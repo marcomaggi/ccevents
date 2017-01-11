@@ -1,0 +1,12 @@
+              |-----handy-ruler-----------------------------------------------|
+@PACKAGE_NAME@: @PACKAGE_NAME@ @PACKAGE_VERSION@
+@PACKAGE_NAME@:
+@PACKAGE_NAME@: A C  language library implementing an  event loop for the
+@PACKAGE_NAME@: GNU+Linux platform.
+@PACKAGE_NAME@:
+@PACKAGE_NAME@: It is written in C11 with GCC extensions.
+@PACKAGE_NAME@:
+@PACKAGE_NAME@:
+@PACKAGE_NAME@:
+@PACKAGE_NAME@:
+@PACKAGE_NAME@:
