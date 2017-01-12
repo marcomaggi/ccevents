@@ -1,7 +1,7 @@
 \input texinfo.tex
 @c %**start of header
 @setfilename ccevents.info
-@settitle Ccevents
+@settitle CCEvents
 @c %**end of header
 
 @include version.texi
@@ -12,11 +12,11 @@
 @c Values.
 @c ------------------------------------------------------------
 
-@set TITLE                      Ccevents
+@set TITLE                      CCEvents
 
 @c To be used as @value{PACKAGE} whenever we need to include the full
 @c name of this package.
-@set PACKAGE                    Ccevents
+@set PACKAGE                    CCEvents
 
 @c To be used as @value{PACKAGE} whenever we need to include the
 @c nickname of the project: the name that is used to compose the
@@ -33,7 +33,7 @@
 
 @c To be used as @value{COPYRIGHT_YEARS} whenever we need to include the
 @c list of copyright years.
-@set COPYRIGHT_YEARS            2012-2017
+@set COPYRIGHT_YEARS            2017
 
 @c ------------------------------------------------------------
 
@@ -41,15 +41,6 @@
 @set BITBUCKET_URL              @url{https://bitbucket.org/marcomaggi/@value{PACKAGE_NICKNAME}}
 @set DOWNLOAD_URL               @url{https://bitbucket.org/marcomaggi/@value{PACKAGE_NICKNAME}/downloads}
 @set DOCUMENTATION_URL          @url{http://marcomaggi.github.io/docs/@value{PACKAGE_NICKNAME}.html}
-@set VICARE_HOMEPAGE_URL        @url{http://marcomaggi.github.io/vicare.html}
-
-@macro templateref{NODE, TITLE}
-@xref{\NODE\,\TITLE\,\TITLE\,template}
-@end macro
-
-@macro template{}
-@acronym{TEMPLATE}
-@end macro
 
 @c page
 @c ------------------------------------------------------------
@@ -57,8 +48,8 @@
 @c ------------------------------------------------------------
 
 @copying
-This document describes version @value{VERSION} of @value{PACKAGE}, a C
-language library implementing a template library.
+This document describes version @value{VERSION} of @value{PACKAGE}, a C language library
+implementing an event loop.  It is written in C11 with @gcc{} extensions.
 
 The package is distributed under the terms of the @gnu{} Lesser General Public License (@lgpl{}).
 
@@ -109,7 +100,7 @@ entitled ``@gnu{} Free Documentation License''.
 @ifinfo
 @dircategory Development
 @direntry
-* ccevents: (ccevents).       Ccevents a template library.
+* ccevents: (ccevents).         CCEvents an events loop library.
 @end direntry
 @end ifinfo
 
@@ -152,13 +143,12 @@ Indexes
 @chapter Overview of the package
 
 
-This document describes version @value{VERSION} of @value{PACKAGE}, a C
-language library implementing a template library.
+This document describes version @value{VERSION} of @value{PACKAGE}, a C language library
+implementing an event loop.  It is written in C11 with @gcc{} extensions.
 
-@value{PACKAGE} installs the single header file @file{ccevents.h}.
-All the function names in the @api{} are prefixed with @code{cct_}; all
-the constant names are prefixed with @code{CCT_}; all the type names are
-prefixed with @code{cct_} and suffixed with @code{_t}.
+@value{PACKAGE} installs the single header file @file{ccevents.h}.  All the function names in the
+@api{} are prefixed with @code{cct_}; all the constant names are prefixed with @code{CCT_}; all the
+type names are prefixed with @code{cct_} and suffixed with @code{_t}.
 
 @menu
 * overview linking::            Linking code with the library.
@@ -183,10 +173,13 @@ Alternatively we can use the raw @gnu{} Autoconf macros:
 
 @example
 AC_CHECK_LIB([ccevents],[cct_version_string],,
-  [AC_MSG_FAILURE([test for Ccevents library failed])])
+  [AC_MSG_FAILURE([test for CCEvents library failed])])
 AC_CHECK_HEADERS([ccevents.h],,
-  [AC_MSG_FAILURE([test for Ccevents header failed])])
+  [AC_MSG_FAILURE([test for CCEvents header failed])])
 @end example
+
+We need to remember that client code using @value{PACKAGE}'s library must be written using the C11
+language and the @gcc{} extensions enabled by @option{-fplan9-extensions}.
 
 @c page
 @node version
