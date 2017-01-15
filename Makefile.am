@@ -44,8 +44,8 @@ libccevents_la_SOURCES= \
 #### tests
 
 check_PROGRAMS	= \
-	tests/version		\
-	tests/fd-sources
+	tests/version			\
+	tests/standalone-fd-sources
 
 TESTS				= $(check_PROGRAMS)
 
@@ -55,8 +55,8 @@ ccevents_tests_ldadd		= libccevents.la
 tests_version_CPPFLAGS		= $(ccevents_tests_cppflags)
 tests_version_LDADD		= $(ccevents_tests_ldadd)
 
-tests_fd_sources_CPPFLAGS	= $(ccevents_tests_cppflags)
-tests_fd_sources_LDADD		= $(ccevents_tests_ldadd)
+tests_standalone_fd_sources_CPPFLAGS	= $(ccevents_tests_cppflags)
+tests_standalone_fd_sources_LDADD	= $(ccevents_tests_ldadd)
 
 installcheck-local: $(TESTS)
 	@for f in $(TESTS); do $(builddir)/$$f; done
