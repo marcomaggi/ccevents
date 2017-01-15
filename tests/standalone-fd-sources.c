@@ -34,7 +34,7 @@
 #include <unistd.h>
 
 int
-main (int argc, const char *const argv[])
+main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
   /* Detecting  readability  in the  first  file  descriptor of  a  pipe
      created with "pipe(2)". */
