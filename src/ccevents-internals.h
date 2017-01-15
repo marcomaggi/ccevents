@@ -1,5 +1,5 @@
 /*
-  Part of: Ccevents
+  Part of: CCEvents
   Contents: private header file
   Date: Jan 11, 2017
 
@@ -36,6 +36,8 @@
 #  include <config.h>
 #endif
 #include "ccevents.h"
+#include <stdio.h>
+#include <assert.h>
 
 
 /** --------------------------------------------------------------------

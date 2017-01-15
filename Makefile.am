@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS		= -I meta/autotools
 AUTOMAKE_OPTIONS	= foreign
 EXTRA_DIST		= INSTALL configure.sh
 dist_doc_DATA		= README COPYING
-AM_CFLAGS		= -Wall
+AM_CFLAGS		= -Wall $(CCEXCEPTIONS_CFLAGS)
 
 ## --------------------------------------------------------------------
 
@@ -32,25 +32,31 @@ ccevents_AGE		= @ccevents_VERSION_INTERFACE_AGE@
 include_HEADERS		= src/ccevents.h
 
 lib_LTLIBRARIES		= libccevents.la
-libccevents_la_LDFLAGS= -version-info $(ccevents_CURRENT):$(ccevents_REVISION):$(ccevents_AGE)
+libccevents_la_LDFLAGS	= -version-info $(ccevents_CURRENT):$(ccevents_REVISION):$(ccevents_AGE) \
+			  $(CCEXCEPTIONS_LIBS)
 libccevents_la_SOURCES= \
-	src/ccevents.h		\
+	src/ccevents.h			\
 	src/ccevents-internals.h	\
-	src/ccevents-version.c
+	src/ccevents-version.c		\
+	src/ccevents-fd-sources.c
 
 #page
 #### tests
 
 check_PROGRAMS	= \
-	tests/version
+	tests/version		\
+	tests/fd-sources
 
 TESTS				= $(check_PROGRAMS)
 
-ccevents_tests_cppflags	= -I$(srcdir)/src
+ccevents_tests_cppflags		= -I$(srcdir)/src $(CCEXCEPTIONS_FLAGS)
 ccevents_tests_ldadd		= libccevents.la
 
 tests_version_CPPFLAGS		= $(ccevents_tests_cppflags)
 tests_version_LDADD		= $(ccevents_tests_ldadd)
+
+tests_fd_sources_CPPFLAGS	= $(ccevents_tests_cppflags)
+tests_fd_sources_LDADD		= $(ccevents_tests_ldadd)
 
 installcheck-local: $(TESTS)
 	@for f in $(TESTS); do $(builddir)/$$f; done

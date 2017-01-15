@@ -2,7 +2,7 @@ dnl @configure_input@
 dnl
 
 AC_PREREQ([2.69])
-AC_INIT([Ccevents],[0.1d0],
+AC_INIT([CCEvents],[0.1d0],
   [marco.maggi-ipsu@poste.it],
   [ccevents],[http://marcomaggi.github.com/ccevents])
 dnl This is the revision number of this configure.ac
@@ -65,7 +65,9 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 AC_HEADER_STDC
 dnl AC_HEADER_SYS_WAIT
-dnl AC_CHECK_HEADERS([assert.h stdint.h strings.h errno.h stddef.h sys/mman.h sys/resource.h unistd.h])
+AC_CHECK_HEADERS([assert.h stdint.h strings.h errno.h stddef.h])
+AC_CHECK_HEADER([stdbool.h],,[AC_MSG_ERROR([unable to fine stdbool.h])])
+AC_CHECK_HEADER([sys/select.h],,[AC_MSG_ERROR([unable to fine sys/select.h])])
 dnl AC_CHECK_SIZEOF(void *)
 dnl AC_C_CONST
 dnl AC_C_INLINE
@@ -99,9 +101,9 @@ AC_CACHE_SAVE
 dnl page
 #### external libraries
 
-dnl AX_PTHREAD(,[AC_MSG_ERROR([cannot find pthread library],[1])])
+PKG_CHECK_MODULES([CCEXCEPTIONS],[ccexceptions >= 0.2])
 
-dnl AC_CACHE_SAVE
+AC_CACHE_SAVE
 
 dnl page
 #### operating system specific configuration

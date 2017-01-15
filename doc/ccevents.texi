@@ -125,7 +125,7 @@ entitled ``@gnu{} Free Documentation License''.
 
 Appendices
 
-* Package License::             GNU General Public License.
+* Package License::             GNU Lesser General Public License.
 * Documentation License::       GNU Free Documentation License.
 * references::                  Bibliography and references.
 
@@ -149,6 +149,9 @@ implementing an event loop.  It is written in C11 with @gcc{} extensions.
 @value{PACKAGE} installs the single header file @file{ccevents.h}.  All the function names in the
 @api{} are prefixed with @code{cct_}; all the constant names are prefixed with @code{CCT_}; all the
 type names are prefixed with @code{cct_} and suffixed with @code{_t}.
+
+The events loop implementation is inspired by the architecture of the event loop of
+@url{http://www.tcl.tk/, Tcl}; though no code comes from Tcl.
 
 @menu
 * overview linking::            Linking code with the library.

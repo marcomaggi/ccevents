@@ -1,5 +1,5 @@
 /*
-  Part of: Ccevents
+  Part of: CCEvents
   Contents: public header file
   Date: Jan 11, 2017
 
@@ -26,7 +26,6 @@
 #ifndef CCEVENTS_H
 #define CCEVENTS_H 1
 
-
 /** --------------------------------------------------------------------
  ** Headers.
  ** ----------------------------------------------------------------- */
@@ -34,6 +33,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <ccexceptions.h>
+#include <stdbool.h>
+#include <time.h>
 
 /* The  macro  CCEVENTS_UNUSED  indicates  that a  function,  function
    argument or variable may potentially be unused. Usage examples:
@@ -49,7 +52,7 @@ extern "C" {
 #endif
 
 #ifndef __GNUC__
-#  define __attribute__(...)	/* empty */
+#  define __attribute__(...)		/* empty */
 #endif
 
 /* I found  the following chunk on  the Net.  (Marco Maggi;  Sun Feb 26,
@@ -79,14 +82,20 @@ extern "C" {
 #  endif
 #endif
 
-
+/** --------------------------------------------------------------------
+ ** Forward declarations.
+ ** ----------------------------------------------------------------- */
+
+typedef struct ccevents_sources_tag_t		ccevents_sources_t;
+typedef struct ccevents_fd_source_tag_t		ccevents_fd_source_t;
+typedef struct ccevents_task_source_tag_t	ccevents_task_source_t;
+
 /** --------------------------------------------------------------------
  ** Constants.
  ** ----------------------------------------------------------------- */
 
+#define MAX_CONSECUTIVE_FD_EVENTS	5
 
-
-
 /** --------------------------------------------------------------------
  ** Version functions.
  ** ----------------------------------------------------------------- */
@@ -96,7 +105,122 @@ ccevents_decl int		cct_version_interface_current	(void);
 ccevents_decl int		cct_version_interface_revision	(void);
 ccevents_decl int		cct_version_interface_age	(void);
 
-
+/** --------------------------------------------------------------------
+ ** Time representation.
+ ** ----------------------------------------------------------------- */
+
+typedef struct timeval		ccevents_absolute_time_t;
+
+/** --------------------------------------------------------------------
+ ** File descriptor events sources.
+ ** ----------------------------------------------------------------- */
+
+typedef bool ccevents_fd_source_query_fun_t		(cce_location_tag_t * L,
+							 ccevents_fd_source_t * fds);
+typedef void ccevents_fd_source_handler_fun_t		(cce_location_tag_t * L,
+							 ccevents_fd_source_t * fds);
+typedef void ccevents_fd_source_expiration_handler_fun_t(ccevents_fd_source_t * fds);
+
+struct ccevents_fd_source_tag_t {
+  /* The file descriptor. */
+  int				fd;
+
+  /* A thunk to be called to  query the file descriptor for the expected
+     event. */
+  ccevents_fd_source_query_fun_t *	query;
+
+  /* A thunk to be called whenever the expected event happens. */
+  ccevents_fd_source_handler_fun_t *	handler;
+
+  /* False or  a TIME struct  representing the expiration time  for this
+     event. */
+  ccevents_absolute_time_t		expiration_time;
+
+  /* False  or a  thunk to be called whenever this event expires. */
+  ccevents_fd_source_expiration_handler_fun_t *	expiration_handler;
+
+  ccevents_fd_source_t *	next;
+  ccevents_fd_source_t *	prev;
+};
+
+ccevents_decl void ccevents_fd_event_source_init (ccevents_fd_source_t * fds,
+						  int fd,
+						  ccevents_fd_source_query_fun_t * query_fd_fun,
+						  ccevents_fd_source_handler_fun_t * event_handler_fun,
+						  ccevents_absolute_time_t expiration_time,
+						  ccevents_fd_source_expiration_handler_fun_t * expiration_handler)
+  __attribute__((nonnull(1, 3, 4, 6)));
+
+ccevents_decl void ccevents_fd_event_source_register (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
+  __attribute__((nonnull(1, 2)));
+
+ccevents_decl void ccevents_fd_event_source_forget (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
+  __attribute__((nonnull(1, 2)));
+
+ccevents_decl bool ccevents_query_fd_readability (cce_location_tag_t * there, ccevents_fd_source_t * fds)
+  __attribute__((nonnull(1, 2)));
+ccevents_decl bool ccevents_query_fd_writability (cce_location_tag_t * there, ccevents_fd_source_t * fds)
+  __attribute__((nonnull(1, 2)));
+ccevents_decl bool ccevents_query_fd_exception   (cce_location_tag_t * there, ccevents_fd_source_t * fds)
+  __attribute__((nonnull(1, 2)));
+
+ccevents_decl bool ccevents_fd_source_do_one_event (cce_location_tag_t * there, ccevents_fd_source_t * fds)
+  __attribute__((nonnull(1, 2)));
+
+/** --------------------------------------------------------------------
+ ** Task fragment event sources.
+ ** ----------------------------------------------------------------- */
+
+struct ccevents_task_source_tag_t {
+  ccevents_task_source_t *	prev;
+  ccevents_task_source_t *	next;
+};
+
+/** --------------------------------------------------------------------
+ ** Interprocess signal event sources.
+ ** ----------------------------------------------------------------- */
+
+typedef void ccevents_signal_handler_t (void);
+
+/** --------------------------------------------------------------------
+ ** Events sources.
+ ** ----------------------------------------------------------------- */
+
+struct ccevents_sources_tag_t {
+  /* Boolean.  True if  a request to leave the loop  as soon as possible
+     was posted. */
+  bool		break_flag;
+
+  ccevents_signal_handler_t *	signal_handlers;
+  /* Vector of  null or lists.   Each list contains  interprocess signal
+     handlers in the form of thunks to be run once. */
+
+  /* Non-negative fixnum.  Count of consecutive fd events served. */
+  size_t	fds_count;
+
+  /* Non-negative fixnum.   Maximum number  of consecutive fd  events to
+     serve.  When the count reaches the watermark level: the loop avoids
+     servicing  fd events  and  tries  to serve  an  event from  another
+     source. */
+  size_t	fds_watermark;
+
+  /* Reverse list of fd entries already queried for the current run over
+     fd event sources. */
+  ccevents_fd_source_t *	fds_head;
+
+  /* List of fd entries still to query  in the current run over fd event
+     sources. */
+  ccevents_fd_source_t *	fds_tail;
+
+  /* Reverse list  of task entries  already queried for the  current run
+     over task event sources. */
+  ccevents_task_source_t *	tasks_rev_head;
+
+  /* List of  task entries still to  query in the current  run over task
+     event sources. */
+  ccevents_task_source_t *	tasks_tail;
+};
+
 /** --------------------------------------------------------------------
  ** Done.
  ** ----------------------------------------------------------------- */
