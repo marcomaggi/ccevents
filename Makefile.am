@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS		= -I meta/autotools
 AUTOMAKE_OPTIONS	= foreign
 EXTRA_DIST		= INSTALL configure.sh
 dist_doc_DATA		= README COPYING
-AM_CFLAGS		= -Wall $(CCEXCEPTIONS_CFLAGS)
+AM_CFLAGS		= -Wall
 
 ## --------------------------------------------------------------------
 
@@ -32,6 +32,7 @@ ccevents_AGE		= @ccevents_VERSION_INTERFACE_AGE@
 include_HEADERS		= src/ccevents.h
 
 lib_LTLIBRARIES		= libccevents.la
+libccevents_la_CPPFLAGS	= $(CCEXCEPTIONS_CFLAGS)
 libccevents_la_LDFLAGS	= -version-info $(ccevents_CURRENT):$(ccevents_REVISION):$(ccevents_AGE) \
 			  $(CCEXCEPTIONS_LIBS)
 libccevents_la_SOURCES= \

@@ -29,9 +29,13 @@
 #include <ccevents.h>
 #include <ccexceptions.h>
 #include <assert.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 int
 main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
@@ -143,8 +147,148 @@ main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
     close(X[1]);
   }
 
+  /* Detecting exception in the server socket of a INET server.  To test
+     sending  OOB  data we  really  need  to  use a  client/server  INET
+     connection, a socketpair will not work. */
+  {
+    int			master_sock, server_sock, client_sock;
+    struct linger	optval = { .l_onoff  = 1, .l_linger = 1 };
+    socklen_t		optlen = sizeof(struct linger);
+    struct sockaddr_in	master_addr = {
+      .sin_family	= AF_INET,
+      /* This is the address "127.0.0.1" in host byte order. */
+      .sin_addr.s_addr	= htonl(INADDR_ANY),
+      .sin_port		= htons(8080)
+    };
+    struct sockaddr_in	server_addr;
+    socklen_t		server_addr_len;
+    struct sockaddr_in	client_addr = {
+      .sin_family	= AF_INET,
+      .sin_addr.s_addr	= htonl(INADDR_ANY),
+      .sin_port		= htons(8080)
+    };
+
+    master_sock = socket(PF_INET, SOCK_STREAM, 0);
+    /* We need this SO_REUSEADDR option: the system will let us run this
+       program multiple  times in a short  time span.  If we  do not set
+       it: the program  will fail if the address is  still registered as
+       bound by a previou program run. */
+    {
+      int	reuse = 1;
+      setsockopt(master_sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
+    }
+    assert(0 <= master_sock);
+    assert(0 == bind(master_sock, (struct sockaddr *)&master_addr, sizeof(master_addr)));
+    assert(0 == listen(master_sock, 2));
+
+    client_sock = socket(PF_INET, SOCK_STREAM, 0);
+    assert(0 <= client_sock);
+    setsockopt(client_sock, SOL_SOCKET, SO_LINGER, &optval, optlen);
+    assert(0 == connect(client_sock, (struct sockaddr *)&client_addr, sizeof(client_addr)));
+
+    server_sock = accept(master_sock, (struct sockaddr *)&server_addr, &server_addr_len);
+    setsockopt(master_sock, SOL_SOCKET, SO_LINGER, &optval, optlen);
+
+    {
+      ccevents_fd_source_t	readable_fd_source;
+      ccevents_fd_source_t	exception_fd_source;
+      ccevents_absolute_time_t	expiration_time = {LONG_MAX, 0};
+      volatile bool		readable_flag = false;
+      volatile bool		exception_flag = false;
+      char			read_buf[11] = {
+	'\0', '\0', '\0',  '\0', '\0', '\0',  '\0', '\0', '\0',  '\0', '\0'
+      };
+      int			read_len = 0;
+      char			except_buf[2] = { '\0', '\0' };
+      int			except_len = 0;
+
+      void readable_event_handler (cce_location_tag_t * there, ccevents_fd_source_t * fds)
+      {
+	int	len;
+	readable_flag = true;
+	len = recv(fds->fd, read_buf + read_len, 10, 0);
+	//fprintf(stderr, "%s: read %d bytes\n", __func__, len);
+	read_len += len;
+      }
+      void exception_event_handler (cce_location_tag_t * there, ccevents_fd_source_t * fds)
+      {
+	int	len;
+	exception_flag = true;
+	len = recv(fds->fd, except_buf + except_len, 1, MSG_OOB);
+	//fprintf(stderr, "%s: read %d bytes\n", __func__, len);
+	except_len += len;
+      }
+      void expiration_handler (ccevents_fd_source_t * fds)
+      {
+	return;
+      }
+
+      //fprintf(stderr, "socketpair: server_sock = %d, client_sock = %d\n", server_sock, client_sock);
+      ccevents_fd_event_source_init (&readable_fd_source, server_sock,
+				     ccevents_query_fd_readability, readable_event_handler,
+				     expiration_time, expiration_handler);
+      ccevents_fd_event_source_init (&exception_fd_source, server_sock,
+				     ccevents_query_fd_exception, exception_event_handler,
+				     expiration_time, expiration_handler);
+
+      /* Send data. */
+      {
+	uint8_t		buf1[3] = { '1', '2', '3' };
+	uint8_t		buf2[3] = { '4', '5', '6' };
+	uint8_t		buf3[3] = { '7', '8', '9' };
+	assert(3 == send(client_sock, buf1, 3, 0));
+	/* The byte "6" is the OOB data. */
+	assert(3 == send(client_sock, buf2, 3, 0));
+	assert(1 == send(client_sock, "X", 1, MSG_OOB));
+	assert(3 == send(client_sock, buf3, 3, 0));
+      }
+
+      {
+	cce_location_t	L;
+	bool		event_served = false;
+
+	if (cce_location(L)) {
+	  cce_run_error_handlers(L);
+	} else {
+	  event_served = ccevents_fd_source_do_one_event(L, &readable_fd_source);
+	  cce_run_cleanup_handlers(L);
+	  assert(true == event_served);
+	  assert(true == readable_flag);
+	  assert(false == exception_flag);
+	  //fprintf(stderr, "read_len = %d, read_buf = %s\n", (int)read_len, read_buf);
+	  assert(0 == strncmp(read_buf, "123456", 6));
+	}
+
+	if (cce_location(L)) {
+	  cce_run_error_handlers(L);
+	} else {
+	  event_served = ccevents_fd_source_do_one_event(L, &exception_fd_source);
+	  cce_run_cleanup_handlers(L);
+	  assert(true == event_served);
+	  assert(true == readable_flag);
+	  assert(true == exception_flag);
+	  //fprintf(stderr, "except_len = %d, except_buf = %s\n", (int)except_len, except_buf);
+	  assert(0 == strncmp(except_buf, "X", 1));
+	}
+
+	if (cce_location(L)) {
+	  cce_run_error_handlers(L);
+	} else {
+	  event_served = ccevents_fd_source_do_one_event(L, &readable_fd_source);
+	  cce_run_cleanup_handlers(L);
+	  assert(true == event_served);
+	  assert(true == readable_flag);
+	  //fprintf(stderr, "read_len = %d, read_buf = %s\n", (int)read_len, read_buf);
+	  assert(0 == strncmp(read_buf, "123456789", 9));
+	}
+      }
+    }
+    close(server_sock);
+    close(client_sock);
+    close(master_sock);
+  }
+
   exit(EXIT_SUCCESS);
 }
-
 
 /* end of file */
