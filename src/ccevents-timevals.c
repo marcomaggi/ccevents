@@ -229,18 +229,9 @@ ccevents_timeval_sub (cce_location_tag_t * there, ccevents_timeval_t A, ccevents
  *
  */
 {
-  ccevents_timeval_t	R;
-
   ASSERT_NORMALISED_TIMEVAL(A);
   ASSERT_NORMALISED_TIMEVAL(B);
-
-  R.tv_sec  = A.tv_sec  - B.tv_sec;
-  R.tv_usec = A.tv_usec - B.tv_usec;
-  if (R.tv_usec < 0) {
-    R.tv_usec += 1000000L;
-    R.tv_sec--; // borrow
-  }
-  return R;
+  return ccevents_timeval_init(there, (A.tv_sec - B.tv_sec), (A.tv_usec - B.tv_usec));
 }
 
 
