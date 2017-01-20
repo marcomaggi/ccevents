@@ -38,6 +38,7 @@ libccevents_la_LDFLAGS	= -version-info $(ccevents_CURRENT):$(ccevents_REVISION):
 libccevents_la_SOURCES= \
 	src/ccevents.h			\
 	src/ccevents-internals.h	\
+	src/ccevents-debug.h		\
 	src/ccevents-core.c		\
 	src/ccevents-version.c		\
 	src/ccevents-conditions.c	\
