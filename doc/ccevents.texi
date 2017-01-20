@@ -124,6 +124,7 @@ entitled ``@gnu{} Free Documentation License''.
 * init::                        Library initialisation.
 * version::                     Version functions.
 * conditions::                  Exceptional condition objects.
+* timevals::                    Handling time spans.
 * timeouts::                    Handling event expiration times.
 
 Appendices
@@ -543,6 +544,87 @@ if (cce_location(L)) @{
   cce_run_cleanup_handlers(L);
 @}
 @end smallexample
+
+@c page
+@node timevals
+@chapter Handling time spans
+
+
+It is typical for a C language system function, under a Unix--like system, to require a @code{struct
+timeval} value to represent a time span; @value{PACKAGE} implements an @api{} to handle such
+objects.
+
+The @api{} is peculiar because often it requires the whole data structure to passed by value, rather
+than using a pointer to structure as is usually the case.
+
+
+@deftp {Struct Typedef} ccevents_timeval_t
+An alias for @objtype{struct timeval} used to represent normalised values.  A normalised value is
+such that the fields @code{tv_sec} and @code{tv_usec} obey the following constraints:
+
+@example
+0 <= tv_sec  <= LONG_MAX
+0 <= tv_usec <= 999999
+@end example
+
+This type has the following public fields:
+
+@table @code
+@item struct timeval;
+An anonymous field.
+@end table
+@end deftp
+
+
+@deftypefun ccevents_timeval_t ccevents_timeval_init (cce_location_tag_t * there, long @var{seconds}, long @var{microseconds})
+Build and return a timeval structure initialised and normalised with the given arguments.  If an
+error occurs while normalising: an exception is raised by performing a non--local exit to
+@var{there}.
+
+The argument @var{seconds} is meant to be in the range @samp{[0, LONG_MAX]}.  The argument
+@var{microseconds} is meant to be in the range @samp{[LONG_MIN, LONG_MAX]}.
+@end deftypefun
+
+
+@deftypefun ccevents_timeval_t ccevents_timeval_normalise (cce_location_tag_t * @var{there}, struct timeval @var{T})
+Build and return a timeval structure initialised and normalised with the given arguments.  If an
+error occurs while normalising: an exception is raised by performing a non--local exit to
+@var{there}.
+
+The field @code{tv_sec} of @var{T} is meant to be in the range @samp{[0, LONG_MAX]}.  The field
+@code{tv_usec} of @var{T} is meant to be in the range @samp{[LONG_MIN, LONG_MAX]}.
+@end deftypefun
+
+
+@deftypefun ccevents_timeval_t ccevents_timeval_add (cce_location_tag_t * @var{there}, ccevents_timeval_t @var{A}, ccevents_timeval_t @var{B})
+Add the two timeval values @var{A} and @var{B} and return a normalised timeval value.  If an error
+occurs while adding or normalising: an exception is raised by performing a non--local exit to
+@var{there}.
+@end deftypefun
+
+
+@deftypefun ccevents_timeval_t ccevents_timeval_sub (cce_location_tag_t * @var{there}, ccevents_timeval_t @var{A}, ccevents_timeval_t @var{B})
+Subtract @var{B} from @var{A} and return a normalised timeval value representing the difference.  If
+an error occurs while subtracting or normalising: an exception is raised by performing a non--local
+exit to @var{there}.
+@end deftypefun
+
+
+@deftypefun int ccevents_timeval_compare (ccevents_timeval_t @var{A}, ccevents_timeval_t @var{B})
+Compare the timeval values @var{A} and @var{B}.  Return:
+
+@table @code
+@item 0
+If @var{A} is equal to @var{B}.
+
+@item +1
+If @var{A} is greater than @var{B}.
+
+@item -1
+If @var{A} is less than @var{B}.
+@end table
+@end deftypefun
+
 
 @c page
 @node timeouts

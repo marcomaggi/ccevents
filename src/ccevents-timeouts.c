@@ -218,10 +218,10 @@ ccevents_timeout_microseconds (const ccevents_timeout_t * to)
 {
   return to->microseconds;
 }
-struct timeval
+ccevents_timeval_t
 ccevents_timeout_time_span (const ccevents_timeout_t * to)
 {
-  struct timeval	span = {
+  ccevents_timeval_t	span = {
     .tv_sec  = to->seconds,
     /* With  a  normalised  'to'  the  'timeval'  representation  cannot
        overflow. */
@@ -229,10 +229,10 @@ ccevents_timeout_time_span (const ccevents_timeout_t * to)
   };
   return span;
 }
-struct timeval
+ccevents_timeval_t
 ccevents_timeout_time (ccevents_timeout_t * to)
 {
-  struct timeval	absolute_time = {
+  ccevents_timeval_t	absolute_time = {
     .tv_sec  = to->tv_sec,
     .tv_usec = to->tv_usec
   };
@@ -256,8 +256,8 @@ ccevents_timeout_timed_out (ccevents_timeout_t * to)
   if (ccevents_timeout_infinite_time_span(to)) {
     rv = true;
   } else {
-    struct timeval	now;
-    struct timeval	trigger_time	= ccevents_timeout_time(to);
+    ccevents_timeval_t	now;
+    ccevents_timeval_t	trigger_time	= ccevents_timeout_time(to);
     gettimeofday(&now, NULL);
     if (now.tv_sec < trigger_time.tv_sec) {
       rv = true;
@@ -325,9 +325,9 @@ ccevents_timeout_greater (ccevents_timeout_t * toA, ccevents_timeout_t * toB)
 int
 ccevents_timeout_time_cmp (ccevents_timeout_t * A, ccevents_timeout_t * B)
 {
-  struct timeval span_a = ccevents_timeout_time(A);
-  struct timeval span_b = ccevents_timeout_time(B);
-  return ccevents_timeval_cmp(&span_a, &span_b);
+  ccevents_timeval_t span_a = ccevents_timeout_time(A);
+  ccevents_timeval_t span_b = ccevents_timeout_time(B);
+  return ccevents_timeval_compare(span_a, span_b);
 }
 bool
 ccevents_timeout_first (ccevents_timeout_t * A, ccevents_timeout_t * B)
@@ -352,8 +352,8 @@ ccevents_timeout_start (cce_location_tag_t * there, ccevents_timeout_t * to)
     to->tv_sec  = LONG_MAX;
     to->tv_usec	= 0;
   } else {
-    struct timeval	now;
-    struct timeval	span;
+    ccevents_timeval_t	now;
+    ccevents_timeval_t	span;
 
     gettimeofday(&now, NULL);
     span = ccevents_timeout_time_span(to);

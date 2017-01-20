@@ -202,7 +202,7 @@ ccevents_decl ccevents_timeval_t ccevents_timeval_add (cce_location_tag_t * ther
 						       ccevents_timeval_t A, ccevents_timeval_t B);
 ccevents_decl ccevents_timeval_t ccevents_timeval_sub (cce_location_tag_t * there,
 						       ccevents_timeval_t A, ccevents_timeval_t B);
-ccevents_decl int ccevents_timeval_cmp (struct timeval * A, struct timeval * B);
+ccevents_decl int ccevents_timeval_compare (ccevents_timeval_t A, ccevents_timeval_t B);
 
 
 /** --------------------------------------------------------------------
@@ -213,7 +213,7 @@ typedef struct ccevents_timeout_tag_t {
   /* When this timeout is started the  expiration time is stored in this
      structure.   When  the "tv_sec"  field  is  set to  LONG_MAX:  this
      timeout never expires. */
-  struct timeval;
+  ccevents_timeval_t;
   /* Seconds count, a  non-negative number.  When set  to LONG_MAX: this
      timeout never expires. */
   long int		seconds;
@@ -237,8 +237,8 @@ ccevents_decl void ccevents_timeout_copy (ccevents_timeout_t * dst, const cceven
 ccevents_decl long int ccevents_timeout_seconds      (const ccevents_timeout_t * to);
 ccevents_decl long int ccevents_timeout_milliseconds (const ccevents_timeout_t * to);
 ccevents_decl long int ccevents_timeout_microseconds (const ccevents_timeout_t * to);
-ccevents_decl struct timeval ccevents_timeout_time_span (const ccevents_timeout_t * to);
-ccevents_decl struct timeval ccevents_timeout_time (ccevents_timeout_t * to);
+ccevents_decl ccevents_timeval_t ccevents_timeout_time_span (const ccevents_timeout_t * to);
+ccevents_decl ccevents_timeval_t ccevents_timeout_time (ccevents_timeout_t * to);
 ccevents_decl bool ccevents_timeout_infinite_time_span (ccevents_timeout_t * to);
 ccevents_decl bool ccevents_timeout_timed_out (ccevents_timeout_t * to);
 ccevents_decl int ccevents_timeout_cmp (ccevents_timeout_t * toA, ccevents_timeout_t * toB);

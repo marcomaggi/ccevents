@@ -210,13 +210,13 @@ test_timeout_getters (void)
   assert(2 == ccevents_timeout_milliseconds(&to));
   assert(3 == ccevents_timeout_microseconds(&to));
   {
-    struct timeval	span;
+    ccevents_timeval_t	span;
     span = ccevents_timeout_time_span(&to);
     assert(1 == span.tv_sec);
     assert(2003 == span.tv_usec);
   }
   {
-    struct timeval	abs_time;
+    ccevents_timeval_t	abs_time;
     abs_time = ccevents_timeout_time(&to);
     /* The timeout has not been started. */
     assert(LONG_MAX == abs_time.tv_sec);

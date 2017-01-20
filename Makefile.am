@@ -51,6 +51,7 @@ libccevents_la_SOURCES= \
 
 check_PROGRAMS	= \
 	tests/version			\
+	tests/timevals			\
 	tests/timeouts			\
 	tests/standalone-fd-sources
 
@@ -64,6 +65,9 @@ tests_version_LDADD			= $(ccevents_tests_ldadd)
 
 tests_timeouts_CPPFLAGS			= $(ccevents_tests_cppflags)
 tests_timeouts_LDADD			= $(ccevents_tests_ldadd)
+
+tests_timevals_CPPFLAGS			= $(ccevents_tests_cppflags)
+tests_timevals_LDADD			= $(ccevents_tests_ldadd)
 
 tests_standalone_fd_sources_CPPFLAGS	= $(ccevents_tests_cppflags)
 tests_standalone_fd_sources_LDADD	= $(ccevents_tests_ldadd)

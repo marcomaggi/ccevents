@@ -125,20 +125,44 @@ ccevents_timeval_normalise (cce_location_tag_t * there, struct timeval T)
  *
  *    0 <= R.tv_sec  <= LONG_MAX
  *    0 <= R.tv_usec <= 999999
+ *
+ * The field "tv_sec" of "T" is meant  to be in the range [0, LONG_MAX].
+ * The field  "tv_usec" of "T"  is meant to  be in the  range [LONG_MIN,
+ * LONG_MAX].
  */
 {
-  ccevents_timeval_t	R = { .tv_sec = T.tv_sec, .tv_usec = T.tv_usec };
-  if (R.tv_usec > 999999) {
-    long	div = R.tv_usec / 1000000;
-    long	mod = R.tv_usec % 1000000;
-    if ((LONG_MAX - R.tv_sec) > div) {
-      R.tv_sec += div;
+  if ((T.tv_sec < 0) || (LONG_MAX < T.tv_sec) ||
+      (T.tv_usec < LONG_MIN) || (LONG_MAX < T.tv_usec)) {
+    cce_raise(there, ccevents_condition_timeval_invalid());
+  }
+  if (0 > T.tv_usec) {
+    /* If "T.tv_usec" is negative: both "div" and "mod" are negative. */
+    long	div = T.tv_usec / 1000000L;
+    long	mod = T.tv_usec % 1000000L;
+    if (0) fprintf(stderr, "div = %ld, mod = %ld, LONG_MIN = %ld\n", div, mod, LONG_MIN);
+    T.tv_sec += div - 1;
+    T.tv_usec = mod + 1000000L;
+    if (0) fprintf(stderr, "tv_sec = %ld, tv_usec = %ld\n", T.tv_sec, T.tv_usec);
+    /* It is possible that:  after distributing negative microseconds into
+       seconds, the number of seconds is negative. */
+    if (0 > T.tv_sec) {
+      cce_raise(there, ccevents_condition_timeval_overflow());
+    }
+  }
+  if (T.tv_usec > 999999) {
+    long	div = T.tv_usec / 1000000L;
+    long	mod = T.tv_usec % 1000000L;
+    if ((LONG_MAX - T.tv_sec) > div) {
+      T.tv_sec += div;
     } else {
       cce_raise(there, ccevents_condition_timeval_overflow());
     }
-    R.tv_usec = mod;
+    T.tv_usec = mod;
   }
-  return R;
+  {
+    ccevents_timeval_t	R = { .tv_sec = T.tv_sec, .tv_usec = T.tv_usec };
+    return R;
+  }
 }
 ccevents_timeval_t
 ccevents_timeval_init (cce_location_tag_t * there, long seconds, long microseconds)
@@ -161,8 +185,10 @@ ccevents_timeval_add (cce_location_tag_t * there, ccevents_timeval_t A, ccevents
  */
 {
   ccevents_timeval_t	R;
+  ASSERT_NORMALISED_TIMEVAL(A);
+  ASSERT_NORMALISED_TIMEVAL(B);
 
-  if ((LONG_MAX - A.tv_sec) < B.tv_sec) {
+  if ((LONG_MAX - A.tv_sec) > B.tv_sec) {
     R.tv_sec = A.tv_sec + B.tv_sec;
   } else {
     cce_raise(there, ccevents_condition_timeval_overflow());
@@ -175,7 +201,7 @@ ccevents_timeval_add (cce_location_tag_t * there, ccevents_timeval_t A, ccevents
   {
     long	secs = R.tv_usec / 1000000L;
     R.tv_usec %= 1000000L;
-    if ((LONG_MAX - R.tv_sec) < secs) {
+    if ((LONG_MAX - R.tv_sec) > secs) {
       R.tv_sec += secs;
     } else {
       cce_raise(there, ccevents_condition_timeval_overflow());
@@ -211,7 +237,7 @@ ccevents_timeval_sub (cce_location_tag_t * there, ccevents_timeval_t A, ccevents
   R.tv_sec  = A.tv_sec  - B.tv_sec;
   R.tv_usec = A.tv_usec - B.tv_usec;
   if (R.tv_usec < 0) {
-    R.tv_usec += 1000000;
+    R.tv_usec += 1000000L;
     R.tv_sec--; // borrow
   }
   return R;
@@ -219,17 +245,17 @@ ccevents_timeval_sub (cce_location_tag_t * there, ccevents_timeval_t A, ccevents
 
 
 int
-ccevents_timeval_cmp (struct timeval * A, struct timeval * B)
+ccevents_timeval_compare (ccevents_timeval_t A, ccevents_timeval_t B)
 {
-  if (A->tv_sec < B->tv_sec) {
+  if (A.tv_sec < B.tv_sec) {
     return -1;
-  } else if (A->tv_sec > B->tv_sec) {
+  } else if (A.tv_sec > B.tv_sec) {
     return +1;
   } else {
-    /* (A->tv_sec == B->tv_sec) */
-    if (A->tv_usec < B->tv_usec) {
+    /* (A.tv_sec == B.tv_sec) */
+    if (A.tv_usec < B.tv_usec) {
       return -1;
-    } else if (A->tv_usec > B->tv_usec) {
+    } else if (A.tv_usec > B.tv_usec) {
       return +1;
     } else {
       return 0;
