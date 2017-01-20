@@ -21,6 +21,9 @@ Topics
 This package installs  a C language library implementing  an event loop.
 It is written in C11 with GCC extensions.
 
+  This package  depends on  the package  CCExceptions, at  least version
+0.2.
+
   The package  makes use  of the  GNU Autotools  and it  is tested  on a
 GNU+Linux system.
 
@@ -48,7 +51,8 @@ with this program.  If not, see <http://www.gnu.org/licenses/>.
 3. Install
 ----------
 
-To install from a proper release tarball, do this:
+First  we must  make  sure  that the  package  CCExceptions is  properly
+installed.  To install from a proper release tarball, do this:
 
     $ cd ccevents-0.1.0
     $ mkdir build
@@ -150,6 +154,9 @@ the GNU Project software can be found here:
 
 			 <http://www.gnu.org/>
 
+the package CCExceptions can be found here:
+
+	     <http://github.com/marcomaggi/ccexceptions/>
 
 
 ### end of file

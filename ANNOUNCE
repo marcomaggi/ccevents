@@ -10,7 +10,8 @@ for the GNU+Linux platform.  It is written in C11 with GCC extensions.
 
   The package  makes use  of the  GNU Autotools  and it  is tested  on a
 GNU+Linux system.  It is distributed under the GNU Lesser General Public
-License version 3.0.
+License version 3.0.  This package  depends on the package CCExceptions,
+at least version 0.2.
 
   The latest release of this package can be downloaded from:
 
