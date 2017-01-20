@@ -19,6 +19,7 @@
 int
 main (int argc, const char *const argv[])
 {
+  ccevents_init();
   printf("version number string: %s\n", cct_version_string());
   printf("libtool version number: %d:%d:%d\n",
 	 cct_version_interface_current(),

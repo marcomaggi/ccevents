@@ -35,7 +35,7 @@ ccevents_fd_event_source_init (ccevents_fd_source_t * fds,
 			       int fd,
 			       ccevents_fd_source_query_fun_t * query_fd_fun,
 			       ccevents_fd_source_handler_fun_t * event_handler_fun,
-			       ccevents_absolute_time_t expiration_time,
+			       ccevents_timeout_t expiration_time,
 			       ccevents_fd_source_expiration_handler_fun_t * expiration_handler)
 /* Initialise an already allocated fd source.
 

@@ -121,7 +121,10 @@ entitled ``@gnu{} Free Documentation License''.
 
 @menu
 * overview::                    Overview of the package.
+* init::                        Library initialisation.
 * version::                     Version functions.
+* conditions::                  Exceptional condition objects.
+* timeouts::                    Handling event expiration times.
 
 Appendices
 
@@ -146,12 +149,18 @@ Indexes
 This document describes version @value{VERSION} of @value{PACKAGE}, a C language library
 implementing an event loop.  It is written in C11 with @gcc{} extensions.
 
+This package depends on the package CCExceptions, at least version 0.2; @ref{references} for details
+on downloading it.
+
 @value{PACKAGE} installs the single header file @file{ccevents.h}.  All the function names in the
 @api{} are prefixed with @code{cct_}; all the constant names are prefixed with @code{CCT_}; all the
 type names are prefixed with @code{cct_} and suffixed with @code{_t}.
 
 The events loop implementation is inspired by the architecture of the event loop of
 @url{http://www.tcl.tk/, Tcl}; though no code comes from Tcl.
+
+Notice that, before using the library, we need to call the global initialisation function
+@cfunc{ccevents_init}.
 
 @menu
 * overview linking::            Linking code with the library.
@@ -183,6 +192,16 @@ AC_CHECK_HEADERS([ccevents.h],,
 
 We need to remember that client code using @value{PACKAGE}'s library must be written using the C11
 language and the @gcc{} extensions enabled by @option{-fplan9-extensions}.
+
+@c page
+@node init
+@chapter Library initialisation
+
+
+@deftypefun void ccevents_init (void)
+Initialises the internal structures of the library.  It is fine to call this function multiple
+times.
+@end deftypefun
 
 @c page
 @node version
@@ -217,6 +236,487 @@ Return an integer representing the library interface current age.
 @end deftypefun
 
 @c page
+@node conditions
+@chapter Exceptional condition objects
+
+
+@value{PACKAGE} makes use of the external library CCExceptions to signal exceptional conditions and
+errors through non--local exits; @xref{Top, CCExceptions, CCExceptions, ccexceptions, CCExceptions}.
+The functions will raise exceptional conditions with @cfunc{cce_raise} and expect the caller to
+intercept them using the @code{cce_location_t} mechanics.
+
+@menu
+* conditions base::             Base exceptional conditions.
+* conditions timeval::          Timeval exceptional conditions.
+* conditions timeout::          Timeout exceptional conditions.
+@end menu
+
+@c page
+@node conditions base
+@section Base exceptional conditions
+
+
+@deftp {Struct Typedef} ccevents_condition_descriptor_base_t
+Type of data structure representing the base exceptional condition descriptor for all the conditions
+defined by this library.  It has the following public fields:
+
+@table @code
+@item cce_condition_descriptor_t
+Anonymous field representing the condition descriptor's base values.
+@end table
+
+The parent of this type descriptor is @code{cce_root_condition_descriptor} as defined by the
+CCExceptions library.  @xref{conditions root, CCExceptions, CCExceptions, ccexceptions,
+CCExceptions}.
+@end deftp
+
+
+@deftypevr {Dynamic Constant} {const ccevents_condition_descriptor_base_t *} ccevents_base_condition_descriptor
+Pointer to a statically allocated exceptional condition descriptor.
+@end deftypevr
+
+@c page
+@node conditions timeval
+@section Timeval exceptional conditions
+
+
+@menu
+* timevals conditions invalid::         Invalid timeval values.
+* timevals conditions overflow::        Overflow in timeval representation.
+@end menu
+
+@c page
+@node timevals conditions invalid
+@subsection Invalid timeval values
+
+
+@deftp {Struct Typedef} ccevents_condition_descriptor_timeval_invalid_t
+Type of data structure representing the exceptional condition descriptor for ``invalid timeval
+initialisation'' errors.  It has the following public fields:
+
+@table @code
+@item cce_condition_descriptor_t
+Anonymous field representing the condition descriptor's base values.
+@end table
+
+The parent of this type descriptor is the descriptor referenced by @code{ccevents_base_condition_descriptor}.
+@end deftp
+
+
+@deftp {Struct Typedef} ccevents_condition_timeval_invalid_t
+Type of data structure representing exceptional condition objects for ``invalid timeval
+initialisation'' errors.  It has the following public fields:
+
+@table @code
+@item cce_condition_t
+Anonymous field representing the condition object's base values.
+@end table
+@end deftp
+
+
+@deftypevr {Constant} {const ccevents_condition_descriptor_timeval_invalid_t *} ccevents_condition_timeval_invalid_descriptor
+Pointer to a statically allocated exceptional condition descriptor.
+@end deftypevr
+
+
+@deftypefun {const ccevents_condition_timeval_invalid_t *} ccevents_condition_timeval_invalid (void)
+Return a pointer to exceptional condition object.  The returned object must be released with a
+proper call to @cfunc{cce_condition_free}.
+@end deftypefun
+
+
+To catch this exceptional condition we can to:
+
+@smallexample
+cce_location_t        L;
+ccevents_timeval_t    to;
+
+if (cce_location(L)) @{
+  cce_condition_t * C = cce_location_condition(L);
+
+  if (cce_condition_is_a(C, ccevents_condition_timeval_invalid_descriptor)) @{
+    ccevents_condition_timeval_invalid_t * K = \
+      (ccevents_condition_timeval_invalid_t *)C;
+    do_something_with(K);
+  @}
+  cce_condition_free(C);
+  cce_run_error_handlers(L);
+@} else @{
+  do_something(L);
+  cce_run_cleanup_handlers(L);
+@}
+@end smallexample
+
+@c page
+@node timevals conditions overflow
+@subsection Overflow in timeval representation
+
+
+@deftp {Struct Typedef} ccevents_condition_descriptor_timeval_overflow_t
+Type of data structure representing the exceptional condition descriptor for ``timeval
+initialisation overflow'' errors.  It has the following public fields:
+
+@table @code
+@item cce_condition_descriptor_t
+Anonymous field representing the condition descriptor's base values.
+@end table
+
+The parent of this type descriptor is the descriptor referenced by @code{ccevents_base_condition_descriptor}.
+@end deftp
+
+
+@deftp {Struct Typedef} ccevents_condition_timeval_overflow_t
+Type of data structure representing exceptional condition objects for ``timeval initialisation
+overflow'' errors.  It has the following public fields:
+
+@table @code
+@item cce_condition_t
+Anonymous field representing the condition object's base values.
+@end table
+@end deftp
+
+
+@deftypevr {Constant} {const ccevents_condition_descriptor_timeval_overflow_t *} ccevents_condition_timeval_overflow_descriptor
+Pointer to a statically allocated exceptional condition descriptor.
+@end deftypevr
+
+
+@deftypefun {const ccevents_condition_timeval_overflow_t *} ccevents_condition_timeval_overflow (void)
+Return a pointer to exceptional condition object.  The returned object must be released with a
+proper call to @cfunc{cce_condition_free}.
+@end deftypefun
+
+
+To catch this exceptional condition we can to:
+
+@smallexample
+cce_location_t        L;
+ccevents_timeval_t    to;
+
+if (cce_location(L)) @{
+  cce_condition_t * C = cce_location_condition(L);
+
+  if (cce_condition_is_a(C, ccevents_condition_timeval_overflow_descriptor)) @{
+    ccevents_condition_timeval_overflow_t * K = \
+      (ccevents_condition_timeval_overflow_t *)C;
+    do_something_with(K);
+  @}
+  cce_condition_free(C);
+  cce_run_error_handlers(L);
+@} else @{
+  do_something(L);
+  cce_run_cleanup_handlers(L);
+@}
+@end smallexample
+
+@c page
+@node conditions timeout
+@section Timeout exceptional conditions
+
+
+@menu
+* timeouts conditions invalid::         Invalid timeout values.
+* timeouts conditions overflow::        Overflow in timeout representation.
+@end menu
+
+@c page
+@node timeouts conditions invalid
+@subsection Invalid timeout values
+
+
+@deftp {Struct Typedef} ccevents_condition_descriptor_timeout_invalid_t
+Type of data structure representing the exceptional condition descriptor for ``invalid timeout
+initialisation'' errors.  It has the following public fields:
+
+@table @code
+@item cce_condition_descriptor_t
+Anonymous field representing the condition descriptor's base values.
+@end table
+
+The parent of this type descriptor is the descriptor referenced by @code{ccevents_base_condition_descriptor}.
+@end deftp
+
+
+@deftp {Struct Typedef} ccevents_condition_timeout_invalid_t
+Type of data structure representing exceptional condition objects for ``invalid timeout
+initialisation'' errors.  It has the following public fields:
+
+@table @code
+@item cce_condition_t
+Anonymous field representing the condition object's base values.
+@end table
+@end deftp
+
+
+@deftypevr {Constant} {const ccevents_condition_descriptor_timeout_invalid_t *} ccevents_condition_timeout_invalid_descriptor
+Pointer to a statically allocated exceptional condition descriptor.
+@end deftypevr
+
+
+@deftypefun {const ccevents_condition_timeout_invalid_t *} ccevents_condition_timeout_invalid (void)
+Return a pointer to exceptional condition object.  The returned object must be released with a
+proper call to @cfunc{cce_condition_free}.
+@end deftypefun
+
+
+To catch this exceptional condition we can to:
+
+@smallexample
+cce_location_t        L;
+ccevents_timeout_t    to;
+
+if (cce_location(L)) @{
+  cce_condition_t * C = cce_location_condition(L);
+
+  if (cce_condition_is_a(C, ccevents_condition_timeout_invalid_descriptor)) @{
+    ccevents_condition_timeout_invalid_t * K = \
+      (ccevents_condition_timeout_invalid_t *)C;
+    do_something_with(K);
+  @}
+  cce_condition_free(C);
+  cce_run_error_handlers(L);
+@} else @{
+  do_something(L);
+  cce_run_cleanup_handlers(L);
+@}
+@end smallexample
+
+@c page
+@node timeouts conditions overflow
+@subsection Overflow in timeout representation
+
+
+@deftp {Struct Typedef} ccevents_condition_descriptor_timeout_overflow_t
+Type of data structure representing the exceptional condition descriptor for ``timeout
+initialisation overflow'' errors.  It has the following public fields:
+
+@table @code
+@item cce_condition_descriptor_t
+Anonymous field representing the condition descriptor's base values.
+@end table
+
+The parent of this type descriptor is the descriptor referenced by
+@code{ccevents_base_condition_descriptor}.
+@end deftp
+
+
+@deftp {Struct Typedef} ccevents_condition_timeout_overflow_t
+Type of data structure representing exceptional condition objects for ``timeout initialisation
+overflow'' errors.  It has the following public fields:
+
+@table @code
+@item cce_condition_t
+Anonymous field representing the condition object's base values.
+@end table
+@end deftp
+
+
+@deftypevr {Constant} {const ccevents_condition_descriptor_timeout_overflow_t *} ccevents_condition_timeout_overflow_descriptor
+Pointer to a statically allocated exceptional condition descriptor.
+@end deftypevr
+
+
+@deftypefun {const ccevents_condition_timeout_overflow_t *} ccevents_condition_timeout_overflow (void)
+Return a pointer to exceptional condition object.  The returned object must be released with a
+proper call to @cfunc{cce_condition_free}.
+@end deftypefun
+
+
+To catch this exceptional condition we can to:
+
+@smallexample
+cce_location_t        L;
+ccevents_timeout_t    to;
+
+if (cce_location(L)) @{
+  cce_condition_t * C = cce_location_condition(L);
+
+  if (cce_condition_is_a(C, ccevents_condition_timeout_overflow_descriptor)) @{
+    ccevents_condition_timeout_overflow_t * K = \
+      (ccevents_condition_timeout_overflow_t *)C;
+    do_something_with(K);
+  @}
+  cce_condition_free(C);
+  cce_run_error_handlers(L);
+@} else @{
+  do_something(L);
+  cce_run_cleanup_handlers(L);
+@}
+@end smallexample
+
+@c page
+@node timeouts
+@chapter Handling event expiration times
+
+
+This module implements ``polling timeouts''.
+
+@menu
+* timeouts typedefs::           Type definitions.
+* timeouts init::               Constructors.
+* timeouts operations::         Operations.
+* timeouts getters::            Getter functions.
+* timeouts predicates::         Predicates.
+* timeouts comparison::         Comparison.
+@end menu
+
+@c page
+@node timeouts typedefs
+@section Type definitions
+
+
+@deftp {Struct Typedef} ccevents_timeout_t
+Represents a time span from a point in time towards the future.  It is meant to be used to signal
+that an event has not happended in a fixed amount of time.
+
+Holds values for seconds, milliseconds and microseconds as @code{long int}.  The number of seconds
+can only be zero or positive; the numbers of milliseconds and microseconds are normalised by
+@cfunc{ccevents_timeout_init} to the range @code{[0, 999]}; the normalisation process can lead to an
+overflow, which is signalled by raising an exception.
+
+The maximum representable time span is: @code{LONG_MAX-1} seconds, @code{999} milliseconds,
+@code{999} microseconds.  When the number of seconds is set to @code{LONG_MAX}: the time span is
+interpreted as ``infinite'', the timeout will never expire.
+
+An instance of this structure type is also an instance of @code{struct timeval}.
+@end deftp
+
+@c page
+@node timeouts init
+@section Constructors
+
+
+@deftypefun void ccevents_timeout_init (cce_location_tag_t * @var{there}, ccevents_timeout_t * @var{to}, long @var{seconds}, long @var{milliseconds}, long @var{microseconds})
+Initialise an already allocated timeout structure.  The arguments @var{seconds}, @var{milliseconds}
+and @var{microseconds} represent a time span towards the future.
+
+If an error occurs while normalising the given time span specification: raise an exception to
+@var{there}.
+@end deftypefun
+
+
+@deftypefun void ccevents_timeout_copy (ccevents_timeout_t * @var{dst}, ccevents_timeout_t * @var{src})
+Copy the timeout specification referenced by @var{src} into the one referenced by @var{dst}.
+@end deftypefun
+
+@c page
+@node timeouts operations
+@section Operations
+
+
+@deftypefun void ccevents_timeout_start (ccevents_timeout_t * @var{to})
+Start the timer associated to the already initialised @var{to} object: acquire the current absolute
+time and compute the time instant that will trigger the timeout.  The triggering time is stored in
+@var{to}.
+
+As a special case: if the time span is infinite, the trigger time is set to: @code{LONG_MAX}
+seconds.  This should guarantee that @var{to} will never expire.
+@end deftypefun
+
+
+@deftypefun void ccevents_timeout_reset (ccevents_timeout_t * @var{to})
+Reset a timeout, ``stop'' the timer.  The trigger time is set to a value meaning infinite expiration
+time.
+@end deftypefun
+
+@c page
+@node timeouts getters
+@section Getter functions
+
+
+@deftypefun long ccevents_timeout_seconds (ccevents_timeout_t * @var{to})
+Return the current number of seconds.  The value is in the range @code{[0, LONG_MAX]}.
+@end deftypefun
+
+
+@deftypefun long ccevents_timeout_milliseconds (ccevents_timeout_t * @var{to})
+Return the current number of milliseconds.  The value is in the range @code{[0, 999]}.
+@end deftypefun
+
+
+@deftypefun long ccevents_timeout_microseconds (ccevents_timeout_t * @var{to})
+Return the current number of microseconds.  The value is in the range @code{[0, 999]}.
+@end deftypefun
+
+
+@deftypefun {struct timeval} ccevents_timeout_time_span (ccevents_timeout_t * @var{to})
+Return a @code{timeval} representing the current time span.  The value in the field @code{tv_sec} is
+in the range @code{[0, LONG_MAX]}, while the value in the field @code{tv_usec} is in the range
+@code{[0, 1000000)}.
+@end deftypefun
+
+
+@deftypefun {struct timeval} ccevents_timeout_time (ccevents_timeout_t * @var{to})
+Return a @code{timeval} representing the current trigger absolute time.  The value in the field
+@code{tv_sec} is in the range @code{[0, LONG_MAX]}, while the value in the field @code{tv_usec} is
+in the range @code{[0, 100000)}.  The returned value is meaningful only if the timeout has been
+started.
+@end deftypefun
+
+@c page
+@node timeouts predicates
+@section Predicates
+
+
+@deftypefun bool ccevents_timeout_infinite_time_span (ccevents_timeout_t * @var{to})
+Return true if @var{to} represents an ``infinite'' time span: one for which
+@cfunc{ccevents_timeout_timed_out} will never return true.
+@end deftypefun
+
+
+@deftypefun bool ccevents_timeout_timed_out (ccevents_timeout_t * @var{to})
+Acquire the current time and compare it with the trigger time.  Return true if the timeout has
+triggered; otherwise return false.
+@end deftypefun
+
+@c page
+@node timeouts comparison
+@section Comparison functions
+
+
+@subsubheading Time span comparison
+
+
+@deftypefun int ccevents_timeout_cmp (ccevents_timeout_t * @var{A}, ccevents_timeout_t * @var{B})
+Compare the time spans of two timeouts; return: @code{-1} if @code{@var{A} < @var{B}}, @code{0} if
+@code{@var{A} == @var{B}}, @code{+1} if @code{@var{A} > @var{B}}.
+@end deftypefun
+
+
+@deftypefun bool ccevents_timeout_less (ccevents_timeout_t * @var{A}, ccevents_timeout_t * @var{B})
+Compare the time spans of two timeouts; return true if @code{@var{A} < @var{B}}.
+@end deftypefun
+
+
+@deftypefun bool ccevents_timeout_equal (ccevents_timeout_t * @var{A}, ccevents_timeout_t * @var{B})
+Compare the time spans of two timeouts; return true if @code{@var{A} == @var{B}}.
+@end deftypefun
+
+
+@deftypefun bool ccevents_timeout_greater (ccevents_timeout_t * @var{A}, ccevents_timeout_t * @var{B})
+Compare the time spans of two timeouts; return true if @code{@var{A} > @var{B}}.
+@end deftypefun
+
+
+@subsubheading Trigger time comparison
+
+
+@deftypefun int ccevents_timeout_time_cmp (ccevents_timeout_t * @var{A}, ccevents_timeout_t * @var{B})
+Compare the trigger times of two timeouts; return: @code{-1} if @code{@var{A} < @var{B}}, @code{0}
+if @code{@var{A} == @var{B}}, @code{+1} if @code{@var{A} > @var{B}}.
+@end deftypefun
+
+
+@deftypefun bool ccevents_timeout_first (ccevents_timeout_t @var{A}, ccevents_timeout_t * @var{B})
+Compare the trigger times of two timeouts; return true if @code{@var{A} < @var{B}}.
+@end deftypefun
+
+
+@deftypefun bool ccevents_timeout_last_p (ccevents_timeout_t * @var{A}, ccevents_timeout_t * @var{B})
+Compare the trigger times of two timeouts; return true if @code{@var{A} > @var{B}}.
+@end deftypefun
+
+@c page
 @c ------------------------------------------------------------
 @c Appendices.
 @c ------------------------------------------------------------
@@ -247,6 +747,10 @@ development takes place at:
 and as backup at:
 
 @center @value{BITBUCKET_URL}
+
+We can find the package  CCExceptions at:
+
+@center @url{http://github.com/marcomaggi/ccexceptions/}
 
 @c page
 @node concept index

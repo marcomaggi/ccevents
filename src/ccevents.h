@@ -26,6 +26,7 @@
 #ifndef CCEVENTS_H
 #define CCEVENTS_H 1
 
+
 /** --------------------------------------------------------------------
  ** Headers.
  ** ----------------------------------------------------------------- */
@@ -36,7 +37,9 @@ extern "C" {
 
 #include <ccexceptions.h>
 #include <stdbool.h>
+#include <limits.h>
 #include <time.h>
+#include <sys/time.h>
 
 /* The  macro  CCEVENTS_UNUSED  indicates  that a  function,  function
    argument or variable may potentially be unused. Usage examples:
@@ -82,6 +85,14 @@ extern "C" {
 #  endif
 #endif
 
+
+/** --------------------------------------------------------------------
+ ** Initialisation.
+ ** ----------------------------------------------------------------- */
+
+ccevents_decl void ccevents_init (void);
+
+
 /** --------------------------------------------------------------------
  ** Forward declarations.
  ** ----------------------------------------------------------------- */
@@ -90,12 +101,14 @@ typedef struct ccevents_sources_tag_t		ccevents_sources_t;
 typedef struct ccevents_fd_source_tag_t		ccevents_fd_source_t;
 typedef struct ccevents_task_source_tag_t	ccevents_task_source_t;
 
+
 /** --------------------------------------------------------------------
  ** Constants.
  ** ----------------------------------------------------------------- */
 
 #define MAX_CONSECUTIVE_FD_EVENTS	5
 
+
 /** --------------------------------------------------------------------
  ** Version functions.
  ** ----------------------------------------------------------------- */
@@ -105,12 +118,138 @@ ccevents_decl int		cct_version_interface_current	(void);
 ccevents_decl int		cct_version_interface_revision	(void);
 ccevents_decl int		cct_version_interface_age	(void);
 
+
 /** --------------------------------------------------------------------
- ** Time representation.
+ ** Exceptional conditions.
  ** ----------------------------------------------------------------- */
 
-typedef struct timeval		ccevents_absolute_time_t;
+typedef struct ccevents_condition_descriptor_base_t {
+  cce_condition_descriptor_t;
+} ccevents_condition_descriptor_base_t;
 
+ccevents_decl const ccevents_condition_descriptor_base_t * ccevents_base_condition_descriptor;
+
+/* ------------------------------------------------------------------ */
+
+typedef struct ccevents_condition_descriptor_timeval_invalid_t {
+  cce_condition_descriptor_t;
+} ccevents_condition_descriptor_timeval_invalid_t;
+
+typedef struct ccevents_condition_timeval_invalid_t {
+  cce_condition_t;
+} ccevents_condition_timeval_invalid_t;
+
+ccevents_decl const ccevents_condition_timeval_invalid_t * ccevents_condition_timeval_invalid (void);
+ccevents_decl const ccevents_condition_descriptor_timeval_invalid_t * ccevents_condition_timeval_invalid_descriptor;
+
+/* ------------------------------------------------------------------ */
+
+typedef struct ccevents_condition_descriptor_timeval_overflow_t {
+  cce_condition_descriptor_t;
+} ccevents_condition_descriptor_timeval_overflow_t;
+
+typedef struct ccevents_condition_timeval_overflow_t {
+  cce_condition_t;
+} ccevents_condition_timeval_overflow_t;
+
+ccevents_decl const ccevents_condition_timeval_overflow_t * ccevents_condition_timeval_overflow (void);
+ccevents_decl const ccevents_condition_descriptor_timeval_overflow_t * ccevents_condition_timeval_overflow_descriptor;
+
+/* ------------------------------------------------------------------ */
+
+typedef struct ccevents_condition_descriptor_timeout_invalid_t {
+  cce_condition_descriptor_t;
+} ccevents_condition_descriptor_timeout_invalid_t;
+
+typedef struct ccevents_condition_timeout_invalid_t {
+  cce_condition_t;
+} ccevents_condition_timeout_invalid_t;
+
+ccevents_decl const ccevents_condition_timeout_invalid_t *	ccevents_condition_timeout_invalid (void);
+ccevents_decl const ccevents_condition_descriptor_timeout_invalid_t * ccevents_condition_timeout_invalid_descriptor;
+
+/* ------------------------------------------------------------------ */
+
+typedef struct ccevents_condition_descriptor_timeout_overflow_t {
+  cce_condition_descriptor_t;
+} ccevents_condition_descriptor_timeout_overflow_t;
+
+typedef struct ccevents_condition_timeout_overflow_t {
+  cce_condition_t;
+} ccevents_condition_timeout_overflow_t;
+
+ccevents_decl const ccevents_condition_timeout_overflow_t * ccevents_condition_timeout_overflow (void);
+ccevents_decl const ccevents_condition_descriptor_timeout_overflow_t * ccevents_condition_timeout_overflow_descriptor;
+
+
+/** --------------------------------------------------------------------
+ ** Timeval handling.
+ ** ----------------------------------------------------------------- */
+
+/* This is like  "struct timeval" but it is guaranteed  to be normalised
+ * such that:
+ *
+ *    0 <= tv_sec  <= LONG_MAX
+ *    0 <= tv_usec <= 999999
+ */
+typedef struct ccevents_timeval_t {
+  struct timeval;
+} ccevents_timeval_t;
+
+ccevents_decl ccevents_timeval_t ccevents_timeval_init (cce_location_tag_t * there, long seconds, long microseconds);
+ccevents_decl ccevents_timeval_t ccevents_timeval_normalise (cce_location_tag_t * there, struct timeval T);
+ccevents_decl ccevents_timeval_t ccevents_timeval_add (cce_location_tag_t * there,
+						       ccevents_timeval_t A, ccevents_timeval_t B);
+ccevents_decl ccevents_timeval_t ccevents_timeval_sub (cce_location_tag_t * there,
+						       ccevents_timeval_t A, ccevents_timeval_t B);
+ccevents_decl int ccevents_timeval_cmp (struct timeval * A, struct timeval * B);
+
+
+/** --------------------------------------------------------------------
+ ** Timeouts representation.
+ ** ----------------------------------------------------------------- */
+
+typedef struct ccevents_timeout_tag_t {
+  /* When this timeout is started the  expiration time is stored in this
+     structure.   When  the "tv_sec"  field  is  set to  LONG_MAX:  this
+     timeout never expires. */
+  struct timeval;
+  /* Seconds count, a  non-negative number.  When set  to LONG_MAX: this
+     timeout never expires. */
+  long int		seconds;
+  /* Milliseconds  count.  After  normalisation:  this value  is in  the
+     range [0, 999]. */
+  long int		milliseconds;
+  /* Microseconds  count.  After  normalisation:  this value  is in  the
+     range [0, 999]. */
+  long int		microseconds;
+} ccevents_timeout_t;
+
+/* A  constant, statically  allocated  instance of  "ccevents_timeout_t"
+   representing a timeout that never expires. */
+ccevents_decl const ccevents_timeout_t CCEVENTS_TIMEOUT_NEVER;
+
+ccevents_decl void ccevents_timeout_init (cce_location_tag_t * there, ccevents_timeout_t * to,
+					  const long seconds,
+					  const long milliseconds,
+					  const long microseconds);
+ccevents_decl void ccevents_timeout_copy (ccevents_timeout_t * dst, const ccevents_timeout_t * src);
+ccevents_decl long int ccevents_timeout_seconds      (const ccevents_timeout_t * to);
+ccevents_decl long int ccevents_timeout_milliseconds (const ccevents_timeout_t * to);
+ccevents_decl long int ccevents_timeout_microseconds (const ccevents_timeout_t * to);
+ccevents_decl struct timeval ccevents_timeout_time_span (const ccevents_timeout_t * to);
+ccevents_decl struct timeval ccevents_timeout_time (ccevents_timeout_t * to);
+ccevents_decl bool ccevents_timeout_infinite_time_span (ccevents_timeout_t * to);
+ccevents_decl bool ccevents_timeout_timed_out (ccevents_timeout_t * to);
+ccevents_decl int ccevents_timeout_cmp (ccevents_timeout_t * toA, ccevents_timeout_t * toB);
+ccevents_decl bool ccevents_timeout_less (ccevents_timeout_t * toA, ccevents_timeout_t * toB);
+ccevents_decl bool ccevents_timeout_equal (ccevents_timeout_t * toA, ccevents_timeout_t * toB);
+ccevents_decl bool ccevents_timeout_greater (ccevents_timeout_t * toA, ccevents_timeout_t * toB);
+ccevents_decl int ccevents_timeout_time_cmp (ccevents_timeout_t * A, ccevents_timeout_t * B);
+ccevents_decl bool ccevents_timeout_first (ccevents_timeout_t * A, ccevents_timeout_t * B);
+ccevents_decl bool ccevents_timeout_last (ccevents_timeout_t * A, ccevents_timeout_t * B);
+
+
 /** --------------------------------------------------------------------
  ** File descriptor events sources.
  ** ----------------------------------------------------------------- */
@@ -134,7 +273,7 @@ struct ccevents_fd_source_tag_t {
 
   /* False or  a TIME struct  representing the expiration time  for this
      event. */
-  ccevents_absolute_time_t		expiration_time;
+  ccevents_timeout_t			expiration_time;
 
   /* False  or a  thunk to be called whenever this event expires. */
   ccevents_fd_source_expiration_handler_fun_t *	expiration_handler;
@@ -147,7 +286,7 @@ ccevents_decl void ccevents_fd_event_source_init (ccevents_fd_source_t * fds,
 						  int fd,
 						  ccevents_fd_source_query_fun_t * query_fd_fun,
 						  ccevents_fd_source_handler_fun_t * event_handler_fun,
-						  ccevents_absolute_time_t expiration_time,
+						  ccevents_timeout_t expiration_time,
 						  ccevents_fd_source_expiration_handler_fun_t * expiration_handler)
   __attribute__((nonnull(1, 3, 4, 6)));
 
@@ -167,6 +306,7 @@ ccevents_decl bool ccevents_query_fd_exception   (cce_location_tag_t * there, cc
 ccevents_decl bool ccevents_fd_source_do_one_event (cce_location_tag_t * there, ccevents_fd_source_t * fds)
   __attribute__((nonnull(1, 2)));
 
+
 /** --------------------------------------------------------------------
  ** Task fragment event sources.
  ** ----------------------------------------------------------------- */
@@ -176,12 +316,14 @@ struct ccevents_task_source_tag_t {
   ccevents_task_source_t *	next;
 };
 
+
 /** --------------------------------------------------------------------
  ** Interprocess signal event sources.
  ** ----------------------------------------------------------------- */
 
 typedef void ccevents_signal_handler_t (void);
 
+
 /** --------------------------------------------------------------------
  ** Events sources.
  ** ----------------------------------------------------------------- */
@@ -221,6 +363,7 @@ struct ccevents_sources_tag_t {
   ccevents_task_source_t *	tasks_tail;
 };
 
+
 /** --------------------------------------------------------------------
  ** Done.
  ** ----------------------------------------------------------------- */

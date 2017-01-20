@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS		= -I meta/autotools
 AUTOMAKE_OPTIONS	= foreign
 EXTRA_DIST		= INSTALL configure.sh
 dist_doc_DATA		= README COPYING
-AM_CFLAGS		= -Wall
+AM_CFLAGS		= -Wall $(AX_CFLAGS)
 
 ## --------------------------------------------------------------------
 
@@ -38,7 +38,11 @@ libccevents_la_LDFLAGS	= -version-info $(ccevents_CURRENT):$(ccevents_REVISION):
 libccevents_la_SOURCES= \
 	src/ccevents.h			\
 	src/ccevents-internals.h	\
+	src/ccevents-core.c		\
 	src/ccevents-version.c		\
+	src/ccevents-conditions.c	\
+	src/ccevents-timevals.c		\
+	src/ccevents-timeouts.c		\
 	src/ccevents-fd-sources.c
 
 #page
@@ -46,6 +50,7 @@ libccevents_la_SOURCES= \
 
 check_PROGRAMS	= \
 	tests/version			\
+	tests/timeouts			\
 	tests/standalone-fd-sources
 
 TESTS				= $(check_PROGRAMS)
@@ -53,8 +58,11 @@ TESTS				= $(check_PROGRAMS)
 ccevents_tests_cppflags		= -I$(srcdir)/src $(CCEXCEPTIONS_FLAGS)
 ccevents_tests_ldadd		= libccevents.la
 
-tests_version_CPPFLAGS		= $(ccevents_tests_cppflags)
-tests_version_LDADD		= $(ccevents_tests_ldadd)
+tests_version_CPPFLAGS			= $(ccevents_tests_cppflags)
+tests_version_LDADD			= $(ccevents_tests_ldadd)
+
+tests_timeouts_CPPFLAGS			= $(ccevents_tests_cppflags)
+tests_timeouts_LDADD			= $(ccevents_tests_ldadd)
 
 tests_standalone_fd_sources_CPPFLAGS	= $(ccevents_tests_cppflags)
 tests_standalone_fd_sources_LDADD	= $(ccevents_tests_ldadd)
