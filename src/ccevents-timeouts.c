@@ -35,167 +35,136 @@
 #define MAX_USEC		1000000
 
 
-/** --------------------------------------------------------------------
- ** Exceptional condition descriptor: timeout invalid.
- ** ----------------------------------------------------------------- */
-
-static void             timeout_invalid_condition_destructor  (cce_condition_t * C);
-static const char *     timeout_invalid_condition_static_message (const cce_condition_t * C);
-
-static ccevents_condition_descriptor_timeout_invalid_t timeout_invalid_condition_descriptor = {
-  .parent		= &ccevents_base_condition_descriptor_stru,
-  .free			= timeout_invalid_condition_destructor,
-  .static_message	= timeout_invalid_condition_static_message
-};
-
-const ccevents_condition_descriptor_timeout_invalid_t * \
-  ccevents_condition_timeout_invalid_descriptor = &timeout_invalid_condition_descriptor;
-
-/* There  are  no  dynamic  fields  in  this  condition  object,  so  we
-   statically allocate it. */
-static const ccevents_condition_timeout_invalid_t condition_timeout_invalid = {
-  .descriptor = &timeout_invalid_condition_descriptor
-};
-
-const ccevents_condition_timeout_invalid_t *
-ccevents_condition_timeout_invalid (void)
-{
-  return &condition_timeout_invalid;
-}
-void
-timeout_invalid_condition_destructor (cce_condition_t * C CCEVENTS_UNUSED)
-{
-  return;
-}
-const char *
-timeout_invalid_condition_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
-{
-  return "timeout fields specification would cause invalid time";
-}
-
-
-/** --------------------------------------------------------------------
- ** Exceptional condition descriptor: timeout overflow.
- ** ----------------------------------------------------------------- */
-
-static void             timeout_overflow_condition_destructor	(cce_condition_t * C);
-static const char *     timeout_overflow_condition_static_message (const cce_condition_t * C);
-
-static ccevents_condition_descriptor_timeout_overflow_t timeout_overflow_condition_descriptor = {
-  .parent		= &ccevents_base_condition_descriptor_stru,
-  .free			= timeout_overflow_condition_destructor,
-  .static_message	= timeout_overflow_condition_static_message
-};
-
-const ccevents_condition_descriptor_timeout_overflow_t * \
-  ccevents_condition_timeout_overflow_descriptor = &timeout_overflow_condition_descriptor;
-
-/* There  are  no  dynamic  fields  in  this  condition  object,  so  we
-   statically allocate it. */
-static const ccevents_condition_timeout_overflow_t condition_timeout_overflow = {
-  .descriptor = &timeout_overflow_condition_descriptor
-};
-
-const ccevents_condition_timeout_overflow_t *
-ccevents_condition_timeout_overflow (void)
-{
-  return &condition_timeout_overflow;
-}
-void
-timeout_overflow_condition_destructor (cce_condition_t * C CCEVENTS_UNUSED)
-{
-  return;
-}
-const char *
-timeout_overflow_condition_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
-{
-  return "timeout fields specification would cause overflow in time representation";
-}
-
-
 /** ------------------------------------------------------------
- ** Initialisation.
+ ** Dynamic constants.
  ** ----------------------------------------------------------*/
 
 /* A  constant, statically  allocated  instance of  "ccevents_timeout_t"
    representing a timeout that never expires. */
-const ccevents_timeout_t CCEVENTS_TIMEOUT_NEVER	= {
+static const ccevents_timeout_t TIMEOUT_NEVER	= {
   .tv_sec	= LONG_MAX,
   .tv_usec	= 0,
   .seconds	= LONG_MAX,
   .milliseconds	= 0,
   .microseconds	= 0
 };
+const ccevents_timeout_t * CCEVENTS_TIMEOUT_NEVER = &TIMEOUT_NEVER;
+
+/* A  constant, statically  allocated  instance of  "ccevents_timeout_t"
+   representing a timeout that never expires. */
+static const ccevents_timeout_t TIMEOUT_NOW = {
+  .tv_sec	= 0,
+  .tv_usec	= 0,
+  .seconds	= 0,
+  .milliseconds	= 0,
+  .microseconds	= 0
+};
+const ccevents_timeout_t * CCEVENTS_TIMEOUT_NOW = &TIMEOUT_NOW;
+
+
+/** ------------------------------------------------------------
+ ** Initialisation.
+ ** ----------------------------------------------------------*/
+
+static void
+normalise_little_into_big (cce_location_tag_t * there,
+			   long * hugep, long * bigsp, long * littlesp)
+/* To make it clear, let's assume:
+ *
+ * - "*hugep" is a number of seconds;
+ *
+ * - "*bigp" is a number of milliseconds;
+ *
+ * - "*littlesp" is a number of microseconds;
+ *
+ * then: this function  takes the positive or  negative microseconds and
+ * normalises them  into the range  [0, 999], by distributing  the value
+ * into the milliseconds count.
+ *
+ * When  "hugep"  is  not  NULL:  it  may  happen  that  the  number  of
+ * milliseconds is distributed on the seconds.  When "hugep" is NULL: if
+ * a normalisation of  milliseconds is required, an  exception is raised
+ * with a non-local exit to "there".
+ */
+{
+  long	bigs	= *bigsp;
+  long	littles	= *littlesp;
+
+  if (littles < 0) {
+    /* The littles  are negative: normalise  them by reducing  the bigs.
+     * When "littles" is negative: both "div" and "mod" are negative:
+     *
+     * - When  "long"  is   a  64-bit  word:  "div"  is   in  the  range
+     *   [-9223372036854775, 0].
+     *
+     * - "mod" is in the range [-999, 0].
+     */
+    long	div = littles / 1000L;
+    long	mod = littles % 1000L;
+    bigs    += div - 1;
+    littles  = mod + 1000L;
+    /* Here "littles" is in the range [0, 1000L]. */
+    if (0 > bigs) {
+      /* After distributing  negative littles  into bigs, the  number of
+	 bigs is  negative.  If possible:  distribute the bigs  into the
+	 huges, otherwise raise an exception. */
+      if (NULL != hugep) {
+	normalise_little_into_big(there, NULL, hugep, &bigs);
+      } else {
+	cce_raise(there, ccevents_condition_timeval_overflow());
+      }
+    }
+  }
+  if (littles > 999) {
+    /* Overflow the littles into the bigs. */
+    long	div = littles / 1000L;
+    long	mod = littles % 1000L;
+    if ((LONG_MAX - bigs) > div) {
+      bigs += div;
+    } else {
+      cce_raise(there, ccevents_condition_timeout_overflow());
+    }
+    littles = mod;
+  }
+  /* Done. */
+  *bigsp	= bigs;
+  *littlesp	= littles;
+}
 
 void
 ccevents_timeout_init (cce_location_tag_t * there, ccevents_timeout_t * to,
-		       const long seconds, const long milliseconds, const long microseconds)
+		       long seconds, long milliseconds, long microseconds)
 /* Initialise  an   already  allocated  timeout  structure.    Raise  an
    exception if  the time  span values  would cause  an overflow  in the
    internal time representation. */
 {
-  /* Let's preserver the  operands so that we can use  them when raising
-     an exception. */
-  long		secs	= seconds;
-  long		msecs	= milliseconds;
-  long		usecs	= microseconds;
-
-  if (seconds < 0) {
+  if ((seconds < 0) || (LONG_MAX < seconds) ||
+      (milliseconds < LONG_MIN) || (LONG_MAX < milliseconds) ||
+      (microseconds < LONG_MIN) || (LONG_MAX < microseconds)) {
     cce_raise(there, ccevents_condition_timeout_invalid());
   }
-  ccevents_debug("before normalisation: secs=%ld, msecs=%ld, usecs=%ld", secs, msecs, usecs);
-  /* Overflow the milliseconds into the seconds. */
-  if (msecs > 999) {
-    long	div = msecs / 1000;
-    long	mod = msecs % 1000;
-    if ((LONG_MAX - seconds) > div) {
-      secs += div;
-    } else {
-      cce_raise(there, ccevents_condition_timeout_overflow());
-    }
-    msecs = mod;
-  }
-  ccevents_debug("after msecs normalisation: secs=%ld, msecs=%ld, usecs=%ld", secs, msecs, usecs);
-  /* Overflow the microseconds into the msecs. */
-  if (usecs > 999) {
-    long	div = usecs / 1000;
-    long	mod = usecs % 1000;
-    if ((LONG_MAX - msecs) > div) {
-      msecs += div;
-    } else {
-      cce_raise(there, ccevents_condition_timeout_overflow());
-    }
-    usecs = mod;
-  }
-  ccevents_debug("after usecs normalisation: secs=%ld, msecs=%ld, usecs=%ld", secs, msecs, usecs);
-  /* Overflow  the msecs  into  the seconds.   We do  this  twice as  an
-     attempt to avoid overflowing the milliseconds. */
-  if (msecs > 999) {
-    long	div = msecs / 1000;
-    long	mod = msecs % 1000;
-    ccevents_debug("delta=%ld, div=%ld", LONG_MAX - seconds, div);
-    if ((LONG_MAX - seconds) > div) {
-      secs += div;
-    } else {
-      cce_raise(there, ccevents_condition_timeout_overflow());
-    }
-    msecs = mod;
-  }
-  ccevents_debug("LONG_MAX=                   %ld", LONG_MAX);
-  ccevents_debug("after full normalisation: secs=%ld, msecs=%ld, usecs=%ld", secs, msecs, usecs);
+  ccevents_debug("before normalisation: seconds=%ld, milliseconds=%ld, microseconds=%ld", seconds, milliseconds, microseconds);
+
+  /* Pre-normalisation of the milliseconds. */
+  normalise_little_into_big(there, NULL, &seconds, &milliseconds);
+  ccevents_debug("after milliseconds pre-normalisation: seconds=%ld, milliseconds=%ld, microseconds=%ld", seconds, milliseconds, microseconds);
+
+  /* Normalisation of the microseconds. */
+  normalise_little_into_big(there, &seconds, &milliseconds, &microseconds);
+  ccevents_debug("after microseconds normalisation: seconds=%ld, milliseconds=%ld, microseconds=%ld", seconds, milliseconds, microseconds);
+
+  /* Normalisation of the milliseconds.  */
+  normalise_little_into_big(there, NULL, &seconds, &milliseconds);
+  ccevents_debug("after milliseconds normalisation: seconds=%ld, milliseconds=%ld, microseconds=%ld", seconds, milliseconds, microseconds);
+
   /* These fields represent the timeout's time span. */
-  to->seconds		= secs;
-  to->milliseconds	= msecs;
-  to->microseconds	= usecs;
-  /* These  fields  represent the  timeout's  absolute  time.  They  are
-     properly set by the start function. */
+  to->seconds		= seconds;
+  to->milliseconds	= milliseconds;
+  to->microseconds	= microseconds;
+  /* The "tv"  fields represent the timeout's  absolute expiration time;
+     they are properly set by the start function. */
   to->tv_sec		= LONG_MAX;
   to->tv_usec		= 0;
-}
-void
-ccevents_timeout_copy (ccevents_timeout_t * dst, const ccevents_timeout_t * src)
-{
-  *dst = *src;
 }
 
 
@@ -250,7 +219,7 @@ ccevents_timeout_infinite_time_span (ccevents_timeout_t * to)
   return (LONG_MAX == to->seconds);
 }
 bool
-ccevents_timeout_timed_out (ccevents_timeout_t * to)
+ccevents_timeout_expired (ccevents_timeout_t * to)
 {
   bool	rv;
   if (ccevents_timeout_infinite_time_span(to)) {
@@ -352,22 +321,13 @@ ccevents_timeout_start (cce_location_tag_t * there, ccevents_timeout_t * to)
     to->tv_sec  = LONG_MAX;
     to->tv_usec	= 0;
   } else {
-    ccevents_timeval_t	now;
-    ccevents_timeval_t	span;
+    ccevents_timeval_t	now, span, R;
 
     gettimeofday(&now, NULL);
     span = ccevents_timeout_time_span(to);
-    /* Compute the expiration time and store it in "to".  The expiration
-       time  is the  sum  between the  current time  and  the time  span
-       represented by "to". */
-    if ((LONG_MAX - span.tv_sec) < now.tv_sec) {
-      cce_raise(there, ccevents_condition_timeout_overflow());
-    }
-    to->tv_sec  = now.tv_sec + span.tv_sec;
-    to->tv_usec = now.tv_usec + span.tv_usec;
-    /* Normalise the strucutre. */
-    to->tv_sec  += to->tv_usec / 1000000;
-    to->tv_usec = to->tv_usec % 1000000;
+    R = ccevents_timeval_add(there, now, span);
+    to->tv_sec	= R.tv_sec;
+    to->tv_usec	= R.tv_usec;
   }
 }
 void

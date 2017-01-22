@@ -40,84 +40,6 @@
   } while (0);
 
 
-/** --------------------------------------------------------------------
- ** Exceptional condition descriptor: timeval invalid.
- ** ----------------------------------------------------------------- */
-
-static void		condition_timeval_invalid_destructor     (cce_condition_t * C);
-static const char *	condition_timeval_invalid_static_message (const cce_condition_t * C);
-
-static ccevents_condition_descriptor_timeval_invalid_t condition_timeval_invalid_descriptor = {
-  .parent		= &ccevents_base_condition_descriptor_stru,
-  .free			= condition_timeval_invalid_destructor,
-  .static_message	= condition_timeval_invalid_static_message
-};
-
-const ccevents_condition_descriptor_timeval_invalid_t * \
-  ccevents_condition_timeval_invalid_descriptor = &condition_timeval_invalid_descriptor;
-
-/* This struct type has no dynamic fields, so there is only one instance
-   of this struct type.  We allocate it statically. */
-static const ccevents_condition_timeval_invalid_t condition_timeval_invalid = {
-  .descriptor = &condition_timeval_invalid_descriptor
-};
-
-const ccevents_condition_timeval_invalid_t *
-ccevents_condition_timeval_invalid (void)
-{
-  return &condition_timeval_invalid;
-}
-void
-condition_timeval_invalid_destructor (cce_condition_t * C CCEVENTS_UNUSED)
-{
-  return;
-}
-const char *
-condition_timeval_invalid_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
-{
-  return "timeval fields specification are invalid";
-}
-
-
-/** --------------------------------------------------------------------
- ** Exceptional condition descriptor: timeval overflow.
- ** ----------------------------------------------------------------- */
-
-static void		condition_timeval_overflow_destructor     (cce_condition_t * C);
-static const char *	condition_timeval_overflow_static_message (const cce_condition_t * C);
-
-static ccevents_condition_descriptor_timeval_overflow_t condition_timeval_overflow_descriptor = {
-  .parent		= &ccevents_base_condition_descriptor_stru,
-  .free			= condition_timeval_overflow_destructor,
-  .static_message	= condition_timeval_overflow_static_message
-};
-
-const ccevents_condition_descriptor_timeval_overflow_t * \
-  ccevents_condition_timeval_overflow_descriptor = &condition_timeval_overflow_descriptor;
-
-/* This struct type has no dynamic fields, so there is only one instance
-   of this struct type.  We allocate it statically. */
-static const ccevents_condition_timeval_overflow_t condition_timeval_overflow = {
-  .descriptor = &condition_timeval_overflow_descriptor
-};
-
-const ccevents_condition_timeval_overflow_t *
-ccevents_condition_timeval_overflow (void)
-{
-  return &condition_timeval_overflow;
-}
-void
-condition_timeval_overflow_destructor (cce_condition_t * C CCEVENTS_UNUSED)
-{
-  return;
-}
-const char *
-condition_timeval_overflow_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
-{
-  return "timeval fields specification would cause overflow in time representation";
-}
-
-
 ccevents_timeval_t
 ccevents_timeval_normalise (cce_location_tag_t * there, struct timeval T)
 /* Normalise  the structure  "T" and  return the  result.  The  returned
@@ -136,15 +58,23 @@ ccevents_timeval_normalise (cce_location_tag_t * there, struct timeval T)
     cce_raise(there, ccevents_condition_timeval_invalid());
   }
   if (0 > T.tv_usec) {
-    /* If "T.tv_usec" is negative: both "div" and "mod" are negative. */
+    /* The  microseconds are  negative: normalise  them by  reducing the
+     * seconds.  When "T.tv_usec" is negative:  both "div" and "mod" are
+     * negative:
+     *
+     * - When  "long"  is   a  64-bit  word:  "div"  is   in  the  range
+     * [-9223372036854, 0].
+     *
+     * - "mod" is in the range [-999999, 0].
+     */
     long	div = T.tv_usec / 1000000L;
     long	mod = T.tv_usec % 1000000L;
-    if (0) fprintf(stderr, "div = %ld, mod = %ld, LONG_MIN = %ld\n", div, mod, LONG_MIN);
     T.tv_sec += div - 1;
     T.tv_usec = mod + 1000000L;
+    /* Here "T.tv_usec" is in the range [0, 1000000L]. */
     if (0) fprintf(stderr, "tv_sec = %ld, tv_usec = %ld\n", T.tv_sec, T.tv_usec);
-    /* It is possible that:  after distributing negative microseconds into
-       seconds, the number of seconds is negative. */
+    /* It  is possible  that: after  distributing negative  microseconds
+       into seconds, the number of seconds is negative. */
     if (0 > T.tv_sec) {
       cce_raise(there, ccevents_condition_timeval_overflow());
     }

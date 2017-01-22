@@ -123,37 +123,53 @@ ccevents_decl int		cct_version_interface_age	(void);
  ** Exceptional conditions.
  ** ----------------------------------------------------------------- */
 
-typedef struct ccevents_condition_descriptor_base_t {
+typedef struct ccevents_condition_base_descriptor_t {
   cce_condition_descriptor_t;
-} ccevents_condition_descriptor_base_t;
+} ccevents_condition_base_descriptor_t;
 
-ccevents_decl const ccevents_condition_descriptor_base_t * ccevents_base_condition_descriptor;
+ccevents_decl const ccevents_condition_base_descriptor_t * ccevents_condition_base_descriptor;
 
 /* ------------------------------------------------------------------ */
 
-typedef struct ccevents_condition_descriptor_timeval_invalid_t {
+typedef struct ccevents_condition_timeval_descriptor_t {
   cce_condition_descriptor_t;
-} ccevents_condition_descriptor_timeval_invalid_t;
+} ccevents_condition_timeval_descriptor_t;
+
+typedef struct ccevents_condition_timeval_t {
+  cce_condition_t;
+} ccevents_condition_timeval_t;
+
+ccevents_decl const ccevents_condition_timeval_t * ccevents_condition_timeval (void);
+ccevents_decl const ccevents_condition_timeval_descriptor_t * ccevents_condition_timeval_descriptor;
+ccevents_decl bool ccevents_condition_is_a_timeval (const cce_condition_t * C);
+
+/* ------------------------------------------------------------------ */
+
+typedef struct ccevents_condition_timeval_invalid_descriptor_t {
+  cce_condition_descriptor_t;
+} ccevents_condition_timeval_invalid_descriptor_t;
 
 typedef struct ccevents_condition_timeval_invalid_t {
   cce_condition_t;
 } ccevents_condition_timeval_invalid_t;
 
 ccevents_decl const ccevents_condition_timeval_invalid_t * ccevents_condition_timeval_invalid (void);
-ccevents_decl const ccevents_condition_descriptor_timeval_invalid_t * ccevents_condition_timeval_invalid_descriptor;
+ccevents_decl const ccevents_condition_timeval_invalid_descriptor_t * ccevents_condition_timeval_invalid_descriptor;
+ccevents_decl bool ccevents_condition_is_a_timeval_invalid (const cce_condition_t * C);
 
 /* ------------------------------------------------------------------ */
 
-typedef struct ccevents_condition_descriptor_timeval_overflow_t {
+typedef struct ccevents_condition_timeval_overflow_descriptor_t {
   cce_condition_descriptor_t;
-} ccevents_condition_descriptor_timeval_overflow_t;
+} ccevents_condition_timeval_overflow_descriptor_t;
 
 typedef struct ccevents_condition_timeval_overflow_t {
   cce_condition_t;
 } ccevents_condition_timeval_overflow_t;
 
 ccevents_decl const ccevents_condition_timeval_overflow_t * ccevents_condition_timeval_overflow (void);
-ccevents_decl const ccevents_condition_descriptor_timeval_overflow_t * ccevents_condition_timeval_overflow_descriptor;
+ccevents_decl const ccevents_condition_timeval_overflow_descriptor_t * ccevents_condition_timeval_overflow_descriptor;
+ccevents_decl bool ccevents_condition_is_a_timeval_overflow (const cce_condition_t * C);
 
 /* ------------------------------------------------------------------ */
 
@@ -225,22 +241,23 @@ typedef struct ccevents_timeout_tag_t {
   long int		microseconds;
 } ccevents_timeout_t;
 
-/* A  constant, statically  allocated  instance of  "ccevents_timeout_t"
-   representing a timeout that never expires. */
-ccevents_decl const ccevents_timeout_t CCEVENTS_TIMEOUT_NEVER;
+/* Pointer   to   a   constant,   statically   allocated   instance   of
+   "ccevents_timeout_t" representing a timeout that never expires. */
+ccevents_decl const ccevents_timeout_t * CCEVENTS_TIMEOUT_NEVER;
+/* Pointer   to   a   constant,   statically   allocated   instance   of
+   "ccevents_timeout_t"    representing   a    timeout   that    expires
+   immediately. */
+ccevents_decl const ccevents_timeout_t * CCEVENTS_TIMEOUT_NOW;
 
 ccevents_decl void ccevents_timeout_init (cce_location_tag_t * there, ccevents_timeout_t * to,
-					  const long seconds,
-					  const long milliseconds,
-					  const long microseconds);
-ccevents_decl void ccevents_timeout_copy (ccevents_timeout_t * dst, const ccevents_timeout_t * src);
+					  long seconds, long milliseconds, long microseconds);
 ccevents_decl long int ccevents_timeout_seconds      (const ccevents_timeout_t * to);
 ccevents_decl long int ccevents_timeout_milliseconds (const ccevents_timeout_t * to);
 ccevents_decl long int ccevents_timeout_microseconds (const ccevents_timeout_t * to);
 ccevents_decl ccevents_timeval_t ccevents_timeout_time_span (const ccevents_timeout_t * to);
 ccevents_decl ccevents_timeval_t ccevents_timeout_time (ccevents_timeout_t * to);
 ccevents_decl bool ccevents_timeout_infinite_time_span (ccevents_timeout_t * to);
-ccevents_decl bool ccevents_timeout_timed_out (ccevents_timeout_t * to);
+ccevents_decl bool ccevents_timeout_expired (ccevents_timeout_t * to);
 ccevents_decl int ccevents_timeout_cmp (ccevents_timeout_t * toA, ccevents_timeout_t * toB);
 ccevents_decl bool ccevents_timeout_less (ccevents_timeout_t * toA, ccevents_timeout_t * toB);
 ccevents_decl bool ccevents_timeout_equal (ccevents_timeout_t * toA, ccevents_timeout_t * toB);

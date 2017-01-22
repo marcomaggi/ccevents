@@ -49,7 +49,7 @@ main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
     pipe(X);
     {
       ccevents_fd_source_t	fds[1];
-      ccevents_timeout_t	expiration_time = CCEVENTS_TIMEOUT_NEVER;
+      ccevents_timeout_t	expiration_time = *CCEVENTS_TIMEOUT_NEVER;
       volatile bool		flag = false;
 
       void event_handler (cce_location_tag_t * there, ccevents_fd_source_t * fds)
@@ -114,7 +114,7 @@ main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
     pipe(X);
     {
       ccevents_fd_source_t	fds[1];
-      ccevents_timeout_t	expiration_time = CCEVENTS_TIMEOUT_NEVER;
+      ccevents_timeout_t	expiration_time = *CCEVENTS_TIMEOUT_NEVER;
       volatile bool		flag = false;
 
       void event_handler (cce_location_tag_t * there, ccevents_fd_source_t * fds)
@@ -194,7 +194,7 @@ main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
     {
       ccevents_fd_source_t	readable_fd_source;
       ccevents_fd_source_t	exception_fd_source;
-      ccevents_timeout_t	expiration_time = CCEVENTS_TIMEOUT_NEVER;
+      ccevents_timeout_t	expiration_time = *CCEVENTS_TIMEOUT_NEVER;
       volatile bool		readable_flag = false;
       volatile bool		exception_flag = false;
       char			read_buf[11] = {

@@ -50,8 +50,6 @@
  ** Constants.
  ** ----------------------------------------------------------------- */
 
-ccevents_private_decl ccevents_condition_descriptor_base_t ccevents_base_condition_descriptor_stru;
-
 
 /** --------------------------------------------------------------------
  ** Function prototypes.
