@@ -172,34 +172,19 @@ ccevents_timeout_init (cce_location_tag_t * there, ccevents_timeout_t * to,
  ** Getters.
  ** ----------------------------------------------------------*/
 
-long int
-ccevents_timeout_seconds (const ccevents_timeout_t * to)
-{
-  return to->seconds;
-}
-long int
-ccevents_timeout_milliseconds (const ccevents_timeout_t * to)
-{
-  return to->milliseconds;
-}
-long int
-ccevents_timeout_microseconds (const ccevents_timeout_t * to)
-{
-  return to->microseconds;
-}
 ccevents_timeval_t
 ccevents_timeout_time_span (const ccevents_timeout_t * to)
 {
   ccevents_timeval_t	span = {
     .tv_sec  = to->seconds,
-    /* With  a  normalised  'to'  the  'timeval'  representation  cannot
+    /* With  a  normalised  "to"  the  "timeval"  representation  cannot
        overflow. */
-    .tv_usec = 1000 * to->milliseconds + to->microseconds
+    .tv_usec = 1000L * to->milliseconds + to->microseconds
   };
   return span;
 }
 ccevents_timeval_t
-ccevents_timeout_time (ccevents_timeout_t * to)
+ccevents_timeout_time (const ccevents_timeout_t * to)
 {
   ccevents_timeval_t	absolute_time = {
     .tv_sec  = to->tv_sec,
@@ -214,26 +199,29 @@ ccevents_timeout_time (ccevents_timeout_t * to)
  ** ----------------------------------------------------------*/
 
 bool
-ccevents_timeout_infinite_time_span (ccevents_timeout_t * to)
+ccevents_timeout_infinite_time_span (const ccevents_timeout_t * to)
 {
   return (LONG_MAX == to->seconds);
 }
 bool
-ccevents_timeout_expired (ccevents_timeout_t * to)
+ccevents_timeout_expired (const ccevents_timeout_t * to)
 {
   bool	rv;
   if (ccevents_timeout_infinite_time_span(to)) {
-    rv = true;
+    /* A timeout with infinite time span never expires. */
+    rv = false;
   } else {
     ccevents_timeval_t	now;
-    ccevents_timeval_t	trigger_time	= ccevents_timeout_time(to);
+    ccevents_timeval_t	expiration_time	= ccevents_timeout_time(to);
     gettimeofday(&now, NULL);
-    if (now.tv_sec < trigger_time.tv_sec) {
-      rv = true;
-    } else if ((now.tv_sec = trigger_time.tv_sec) || (now.tv_usec <= trigger_time.tv_usec)) {
-      rv = true;
-    } else {
+    //fprintf(stderr, "now.tv_sec = %ld, now.tv_usec = %ld\n", now.tv_sec, now.tv_usec);
+    //fprintf(stderr, "expiration_time.tv_sec = %ld, expiration_time.tv_usec = %ld\n", expiration_time.tv_sec, expiration_time.tv_usec);
+    if (now.tv_sec < expiration_time.tv_sec) {
       rv = false;
+    } else if ((now.tv_sec == expiration_time.tv_sec) && (now.tv_usec <= expiration_time.tv_usec)) {
+      rv = false;
+    } else {
+      rv = true;
     }
   }
   return rv;
@@ -241,11 +229,11 @@ ccevents_timeout_expired (ccevents_timeout_t * to)
 
 
 /** ------------------------------------------------------------
- ** Timeout span comparison.
+ ** Timeout comparisons.
  ** ----------------------------------------------------------*/
 
 int
-ccevents_timeout_cmp (ccevents_timeout_t * toA, ccevents_timeout_t * toB)
+ccevents_timeout_compare_time_span (const ccevents_timeout_t * toA, const ccevents_timeout_t * toB)
 {
   if (toA->seconds < toB->seconds) {
     return -1;
@@ -270,43 +258,12 @@ ccevents_timeout_cmp (ccevents_timeout_t * toA, ccevents_timeout_t * toB)
     }
   }
 }
-bool
-ccevents_timeout_less (ccevents_timeout_t * toA, ccevents_timeout_t * toB)
-{
-  return (-1 == ccevents_timeout_cmp(toA, toB));
-}
-bool
-ccevents_timeout_equal (ccevents_timeout_t * toA, ccevents_timeout_t * toB)
-{
-  return (0  == ccevents_timeout_cmp(toA, toB));
-}
-bool
-ccevents_timeout_greater (ccevents_timeout_t * toA, ccevents_timeout_t * toB)
-{
-  return (+1 == ccevents_timeout_cmp(toA, toB));
-}
-
-
-/** ------------------------------------------------------------
- ** Timeout trigger time comparison.
- ** ----------------------------------------------------------*/
-
 int
-ccevents_timeout_time_cmp (ccevents_timeout_t * A, ccevents_timeout_t * B)
+ccevents_timeout_compare_expiration_time (const ccevents_timeout_t * A, const ccevents_timeout_t * B)
 {
   ccevents_timeval_t span_a = ccevents_timeout_time(A);
   ccevents_timeval_t span_b = ccevents_timeout_time(B);
   return ccevents_timeval_compare(span_a, span_b);
-}
-bool
-ccevents_timeout_first (ccevents_timeout_t * A, ccevents_timeout_t * B)
-{
-  return (-1 == ccevents_timeout_time_cmp(A, B));
-}
-bool
-ccevents_timeout_last (ccevents_timeout_t * A, ccevents_timeout_t * B)
-{
-  return (+1 == ccevents_timeout_time_cmp(A, B));
 }
 
 

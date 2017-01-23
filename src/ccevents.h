@@ -139,9 +139,11 @@ typedef struct ccevents_condition_timeval_t {
   cce_condition_t;
 } ccevents_condition_timeval_t;
 
-ccevents_decl const ccevents_condition_timeval_t * ccevents_condition_timeval (void);
+ccevents_decl const ccevents_condition_timeval_t * ccevents_condition_timeval (void)
+  __attribute__((pure));
 ccevents_decl const ccevents_condition_timeval_descriptor_t * ccevents_condition_timeval_descriptor;
-ccevents_decl bool ccevents_condition_is_a_timeval (const cce_condition_t * C);
+ccevents_decl bool ccevents_condition_is_a_timeval (const cce_condition_t * C)
+  __attribute__((pure,nonnull(1)));
 
 /* ------------------------------------------------------------------ */
 
@@ -153,9 +155,11 @@ typedef struct ccevents_condition_timeval_invalid_t {
   cce_condition_t;
 } ccevents_condition_timeval_invalid_t;
 
-ccevents_decl const ccevents_condition_timeval_invalid_t * ccevents_condition_timeval_invalid (void);
+ccevents_decl const ccevents_condition_timeval_invalid_t * ccevents_condition_timeval_invalid (void)
+  __attribute__((pure));
 ccevents_decl const ccevents_condition_timeval_invalid_descriptor_t * ccevents_condition_timeval_invalid_descriptor;
-ccevents_decl bool ccevents_condition_is_a_timeval_invalid (const cce_condition_t * C);
+ccevents_decl bool ccevents_condition_is_a_timeval_invalid (const cce_condition_t * C)
+  __attribute__((pure,nonnull(1)));
 
 /* ------------------------------------------------------------------ */
 
@@ -167,9 +171,11 @@ typedef struct ccevents_condition_timeval_overflow_t {
   cce_condition_t;
 } ccevents_condition_timeval_overflow_t;
 
-ccevents_decl const ccevents_condition_timeval_overflow_t * ccevents_condition_timeval_overflow (void);
+ccevents_decl const ccevents_condition_timeval_overflow_t * ccevents_condition_timeval_overflow (void)
+  __attribute__((pure));
 ccevents_decl const ccevents_condition_timeval_overflow_descriptor_t * ccevents_condition_timeval_overflow_descriptor;
-ccevents_decl bool ccevents_condition_is_a_timeval_overflow (const cce_condition_t * C);
+ccevents_decl bool ccevents_condition_is_a_timeval_overflow (const cce_condition_t * C)
+  __attribute__((pure,nonnull(1)));
 
 /* ------------------------------------------------------------------ */
 
@@ -181,7 +187,8 @@ typedef struct ccevents_condition_timeout_invalid_t {
   cce_condition_t;
 } ccevents_condition_timeout_invalid_t;
 
-ccevents_decl const ccevents_condition_timeout_invalid_t *	ccevents_condition_timeout_invalid (void);
+ccevents_decl const ccevents_condition_timeout_invalid_t *	ccevents_condition_timeout_invalid (void)
+  __attribute__((pure));
 ccevents_decl const ccevents_condition_descriptor_timeout_invalid_t * ccevents_condition_timeout_invalid_descriptor;
 
 /* ------------------------------------------------------------------ */
@@ -194,7 +201,8 @@ typedef struct ccevents_condition_timeout_overflow_t {
   cce_condition_t;
 } ccevents_condition_timeout_overflow_t;
 
-ccevents_decl const ccevents_condition_timeout_overflow_t * ccevents_condition_timeout_overflow (void);
+ccevents_decl const ccevents_condition_timeout_overflow_t * ccevents_condition_timeout_overflow (void)
+  __attribute__((pure));
 ccevents_decl const ccevents_condition_descriptor_timeout_overflow_t * ccevents_condition_timeout_overflow_descriptor;
 
 
@@ -212,13 +220,26 @@ typedef struct ccevents_timeval_t {
   struct timeval;
 } ccevents_timeval_t;
 
-ccevents_decl ccevents_timeval_t ccevents_timeval_init (cce_location_tag_t * there, long seconds, long microseconds);
-ccevents_decl ccevents_timeval_t ccevents_timeval_normalise (cce_location_tag_t * there, struct timeval T);
+ccevents_decl ccevents_timeval_t ccevents_timeval_init (cce_location_tag_t * there, long seconds, long microseconds)
+  /* Not "pure" or "const" because it might perform a non-local exit. */
+  __attribute__((nonnull(1)));
+
+ccevents_decl ccevents_timeval_t ccevents_timeval_normalise (cce_location_tag_t * there, struct timeval T)
+  /* Not "pure" or "const" because it might perform a non-local exit. */
+  __attribute__((nonnull(1)));
+
 ccevents_decl ccevents_timeval_t ccevents_timeval_add (cce_location_tag_t * there,
-						       ccevents_timeval_t A, ccevents_timeval_t B);
+						       ccevents_timeval_t A, ccevents_timeval_t B)
+  /* Not "pure" or "const" because it might perform a non-local exit. */
+  __attribute__((nonnull(1)));
+
 ccevents_decl ccevents_timeval_t ccevents_timeval_sub (cce_location_tag_t * there,
-						       ccevents_timeval_t A, ccevents_timeval_t B);
-ccevents_decl int ccevents_timeval_compare (ccevents_timeval_t A, ccevents_timeval_t B);
+						       ccevents_timeval_t A, ccevents_timeval_t B)
+  /* Not "pure" or "const" because it might perform a non-local exit. */
+  __attribute__((nonnull(1)));
+
+ccevents_decl int ccevents_timeval_compare (ccevents_timeval_t A, ccevents_timeval_t B)
+  __attribute__((const));
 
 
 /** --------------------------------------------------------------------
@@ -250,21 +271,50 @@ ccevents_decl const ccevents_timeout_t * CCEVENTS_TIMEOUT_NEVER;
 ccevents_decl const ccevents_timeout_t * CCEVENTS_TIMEOUT_NOW;
 
 ccevents_decl void ccevents_timeout_init (cce_location_tag_t * there, ccevents_timeout_t * to,
-					  long seconds, long milliseconds, long microseconds);
-ccevents_decl long int ccevents_timeout_seconds      (const ccevents_timeout_t * to);
-ccevents_decl long int ccevents_timeout_milliseconds (const ccevents_timeout_t * to);
-ccevents_decl long int ccevents_timeout_microseconds (const ccevents_timeout_t * to);
-ccevents_decl ccevents_timeval_t ccevents_timeout_time_span (const ccevents_timeout_t * to);
-ccevents_decl ccevents_timeval_t ccevents_timeout_time (ccevents_timeout_t * to);
-ccevents_decl bool ccevents_timeout_infinite_time_span (ccevents_timeout_t * to);
-ccevents_decl bool ccevents_timeout_expired (ccevents_timeout_t * to);
-ccevents_decl int ccevents_timeout_cmp (ccevents_timeout_t * toA, ccevents_timeout_t * toB);
-ccevents_decl bool ccevents_timeout_less (ccevents_timeout_t * toA, ccevents_timeout_t * toB);
-ccevents_decl bool ccevents_timeout_equal (ccevents_timeout_t * toA, ccevents_timeout_t * toB);
-ccevents_decl bool ccevents_timeout_greater (ccevents_timeout_t * toA, ccevents_timeout_t * toB);
-ccevents_decl int ccevents_timeout_time_cmp (ccevents_timeout_t * A, ccevents_timeout_t * B);
-ccevents_decl bool ccevents_timeout_first (ccevents_timeout_t * A, ccevents_timeout_t * B);
-ccevents_decl bool ccevents_timeout_last (ccevents_timeout_t * A, ccevents_timeout_t * B);
+					  long seconds, long milliseconds, long microseconds)
+  /* Not "pure" or "const" because:  it mutates the structure referenced
+     by "to"; it might perfor a non-local exit. */
+  __attribute__((nonnull(1,2)));
+
+ccevents_decl ccevents_timeval_t ccevents_timeout_time_span (const ccevents_timeout_t * to)
+  __attribute__((pure,nonnull(1)));
+
+ccevents_decl ccevents_timeval_t ccevents_timeout_time (const ccevents_timeout_t * to)
+  __attribute__((pure,nonnull(1)));
+
+ccevents_decl bool ccevents_timeout_infinite_time_span (const ccevents_timeout_t * to)
+  __attribute__((pure,nonnull(1)));
+
+ccevents_decl bool ccevents_timeout_expired (const ccevents_timeout_t * to)
+  __attribute__((nonnull(1)));
+
+ccevents_decl int ccevents_timeout_compare_time_span (const ccevents_timeout_t * toA, const ccevents_timeout_t * toB)
+  __attribute__((pure,nonnull(1,2)));
+
+ccevents_decl int ccevents_timeout_compare_expiration_time (const ccevents_timeout_t * A, const ccevents_timeout_t * B)
+  __attribute__((pure,nonnull(1,2)));
+
+ccevents_decl void ccevents_timeout_start (cce_location_tag_t * there, ccevents_timeout_t * to)
+  __attribute__((nonnull(1,2)));
+
+ccevents_decl void ccevents_timeout_reset (ccevents_timeout_t * to)
+  __attribute__((nonnull(1)));
+
+static inline long int __attribute__((pure,nonnull(1)))
+ccevents_timeout_seconds (const ccevents_timeout_t * to)
+{
+  return to->seconds;
+}
+static inline long int __attribute__((pure,nonnull(1)))
+ccevents_timeout_milliseconds (const ccevents_timeout_t * to)
+{
+  return to->milliseconds;
+}
+static inline int __attribute__((pure,nonnull(1)))
+ccevents_timeout_microseconds (const ccevents_timeout_t * to)
+{
+  return to->microseconds;
+}
 
 
 /** --------------------------------------------------------------------
@@ -308,20 +358,20 @@ ccevents_decl void ccevents_fd_event_source_init (ccevents_fd_source_t * fds,
   __attribute__((nonnull(1, 3, 4, 6)));
 
 ccevents_decl void ccevents_fd_event_source_register (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
-  __attribute__((nonnull(1, 2)));
+  __attribute__((nonnull(1,2)));
 
 ccevents_decl void ccevents_fd_event_source_forget (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
-  __attribute__((nonnull(1, 2)));
+  __attribute__((nonnull(1,2)));
 
 ccevents_decl bool ccevents_query_fd_readability (cce_location_tag_t * there, ccevents_fd_source_t * fds)
-  __attribute__((nonnull(1, 2)));
+  __attribute__((nonnull(1,2)));
 ccevents_decl bool ccevents_query_fd_writability (cce_location_tag_t * there, ccevents_fd_source_t * fds)
-  __attribute__((nonnull(1, 2)));
+  __attribute__((nonnull(1,2)));
 ccevents_decl bool ccevents_query_fd_exception   (cce_location_tag_t * there, ccevents_fd_source_t * fds)
-  __attribute__((nonnull(1, 2)));
+  __attribute__((nonnull(1,2)));
 
 ccevents_decl bool ccevents_fd_source_do_one_event (cce_location_tag_t * there, ccevents_fd_source_t * fds)
-  __attribute__((nonnull(1, 2)));
+  __attribute__((nonnull(1,2)));
 
 
 /** --------------------------------------------------------------------

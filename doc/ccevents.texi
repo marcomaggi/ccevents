@@ -745,10 +745,10 @@ This module implements ``polling timeouts''.
 @menu
 * timeouts typedefs::           Type definitions.
 * timeouts init::               Constructors.
-* timeouts operations::         Operations.
 * timeouts getters::            Getter functions.
 * timeouts predicates::         Predicates.
 * timeouts comparison::         Comparison.
+* timeouts operations::         Operations.
 @end menu
 
 @c page
@@ -781,10 +781,24 @@ To copy a timeout data structure we can use the C language @code{=} operator.
 
 @deftypefun void ccevents_timeout_init (cce_location_tag_t * @var{there}, ccevents_timeout_t * @var{to}, long @var{seconds}, long @var{milliseconds}, long @var{microseconds})
 Initialise an already allocated timeout structure.  The arguments @var{seconds}, @var{milliseconds}
-and @var{microseconds} represent a time span towards the future.
+and @var{microseconds} represent a time span towards the future:
 
-If an error occurs while normalising the given time span specification: raise an exception to
-@var{there}.
+@table @var
+@item seconds
+It is a count of seconds; it must be in the range @code{[0, LONG_MAX]}.  It is normalised to the
+range @code{[0, LONG_MAX]}.
+
+@item milliseconds
+It is a count of milliseconds; it must be in the range @code{[LONG_MIN, LONG_MAX]}.  It is
+normalised to the range @code{[0, 999]}.
+
+@item microseconds
+It is a count of microseconds; it must be in the range @code{[LONG_MIN, LONG_MAX]}.  It is
+normalised to the range @code{[0, 999]}.
+@end table
+
+If an error occurs while normalising the given time span specification: raise an exception by
+performing a non--local exit to @var{there}.
 @end deftypefun
 
 
@@ -800,57 +814,37 @@ timeout that expires immediately.
 @end deftypevr
 
 @c page
-@node timeouts operations
-@section Operations
-
-
-@deftypefun void ccevents_timeout_start (ccevents_timeout_t * @var{to})
-Start the timer associated to the already initialised @var{to} object: acquire the current absolute
-time and compute the time instant that will trigger the timeout.  The triggering time is stored in
-@var{to}.
-
-As a special case: if the time span is infinite, the trigger time is set to: @code{LONG_MAX}
-seconds.  This should guarantee that @var{to} will never expire.
-@end deftypefun
-
-
-@deftypefun void ccevents_timeout_reset (ccevents_timeout_t * @var{to})
-Reset a timeout, ``stop'' the timer.  The trigger time is set to a value meaning infinite expiration
-time.
-@end deftypefun
-
-@c page
 @node timeouts getters
 @section Getter functions
 
 
-@deftypefun long ccevents_timeout_seconds (ccevents_timeout_t * @var{to})
+@deftypefn {Inline Function} long ccevents_timeout_seconds (const ccevents_timeout_t * @var{to})
 Return the current number of seconds.  The value is in the range @code{[0, LONG_MAX]}.
-@end deftypefun
+@end deftypefn
 
 
-@deftypefun long ccevents_timeout_milliseconds (ccevents_timeout_t * @var{to})
+@deftypefn {Inline Function} long ccevents_timeout_milliseconds (const ccevents_timeout_t * @var{to})
 Return the current number of milliseconds.  The value is in the range @code{[0, 999]}.
-@end deftypefun
+@end deftypefn
 
 
-@deftypefun long ccevents_timeout_microseconds (ccevents_timeout_t * @var{to})
+@deftypefn {Inline Function} long ccevents_timeout_microseconds (const ccevents_timeout_t * @var{to})
 Return the current number of microseconds.  The value is in the range @code{[0, 999]}.
+@end deftypefn
+
+
+@deftypefun ccevents_timeval_t ccevents_timeout_time_span (const ccevents_timeout_t * @var{to})
+Return a timeval structure representing the current time span referenced by @var{to}.  The value in
+the field @code{tv_sec} is in the range @code{[0, LONG_MAX]}, while the value in the field
+@code{tv_usec} is in the range @code{[0, 999999]}.
 @end deftypefun
 
 
-@deftypefun {struct timeval} ccevents_timeout_time_span (ccevents_timeout_t * @var{to})
-Return a @code{timeval} representing the current time span.  The value in the field @code{tv_sec} is
-in the range @code{[0, LONG_MAX]}, while the value in the field @code{tv_usec} is in the range
-@code{[0, 1000000)}.
-@end deftypefun
-
-
-@deftypefun {struct timeval} ccevents_timeout_time (ccevents_timeout_t * @var{to})
-Return a @code{timeval} representing the current trigger absolute time.  The value in the field
-@code{tv_sec} is in the range @code{[0, LONG_MAX]}, while the value in the field @code{tv_usec} is
-in the range @code{[0, 100000)}.  The returned value is meaningful only if the timeout has been
-started.
+@deftypefun ccevents_timeval_t ccevents_timeout_time (const ccevents_timeout_t * @var{to})
+Return a timeval structure representing the current expiration absolute time; the returned value is
+meaningful only if the timeout has been started.  The value in the field @code{tv_sec} is in the
+range @code{[0, LONG_MAX]}, while the value in the field @code{tv_usec} is in the range @code{[0,
+999999]}.
 @end deftypefun
 
 @c page
@@ -858,15 +852,15 @@ started.
 @section Predicates
 
 
-@deftypefun bool ccevents_timeout_infinite_time_span (ccevents_timeout_t * @var{to})
+@deftypefun bool ccevents_timeout_infinite_time_span (const ccevents_timeout_t * @var{to})
 Return true if @var{to} represents an ``infinite'' time span: one for which
 @cfunc{ccevents_timeout_expired} will never return true.
 @end deftypefun
 
 
-@deftypefun bool ccevents_timeout_expired (ccevents_timeout_t * @var{to})
-Acquire the current time and compare it with the trigger time.  Return true if the timeout has
-triggered; otherwise return false.
+@deftypefun bool ccevents_timeout_expired (const ccevents_timeout_t * @var{to})
+Acquire the current time and compare it with the expiration time.  Return true if the timeout has
+expired; otherwise return false.
 @end deftypefun
 
 @c page
@@ -874,46 +868,34 @@ triggered; otherwise return false.
 @section Comparison functions
 
 
-@subsubheading Time span comparison
-
-
-@deftypefun int ccevents_timeout_cmp (ccevents_timeout_t * @var{A}, ccevents_timeout_t * @var{B})
+@deftypefun int ccevents_timeout_compare_time_span (const ccevents_timeout_t * @var{A}, const ccevents_timeout_t * @var{B})
 Compare the time spans of two timeouts; return: @code{-1} if @code{@var{A} < @var{B}}, @code{0} if
 @code{@var{A} == @var{B}}, @code{+1} if @code{@var{A} > @var{B}}.
 @end deftypefun
 
 
-@deftypefun bool ccevents_timeout_less (ccevents_timeout_t * @var{A}, ccevents_timeout_t * @var{B})
-Compare the time spans of two timeouts; return true if @code{@var{A} < @var{B}}.
-@end deftypefun
-
-
-@deftypefun bool ccevents_timeout_equal (ccevents_timeout_t * @var{A}, ccevents_timeout_t * @var{B})
-Compare the time spans of two timeouts; return true if @code{@var{A} == @var{B}}.
-@end deftypefun
-
-
-@deftypefun bool ccevents_timeout_greater (ccevents_timeout_t * @var{A}, ccevents_timeout_t * @var{B})
-Compare the time spans of two timeouts; return true if @code{@var{A} > @var{B}}.
-@end deftypefun
-
-
-@subsubheading Trigger time comparison
-
-
-@deftypefun int ccevents_timeout_time_cmp (ccevents_timeout_t * @var{A}, ccevents_timeout_t * @var{B})
-Compare the trigger times of two timeouts; return: @code{-1} if @code{@var{A} < @var{B}}, @code{0}
+@deftypefun int ccevents_timeout_compare_expiration_time (const ccevents_timeout_t * @var{A}, const ccevents_timeout_t * @var{B})
+Compare the expiration times of two timeouts; return: @code{-1} if @code{@var{A} < @var{B}}, @code{0}
 if @code{@var{A} == @var{B}}, @code{+1} if @code{@var{A} > @var{B}}.
 @end deftypefun
 
+@c page
+@node timeouts operations
+@section Operations
 
-@deftypefun bool ccevents_timeout_first (ccevents_timeout_t @var{A}, ccevents_timeout_t * @var{B})
-Compare the trigger times of two timeouts; return true if @code{@var{A} < @var{B}}.
+
+@deftypefun void ccevents_timeout_start (cce_location_tag_t * @var{there}, ccevents_timeout_t * @var{to})
+Start the timer associated to the already initialised @var{to} object: acquire the current absolute
+time and compute the time instant that will expire the timeout.  The expiration time is stored in
+the structure referenced by @var{to}.  As a special case: if the time span is infinite, the
+expiration time is set to: @code{LONG_MAX} seconds; this should guarantee that @var{to} will never
+expire.  If an error occurs: raise an exception by performing a non--local exit to @var{there}.
 @end deftypefun
 
 
-@deftypefun bool ccevents_timeout_last_p (ccevents_timeout_t * @var{A}, ccevents_timeout_t * @var{B})
-Compare the trigger times of two timeouts; return true if @code{@var{A} > @var{B}}.
+@deftypefun void ccevents_timeout_reset (ccevents_timeout_t * @var{to})
+Reset a timeout, ``stop'' the timer.  The expiration time is set to a value meaning infinite
+expiration time.
 @end deftypefun
 
 @c page
