@@ -569,6 +569,12 @@ proper call to @cfunc{cce_condition_free}.
 @end deftypefun
 
 
+@deftypefun bool ccevents_condition_is_a_timeout_invalid (const cce_condition_t * @var{C})
+Return @true{} if @var{C} is an exceptional condition object of with type descriptor
+@objtype{ccevents_condition_descriptor_timeout_invalid_t}; otherwise return @false{}.
+@end deftypefun
+
+
 To catch this exceptional condition we can to:
 
 @smallexample
@@ -578,7 +584,7 @@ ccevents_timeout_t    to;
 if (cce_location(L)) @{
   cce_condition_t * C = cce_location_condition(L);
 
-  if (cce_condition_is_a(C, ccevents_condition_timeout_invalid_descriptor)) @{
+  if (ccevents_condition_is_a_timeval_invalid(C)) @{
     ccevents_condition_timeout_invalid_t * K = \
       (ccevents_condition_timeout_invalid_t *)C;
     do_something_with(K);
@@ -632,6 +638,12 @@ proper call to @cfunc{cce_condition_free}.
 @end deftypefun
 
 
+@deftypefun bool ccevents_condition_is_a_timeout_overflow (const cce_condition_t * @var{C})
+Return @true{} if @var{C} is an exceptional condition object of with type descriptor
+@objtype{ccevents_condition_descriptor_timeout_overflow_t}; otherwise return @false{}.
+@end deftypefun
+
+
 To catch this exceptional condition we can to:
 
 @smallexample
@@ -641,7 +653,7 @@ ccevents_timeout_t    to;
 if (cce_location(L)) @{
   cce_condition_t * C = cce_location_condition(L);
 
-  if (cce_condition_is_a(C, ccevents_condition_timeout_overflow_descriptor)) @{
+  if (ccevents_condition_is_a_timeout_overflow(C)) @{
     ccevents_condition_timeout_overflow_t * K = \
       (ccevents_condition_timeout_overflow_t *)C;
     do_something_with(K);

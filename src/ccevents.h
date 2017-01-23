@@ -190,6 +190,7 @@ typedef struct ccevents_condition_timeout_invalid_t {
 ccevents_decl const ccevents_condition_timeout_invalid_t *	ccevents_condition_timeout_invalid (void)
   __attribute__((pure));
 ccevents_decl const ccevents_condition_descriptor_timeout_invalid_t * ccevents_condition_timeout_invalid_descriptor;
+ccevents_decl bool ccevents_condition_is_a_timeout_invalid (const cce_condition_t * C);
 
 /* ------------------------------------------------------------------ */
 
@@ -204,6 +205,7 @@ typedef struct ccevents_condition_timeout_overflow_t {
 ccevents_decl const ccevents_condition_timeout_overflow_t * ccevents_condition_timeout_overflow (void)
   __attribute__((pure));
 ccevents_decl const ccevents_condition_descriptor_timeout_overflow_t * ccevents_condition_timeout_overflow_descriptor;
+ccevents_decl bool ccevents_condition_is_a_timeout_overflow (const cce_condition_t * C);
 
 
 /** --------------------------------------------------------------------
