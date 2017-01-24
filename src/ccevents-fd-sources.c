@@ -30,21 +30,57 @@
 #include <errno.h>
 #include <sys/select.h>
 
-void
-ccevents_fd_event_source_init (ccevents_fd_source_t * fds,
-			       int fd,
-			       ccevents_fd_source_query_fun_t * query_fd_fun,
-			       ccevents_fd_source_handler_fun_t * event_handler_fun,
-			       ccevents_timeout_t expiration_time,
-			       ccevents_fd_source_expiration_handler_fun_t * expiration_handler)
-/* Initialise an already allocated fd source.
+
+/** --------------------------------------------------------------------
+ ** Default functions.
+ ** ----------------------------------------------------------------- */
 
-   SOURCES is  a pointer to the  events sources collector to  which this
-   new event source will belong.
+static bool
+default_event_query (cce_location_tag_t * L CCEVENTS_UNUSED,
+		     ccevents_fd_source_t * fds CCEVENTS_UNUSED)
+{
+  return false;
+}
+static void
+default_event_handler (cce_location_tag_t * L CCEVENTS_UNUSED,
+		       ccevents_fd_source_t * fds CCEVENTS_UNUSED)
+{
+  return;
+}
+static void
+default_expiration_handler (cce_location_tag_t * L CCEVENTS_UNUSED,
+			    ccevents_fd_source_t * fds CCEVENTS_UNUSED)
+{
+  return;
+}
+
+
+/** --------------------------------------------------------------------
+ ** Initialisation and set up.
+ ** ----------------------------------------------------------------- */
+
+void
+ccevents_fd_event_source_init (ccevents_fd_source_t * fds, int fd)
+/* Initialise an  already allocated fd source.   FDS is a pointer  to an
+   already  allocated  fd   events  source  struct.   FD   is  the  file
+   descriptor. */
+{
+  fds->fd			= fd;
+  fds->query_fd_fun		= default_event_query;
+  fds->event_handler_fun	= default_event_handler;
+  fds->expiration_time		= *CCEVENTS_TIMEOUT_NEVER;
+  fds->expiration_handler_fun	= default_expiration_handler;
+}
+void
+ccevents_fd_event_source_set (cce_location_tag_t * there,
+			      ccevents_fd_source_t * fds,
+			      ccevents_fd_source_query_fun_t * query_fd_fun,
+			      ccevents_fd_source_handler_fun_t * event_handler_fun,
+			      ccevents_timeout_t expiration_time,
+			      ccevents_fd_source_expiration_handler_fun_t * expiration_handler_fun)
+/* Set up an already initialised fd source to wait for an event.
 
    FDS is a pointer to an already allocated fd events source struct.
-
-   FD is the file descriptor.
 
    QUERY_FD_FUN is  a pointer  to the  function used  to query  the file
    descriptor  for  events.   This  function decides  which  events  are
@@ -55,59 +91,36 @@ ccevents_fd_event_source_init (ccevents_fd_source_t * fds,
 
    EXPIRATION_TIME is the expiration time for the current event waiting.
 
-   EXPIRATION_HANDLER  is  a pointer  to  the  function used  to  handle
+   EXPIRATION_HANDLER_FUN is  a pointer to  the function used  to handle
    expired waiting for the next event. */
 {
-  fds->fd			= fd;
-  fds->query			= query_fd_fun;
-  fds->handler			= event_handler_fun;
-  fds->expiration_time		= expiration_time;
-  fds->expiration_handler	= expiration_handler;
-}
-
-void
-ccevents_fd_event_source_register (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
-/* Push a new file descriptor events source on the list of fd sources in
-   the group SOURCES. */
-{
-  if (sources->fds_head) {
-    fds->prev			= NULL;
-    fds->next			= sources->fds_head;
-    sources->fds_head->prev	= fds;
+  /* We  reset the  timeout just  in  case the  this set  call resets  a
+     previously event selection. */
+  ccevents_timeout_reset(&(fds->expiration_time));
+  /* Set up the event waiting. */
+  {
+    fds->query_fd_fun		= query_fd_fun;
+    fds->event_handler_fun	= event_handler_fun;
+    fds->expiration_time	= expiration_time;
+    fds->expiration_handler_fun	= expiration_handler_fun;
   }
+  /* Start the waiting. */
+  ccevents_timeout_start(there, &(fds->expiration_time));
 }
 
-void
-ccevents_fd_event_source_forget (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
-/* Remove a file  descriptor events source from the  group SOURCES.  The
-   file descriptor source is *not* finalised in any way.
-
-   SOURCES is a  pointer to the events sources collector  from which the
-   event source will be removed.
-
-   FDS is a pointer to the fd events source struct. */
-{
-  for (ccevents_fd_source_t * iter = sources->fds_head; iter; iter = iter->next) {
-    if (iter == fds) {
-      if (iter->prev) {
-	iter->prev->next = iter->next;
-      }
-      if (iter->next) {
-	iter->next->prev = iter->prev;
-      }
-    }
-  }
-  fds->prev	= NULL;
-  fds->next	= NULL;
-}
+
+/** --------------------------------------------------------------------
+ ** Predefined query functions.
+ ** ----------------------------------------------------------------- */
 
 bool
 ccevents_query_fd_readability (cce_location_tag_t * there, ccevents_fd_source_t * fds)
 /* Query a file descriptor for readability. */
 {
-  static struct timeval	timeout = { 0, 0 };
-  fd_set	set;
-  int		rv;
+  /* Remember that "select()" might mutate this struct. */
+  struct timeval	timeout = { 0, 0 };
+  fd_set		set;
+  int			rv;
   FD_ZERO(&set);
   FD_SET(fds->fd, &set);
   errno = 0;
@@ -126,13 +139,15 @@ bool
 ccevents_query_fd_writability (cce_location_tag_t * there, ccevents_fd_source_t * fds)
 /* Query a file descriptor for writability. */
 {
-  static struct timeval	timeout = { 0, 0 };
+  /* Remember that "select()" might mutate this struct. */
+  struct timeval	timeout = { 0, 0 };
   fd_set	set;
   int		rv;
   FD_ZERO(&set);
   FD_SET(fds->fd, &set);
   errno = 0;
   rv = select(1+(fds->fd), NULL, &set, NULL, &timeout);
+  fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fds->fd, rv);
   if (-1 == rv) {
     /* An error occurred. */
     cce_raise(there, cce_errno_condition(rv));
@@ -147,9 +162,10 @@ bool
 ccevents_query_fd_exception (cce_location_tag_t * there, ccevents_fd_source_t * fds)
 /* Query a file descriptor for exception. */
 {
-  static struct timeval	timeout = { 0, 0 };
-  fd_set	set;
-  int		rv;
+  /* Remember that "select()" might mutate this struct. */
+  struct timeval	timeout = { 0, 0 };
+  fd_set		set;
+  int			rv;
   FD_ZERO(&set);
   FD_SET(fds->fd, &set);
   errno = 0;
@@ -163,6 +179,11 @@ ccevents_query_fd_exception (cce_location_tag_t * there, ccevents_fd_source_t * 
     return (1 == rv)? true : false;
   }
 }
+
+
+/** --------------------------------------------------------------------
+ ** Event loop.
+ ** ----------------------------------------------------------------- */
 
 bool
 ccevents_fd_source_do_one_event (cce_location_tag_t * there, ccevents_fd_source_t * fds)
@@ -184,8 +205,20 @@ ccevents_fd_source_do_one_event (cce_location_tag_t * there, ccevents_fd_source_
       cce_run_error_handlers(L);
       cce_raise(there, cce_location_condition(L));
     } else {
-      pending	= fds->query(L, fds);
+      pending	= fds->query_fd_fun(L, fds);
       cce_run_cleanup_handlers(L);
+    }
+  }
+  if (ccevents_timeout_expired(&(fds->expiration_time))) {
+    cce_location_t	L;
+    if (cce_location(L)) {
+      /* Error while handling event. */
+      cce_run_error_handlers(L);
+      cce_raise(there, cce_location_condition(L));
+    } else {
+      fds->expiration_handler_fun(L, fds);
+      cce_run_cleanup_handlers(L);
+      rv = false;
     }
   }
   if (pending) {
@@ -195,7 +228,7 @@ ccevents_fd_source_do_one_event (cce_location_tag_t * there, ccevents_fd_source_
       cce_run_error_handlers(L);
       cce_raise(there, cce_location_condition(L));
     } else {
-      fds->handler(L, fds);
+      fds->event_handler_fun(L, fds);
       cce_run_cleanup_handlers(L);
       rv = true;
     }
@@ -327,5 +360,46 @@ ccevents_fd_source_do_one_event (cce_location_tag_t * there, ccevents_fd_source_
 					   ($fx= fd ($fd-entry-fd E)))
 				     SOURCES.fds.rev-head))))))
 */
+
+
+/** --------------------------------------------------------------------
+ ** Sources registration.
+ ** ----------------------------------------------------------------- */
+
+void
+ccevents_fd_event_source_register (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
+/* Push a new file descriptor events source on the list of fd sources in
+   the group SOURCES. */
+{
+  if (sources->fds_head) {
+    fds->prev			= NULL;
+    fds->next			= sources->fds_head;
+    sources->fds_head->prev	= fds;
+  }
+}
+
+void
+ccevents_fd_event_source_forget (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
+/* Remove a file  descriptor events source from the  group SOURCES.  The
+   file descriptor source is *not* finalised in any way.
+
+   SOURCES is a  pointer to the events sources collector  from which the
+   event source will be removed.
+
+   FDS is a pointer to the fd events source struct. */
+{
+  for (ccevents_fd_source_t * iter = sources->fds_head; iter; iter = iter->next) {
+    if (iter == fds) {
+      if (iter->prev) {
+	iter->prev->next = iter->next;
+      }
+      if (iter->next) {
+	iter->next->prev = iter->prev;
+      }
+    }
+  }
+  fds->prev	= NULL;
+  fds->next	= NULL;
+}
 
 /* end of file */

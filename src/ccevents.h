@@ -323,47 +323,42 @@ ccevents_timeout_microseconds (const ccevents_timeout_t * to)
  ** File descriptor events sources.
  ** ----------------------------------------------------------------- */
 
-typedef bool ccevents_fd_source_query_fun_t		(cce_location_tag_t * L,
-							 ccevents_fd_source_t * fds);
-typedef void ccevents_fd_source_handler_fun_t		(cce_location_tag_t * L,
-							 ccevents_fd_source_t * fds);
-typedef void ccevents_fd_source_expiration_handler_fun_t(ccevents_fd_source_t * fds);
+typedef bool ccevents_fd_source_query_fun_t (cce_location_tag_t * L, ccevents_fd_source_t * fds);
+typedef void ccevents_fd_source_handler_fun_t (cce_location_tag_t * L, ccevents_fd_source_t * fds);
+typedef void ccevents_fd_source_expiration_handler_fun_t (cce_location_tag_t * L, ccevents_fd_source_t * fds);
 
 struct ccevents_fd_source_tag_t {
   /* The file descriptor. */
   int				fd;
 
-  /* A thunk to be called to  query the file descriptor for the expected
-     event. */
-  ccevents_fd_source_query_fun_t *	query;
+  /* Pointer to function  to be called to query the  file descriptor for
+     the expected event. */
+  ccevents_fd_source_query_fun_t *	query_fd_fun;
 
-  /* A thunk to be called whenever the expected event happens. */
-  ccevents_fd_source_handler_fun_t *	handler;
+  /* Pointer  to  function to  be  called  whenever the  expected  event
+     happens. */
+  ccevents_fd_source_handler_fun_t *	event_handler_fun;
 
-  /* False or  a TIME struct  representing the expiration time  for this
-     event. */
+  /* The expiration time for this event. */
   ccevents_timeout_t			expiration_time;
 
-  /* False  or a  thunk to be called whenever this event expires. */
-  ccevents_fd_source_expiration_handler_fun_t *	expiration_handler;
+  /* Pointer to function to be called whenever this event expires. */
+  ccevents_fd_source_expiration_handler_fun_t *	expiration_handler_fun;
 
   ccevents_fd_source_t *	next;
   ccevents_fd_source_t *	prev;
 };
 
-ccevents_decl void ccevents_fd_event_source_init (ccevents_fd_source_t * fds,
-						  int fd,
-						  ccevents_fd_source_query_fun_t * query_fd_fun,
-						  ccevents_fd_source_handler_fun_t * event_handler_fun,
-						  ccevents_timeout_t expiration_time,
-						  ccevents_fd_source_expiration_handler_fun_t * expiration_handler)
-  __attribute__((nonnull(1, 3, 4, 6)));
+ccevents_decl void ccevents_fd_event_source_init (ccevents_fd_source_t * fds, int fd)
+  __attribute__((nonnull(1)));
 
-ccevents_decl void ccevents_fd_event_source_register (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
-  __attribute__((nonnull(1,2)));
-
-ccevents_decl void ccevents_fd_event_source_forget (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
-  __attribute__((nonnull(1,2)));
+ccevents_decl void ccevents_fd_event_source_set (cce_location_tag_t * there,
+						 ccevents_fd_source_t * fds,
+						 ccevents_fd_source_query_fun_t * query_fd_fun,
+						 ccevents_fd_source_handler_fun_t * event_handler_fun,
+						 ccevents_timeout_t expiration_time,
+						 ccevents_fd_source_expiration_handler_fun_t * expiration_handler)
+  __attribute__((nonnull(1, 2, 3, 4, 6)));
 
 ccevents_decl bool ccevents_query_fd_readability (cce_location_tag_t * there, ccevents_fd_source_t * fds)
   __attribute__((nonnull(1,2)));
@@ -373,6 +368,12 @@ ccevents_decl bool ccevents_query_fd_exception   (cce_location_tag_t * there, cc
   __attribute__((nonnull(1,2)));
 
 ccevents_decl bool ccevents_fd_source_do_one_event (cce_location_tag_t * there, ccevents_fd_source_t * fds)
+  __attribute__((nonnull(1,2)));
+
+ccevents_decl void ccevents_fd_event_source_register (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
+  __attribute__((nonnull(1,2)));
+
+ccevents_decl void ccevents_fd_event_source_forget (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
   __attribute__((nonnull(1,2)));
 
 

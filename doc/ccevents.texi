@@ -126,6 +126,7 @@ entitled ``@gnu{} Free Documentation License''.
 * conditions::                  Exceptional condition objects.
 * timevals::                    Handling time spans.
 * timeouts::                    Handling event expiration times.
+* fd::                          Event source for file descriptors.
 
 Appendices
 
@@ -908,6 +909,128 @@ expire.  If an error occurs: raise an exception by performing a non--local exit 
 @deftypefun void ccevents_timeout_reset (ccevents_timeout_t * @var{to})
 Reset a timeout, ``stop'' the timer.  The expiration time is set to a value meaning infinite
 expiration time.
+@end deftypefun
+
+@c page
+@node fd
+@chapter Event source for file descriptors
+
+
+@menu
+* fd typedefs::                 Type definitions.
+* fd init::                     Initialisation and setup.
+* fd query::                    Predefined query functions.
+@end menu
+
+@c page
+@node fd typedefs
+@section Type definitions
+
+
+@deftp {Struct Typedef} ccevents_fd_source_t
+Type of structures representing events from file descriptors.
+@end deftp
+
+
+@c page
+@node fd init
+@section Initialisation and setup
+
+
+@deftypefun void ccevents_fd_event_source_init (ccevents_fd_source_t * @var{fds}, int @var{fd})
+Initialise an already allocated file descriptor event source.  Usually, we call this function only
+once for each file descriptor event source.  @var{FDS} is a pointer to an already allocated fd
+events source struct.  @var{FD} is the file descriptor.
+@end deftypefun
+
+
+@deftypefun void ccevents_fd_event_source_set (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fds}, ccevents_fd_source_query_fun_t * @var{query_fd_fun}, ccevents_fd_source_handler_fun_t * @var{event_handler_fun}, cevents_timeout_t @var{expiration_time}, ccevents_fd_source_expiration_handler_fun_t * @var{expiration_handler_fun})
+Set up an already initialised file descriptor event source to wait for an event.  This function
+starts the timeout representing the expiration time.  After the event represented by the arguments
+has been served or has expired: this function can be called again for the same @var{fds} to set up
+waiting for another event.  If an error occurs: raise an exception by performing a non--local exit
+to @var{there}.
+
+@var{FDS} is a pointer to an already initialised file descriptor events source.
+
+@var{QUERY_FD_FUN} is a pointer to the function used to query the file descriptor for events.  This
+function decides which events are expected: readability, writability, exceptional condition.
+
+@var{EVENT_HANDLER_FUN} is a pointer to the function used to handle a file descriptor event.
+
+@var{EXPIRATION_TIME} is the expiration time for the current event waiting.
+
+@var{EXPIRATION_HANDLER_FUN} is a pointer to the function used to handle expired waiting for the
+event.
+@end deftypefun
+
+
+To set up waiting for a readable event, in @math{5} seconds, on a pipe's file descriptor we can do
+(using nested functions as allowed by a @gcc{} extension):
+
+@smallexample
+int             X[2];
+cce_location_t  L;
+
+/* X[0] is the readable end.  X[1] is the writable end. */
+pipe(X);
+
+if (cce_location(L)) @{
+  cce_run_error_handlers(L);
+@} else @{
+  ccevents_fd_source_t fds;
+  ccevents_timeout_t   expiration_time;
+
+  void event_handler (cce_location_tag_t * there,
+                      ccevents_fd_source_t * fds)
+  @{
+    // We should do something here.
+    return;
+  @}
+  void expiration_handler (cce_location_tag_t * there,
+                           ccevents_fd_source_t * fds)
+  @{
+    // We should do something here.
+    return;
+  @}
+
+  ccevents_timeout_init(L, &expiration_time, 5, 0, 0);
+  ccevents_fd_event_source_init(&fds, X[0]);
+  ccevents_fd_event_source_set(L, &fds,
+    ccevents_query_fd_readability, event_handler,
+    expiration_time, expiration_handler);
+
+  cce_run_cleanup_handlers(L);
+@}
+@end smallexample
+
+@c page
+@node fd query
+@section Predefined query functions
+
+
+@deftypefun bool ccevents_query_fd_readability (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fds})
+Query a file descriptor for readability.  Return @true{} if the file descriptor is readable,
+otherwise return @false{}.  If an error occurs: raise an exception by performing a non--local exit
+to @var{there}.
+
+Beware that some file descriptors are always readable.
+@end deftypefun
+
+
+@deftypefun bool ccevents_query_fd_writability (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fds})
+Query a file descriptor for writability.  Return @true{} if the file descriptor is writable,
+otherwise return @false{}.  If an error occurs: raise an exception by performing a non--local exit
+to @var{there}.
+
+Beware that some file descriptors are always writable.
+@end deftypefun
+
+
+@deftypefun bool ccevents_query_fd_exception (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fds})
+Query a file descriptor for an exception; this is useful when the file descriptor is a network
+socket.  Return @true{} if the file descriptor has received an exception signal, otherwise return
+@false{}.  If an error occurs: raise an exception by performing a non--local exit to @var{there}.
 @end deftypefun
 
 @c page
