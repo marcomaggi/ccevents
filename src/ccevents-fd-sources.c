@@ -70,6 +70,8 @@ ccevents_fd_event_source_init (ccevents_fd_source_t * fds, int fd)
   fds->event_handler_fun	= default_event_handler;
   fds->expiration_time		= *CCEVENTS_TIMEOUT_NEVER;
   fds->expiration_handler_fun	= default_expiration_handler;
+  fds->prev			= NULL;
+  fds->next			= NULL;
 }
 void
 ccevents_fd_event_source_set (cce_location_tag_t * there,
@@ -147,7 +149,7 @@ ccevents_query_fd_writability (cce_location_tag_t * there, ccevents_fd_source_t 
   FD_SET(fds->fd, &set);
   errno = 0;
   rv = select(1+(fds->fd), NULL, &set, NULL, &timeout);
-  fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fds->fd, rv);
+  //fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fds->fd, rv);
   if (-1 == rv) {
     /* An error occurred. */
     cce_raise(there, cce_errno_condition(rv));

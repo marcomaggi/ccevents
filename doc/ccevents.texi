@@ -1011,8 +1011,8 @@ if (cce_location(L)) @{
 
 @deftypefun bool ccevents_query_fd_readability (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fds})
 Query a file descriptor for readability.  Return @true{} if the file descriptor is readable,
-otherwise return @false{}.  If an error occurs: raise an exception by performing a non--local exit
-to @var{there}.
+otherwise return @false{}.  If an error occurs: the value of @code{errno} might be mutated; an
+exception is raised by performing a non--local exit to @var{there}.
 
 Beware that some file descriptors are always readable.
 @end deftypefun
@@ -1020,8 +1020,8 @@ Beware that some file descriptors are always readable.
 
 @deftypefun bool ccevents_query_fd_writability (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fds})
 Query a file descriptor for writability.  Return @true{} if the file descriptor is writable,
-otherwise return @false{}.  If an error occurs: raise an exception by performing a non--local exit
-to @var{there}.
+otherwise return @false{}.  If an error occurs: the value of @code{errno} might be mutated; an
+exception is raised by performing a non--local exit to @var{there}.
 
 Beware that some file descriptors are always writable.
 @end deftypefun
@@ -1030,7 +1030,8 @@ Beware that some file descriptors are always writable.
 @deftypefun bool ccevents_query_fd_exception (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fds})
 Query a file descriptor for an exception; this is useful when the file descriptor is a network
 socket.  Return @true{} if the file descriptor has received an exception signal, otherwise return
-@false{}.  If an error occurs: raise an exception by performing a non--local exit to @var{there}.
+@false{}.  If an error occurs: the value of @code{errno} might be mutated; an exception is raised by
+performing a non--local exit to @var{there}.
 @end deftypefun
 
 @c page
