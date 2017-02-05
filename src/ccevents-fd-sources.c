@@ -161,7 +161,7 @@ ccevents_query_fd_writability (cce_location_tag_t * there, ccevents_group_t * gr
   } else {
     /* Success.  RV  contains the number  of file descriptors  ready for
        writing; in this case it can be only 1 or 0. */
-    fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fdsrc->fd, rv);
+    //fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fdsrc->fd, rv);
     if (1 == rv) {
       return true;
     } else {

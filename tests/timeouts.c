@@ -541,7 +541,7 @@ test_timeout_expiration_time_comparisons (void)
       cce_condition_free(cce_location_condition(L));
     } else {
       ccevents_timeout_init(L, &A, 1, 0, 0);
-      ccevents_timeout_init(L, &B, 1, 0, 0);
+      ccevents_timeout_init(L, &B, 1, 0, 1);
       ccevents_timeout_start(L, &A);
       ccevents_timeout_start(L, &B);
       //fprintf(stderr, "A.tv_sec = %ld, A.tv_usec = %ld\n", A.tv_sec, A.tv_usec);
