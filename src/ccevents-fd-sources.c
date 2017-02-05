@@ -30,378 +30,173 @@
 #include <errno.h>
 #include <sys/select.h>
 
-
 /** --------------------------------------------------------------------
  ** Default functions.
  ** ----------------------------------------------------------------- */
 
 static bool
-default_event_query (cce_location_tag_t * L CCEVENTS_UNUSED,
-		     ccevents_fd_source_t * fds CCEVENTS_UNUSED)
+default_event_query (cce_location_tag_t *	L	CCEVENTS_UNUSED,
+		     ccevents_group_t *		grp	CCEVENTS_UNUSED,
+		     ccevents_source_t *	fdsrc	CCEVENTS_UNUSED)
 {
   return false;
 }
 static void
-default_event_handler (cce_location_tag_t * L CCEVENTS_UNUSED,
-		       ccevents_fd_source_t * fds CCEVENTS_UNUSED)
-{
-  return;
-}
-static void
-default_expiration_handler (cce_location_tag_t * L CCEVENTS_UNUSED,
-			    ccevents_fd_source_t * fds CCEVENTS_UNUSED)
+default_event_handler (cce_location_tag_t *	L	CCEVENTS_UNUSED,
+		       ccevents_group_t *	grp	CCEVENTS_UNUSED,
+		       ccevents_source_t *	fdsrc	CCEVENTS_UNUSED)
 {
   return;
 }
 
-
 /** --------------------------------------------------------------------
- ** Initialisation and set up.
+ ** Method functions.
+ ** ----------------------------------------------------------------- */
+
+static bool
+method_event_inquirer (cce_location_tag_t * L, ccevents_group_t * grp, ccevents_source_t * src)
+{
+  ccevents_fd_source_t *	fdsrc = (ccevents_fd_source_t *) src;
+  return fdsrc->event_inquirer(L, grp, fdsrc);
+}
+static void
+method_event_handler (cce_location_tag_t * L, ccevents_group_t * grp, ccevents_source_t * src)
+{
+  ccevents_fd_source_t *	fdsrc = (ccevents_fd_source_t *) src;
+  return fdsrc->event_handler(L, grp, fdsrc);
+}
+static const ccevents_source_vtable_t methods_table = {
+  .event_inquirer	= method_event_inquirer,
+  .event_handler	= method_event_handler,
+};
+
+/** --------------------------------------------------------------------
+ ** Initialisation and setup.
  ** ----------------------------------------------------------------- */
 
 void
-ccevents_fd_event_source_init (ccevents_fd_source_t * fds, int fd)
-/* Initialise an  already allocated fd source.   FDS is a pointer  to an
+ccevents_fd_event_source_init (ccevents_fd_source_t * fdsrc, int fd)
+/* Initialise an  already allocated fd source.   FDSRC is a pointer  to an
    already  allocated  fd   events  source  struct.   FD   is  the  file
    descriptor. */
 {
-  fds->fd			= fd;
-  fds->query_fd_fun		= default_event_query;
-  fds->event_handler_fun	= default_event_handler;
-  fds->expiration_time		= *CCEVENTS_TIMEOUT_NEVER;
-  fds->expiration_handler_fun	= default_expiration_handler;
-  fds->prev			= NULL;
-  fds->next			= NULL;
+  ccevents_source_init(fdsrc, &methods_table);
+  fdsrc->fd			= fd;
+  fdsrc->event_inquirer		= default_event_query;
+  fdsrc->event_handler		= default_event_handler;
 }
 void
 ccevents_fd_event_source_set (cce_location_tag_t * there,
-			      ccevents_fd_source_t * fds,
-			      ccevents_fd_source_query_fun_t * query_fd_fun,
-			      ccevents_fd_source_handler_fun_t * event_handler_fun,
-			      ccevents_timeout_t expiration_time,
-			      ccevents_fd_source_expiration_handler_fun_t * expiration_handler_fun)
-/* Set up an already initialised fd source to wait for an event.
+			      ccevents_fd_source_t * fdsrc,
+			      ccevents_source_event_inquirer_fun_t * event_inquirer,
+			      ccevents_source_event_handler_fun_t * event_handler)
+/* Set up an already initialised fd  source to wait for an event.  Start
+   the expiration timer.
 
-   FDS is a pointer to an already allocated fd events source struct.
+   FDSRC is a pointer to an already allocated fd events source struct.
 
-   QUERY_FD_FUN is  a pointer  to the  function used  to query  the file
+   EVENT_INQUIRER is  a pointer to the  function used to query  the file
    descriptor  for  events.   This  function decides  which  events  are
    expected: readability, writability, exceptional condition.
 
-   EVENT_HANDLER_FUN is a pointer to the  function used to handle a file
+   EVENT_HANDLER is  a pointer  to the  function used  to handle  a file
    descriptor event.
-
-   EXPIRATION_TIME is the expiration time for the current event waiting.
-
-   EXPIRATION_HANDLER_FUN is  a pointer to  the function used  to handle
-   expired waiting for the next event. */
+*/
 {
-  /* We  reset the  timeout just  in  case the  this set  call resets  a
-     previously event selection. */
-  ccevents_timeout_reset(&(fds->expiration_time));
-  /* Set up the event waiting. */
-  {
-    fds->query_fd_fun		= query_fd_fun;
-    fds->event_handler_fun	= event_handler_fun;
-    fds->expiration_time	= expiration_time;
-    fds->expiration_handler_fun	= expiration_handler_fun;
-  }
-  /* Start the waiting. */
-  ccevents_timeout_start(there, &(fds->expiration_time));
+  ccevents_source_set(there, fdsrc);
+  fdsrc->event_inquirer		= event_inquirer;
+  fdsrc->event_handler		= event_handler;
 }
 
-
 /** --------------------------------------------------------------------
  ** Predefined query functions.
  ** ----------------------------------------------------------------- */
 
 bool
-ccevents_query_fd_readability (cce_location_tag_t * there, ccevents_fd_source_t * fds)
+ccevents_query_fd_readability (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 /* Query a file descriptor for readability. */
 {
   /* Remember that "select()" might mutate this struct. */
   struct timeval	timeout = { 0, 0 };
+  ccevents_fd_source_t * fdsrc = (ccevents_fd_source_t *) src;
   fd_set		set;
   int			rv;
   FD_ZERO(&set);
-  FD_SET(fds->fd, &set);
+  FD_SET(fdsrc->fd, &set);
   errno = 0;
-  rv = select(1+(fds->fd), &set, NULL, NULL, &timeout);
+  rv = select(1+(fdsrc->fd), &set, NULL, NULL, &timeout);
   if (-1 == rv) {
     /* An error occurred. */
     cce_raise(there, cce_errno_condition(rv));
   } else {
     /* Success.  RV  contains the number  of file descriptors  ready for
        reading; in this case it can be only 1 or 0. */
-    return (1 == rv)? true : false;
+    //fprintf(stderr, "%s: rv=%d\n", __func__, rv);
+    if (1 == rv) {
+      return true;
+    } else {
+      ccevents_group_enqueue_source(grp, src);
+      return false;
+    }
   }
 }
 
 bool
-ccevents_query_fd_writability (cce_location_tag_t * there, ccevents_fd_source_t * fds)
+ccevents_query_fd_writability (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 /* Query a file descriptor for writability. */
 {
   /* Remember that "select()" might mutate this struct. */
   struct timeval	timeout = { 0, 0 };
+  ccevents_fd_source_t * fdsrc = (ccevents_fd_source_t *) src;
   fd_set	set;
   int		rv;
   FD_ZERO(&set);
-  FD_SET(fds->fd, &set);
+  FD_SET(fdsrc->fd, &set);
   errno = 0;
-  rv = select(1+(fds->fd), NULL, &set, NULL, &timeout);
-  //fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fds->fd, rv);
+  rv = select(1+(fdsrc->fd), NULL, &set, NULL, &timeout);
+  //fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fdsrc->fd, rv);
   if (-1 == rv) {
     /* An error occurred. */
     cce_raise(there, cce_errno_condition(rv));
   } else {
     /* Success.  RV  contains the number  of file descriptors  ready for
        writing; in this case it can be only 1 or 0. */
-    return (1 == rv)? true : false;
+    fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fdsrc->fd, rv);
+    if (1 == rv) {
+      return true;
+    } else {
+      ccevents_group_enqueue_source(grp, src);
+      return false;
+    }
   }
 }
 
 bool
-ccevents_query_fd_exception (cce_location_tag_t * there, ccevents_fd_source_t * fds)
+ccevents_query_fd_exception (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 /* Query a file descriptor for exception. */
 {
   /* Remember that "select()" might mutate this struct. */
   struct timeval	timeout = { 0, 0 };
+  ccevents_fd_source_t * fdsrc = (ccevents_fd_source_t *) src;
   fd_set		set;
   int			rv;
   FD_ZERO(&set);
-  FD_SET(fds->fd, &set);
+  FD_SET(fdsrc->fd, &set);
   errno = 0;
-  rv = select(1+(fds->fd), NULL, NULL, &set, &timeout);
+  rv = select(1+(fdsrc->fd), NULL, NULL, &set, &timeout);
   if (-1 == rv) {
     /* An error occurred. */
     cce_raise(there, cce_errno_condition(rv));
   } else {
     /* Success.   RV  contains  the  number of  file  descriptors  which
        received an exception; in this case it can be only 1 or 0. */
-    return (1 == rv)? true : false;
-  }
-}
-
-
-/** --------------------------------------------------------------------
- ** Event loop.
- ** ----------------------------------------------------------------- */
-
-bool
-ccevents_fd_source_do_one_event (cce_location_tag_t * there, ccevents_fd_source_t * fds)
-/* Consume one event,  if any, and return.  Return a  boolean, "true" if
-   one event was served; otherwise "false".
-
-   Exceptions raised while querying an  event source or serving an event
-   handler are catched and ignored. */
-{
-  bool		pending;
-  bool		rv = false;
-
-  /* Query the file descriptor for a pending event. */
-  {
-    cce_location_t	L;
-
-    if (cce_location(L)) {
-      /* Error while querying for events. */
-      cce_run_error_handlers(L);
-      cce_raise(there, cce_location_condition(L));
+    if (1 == rv) {
+      return true;
     } else {
-      pending	= fds->query_fd_fun(L, fds);
-      cce_run_cleanup_handlers(L);
+      ccevents_group_enqueue_source(grp, src);
+      return false;
     }
   }
-  if (ccevents_timeout_expired(&(fds->expiration_time))) {
-    cce_location_t	L;
-    if (cce_location(L)) {
-      /* Error while handling event. */
-      cce_run_error_handlers(L);
-      cce_raise(there, cce_location_condition(L));
-    } else {
-      fds->expiration_handler_fun(L, fds);
-      cce_run_cleanup_handlers(L);
-      rv = false;
-    }
-  }
-  if (pending) {
-    cce_location_t	L;
-    if (cce_location(L)) {
-      /* Error while handling event. */
-      cce_run_error_handlers(L);
-      cce_raise(there, cce_location_condition(L));
-    } else {
-      fds->event_handler_fun(L, fds);
-      cce_run_cleanup_handlers(L);
-      rv = true;
-    }
-  }
-  return rv;
-}
-
-/*
-(define (do-one-fd-event)
-  ;;Consume one event, if any, and  return.  Return a boolean, #t if one
-  ;;event was served.
-  ;;
-  ;;Exceptions raised while querying an event source or serving an event
-  ;;handler are catched and ignored.
-  ;;
-  (with-event-sources (SOURCES)
-    (when (and (null? SOURCES.fds.tail)
-	       (not (null? SOURCES.fds.rev-head)))
-      (set! SOURCES.fds.tail     (reverse SOURCES.fds.rev-head))
-      (set! SOURCES.fds.rev-head '()))
-    (if (null? SOURCES.fds.tail)
-	#f
-      (if ($fx< SOURCES.fds.count SOURCES.fds.watermark)
-	  (let ((E ($car SOURCES.fds.tail)))
-	    (set! SOURCES.fds.tail ($cdr SOURCES.fds.tail))
-	    (cond
-	     ;;Check whether the event happened.   If it has: invoke the
-	     ;;associated handler.
-	     ;;
-	     ((%catch (($fd-entry-query E)))
-	      (guard (E (else
-			 ;;(pretty-print E (current-error-port))
-			 #f))
-		(($fd-entry-handler E))
-		($fxincr! SOURCES.fds.count)
-		#t))
-
-	     ;;If an expiration time has  been set: check it against the
-	     ;;current  time.   If  this  even is  expired:  invoke  the
-	     ;;associated handler.
-	     ;;
-	     ((let ((T ($fd-entry-expiration-time E)))
-		(and T (time<=? T (current-time))))
-	      ($fxincr! SOURCES.fds.count)
-	      (($fd-entry-expiration-handler E))
-	      #t)
-
-	     ;;The event  did not happen;  re-enqueue the event  for the
-	     ;;next loop.
-	     ;;
-	     (else
-	      (set! SOURCES.fds.rev-head (cons E SOURCES.fds.rev-head))
-	      (if (null? SOURCES.fds.tail)
-		  (begin
-		    (set! SOURCES.fds.count 0)
-		    #f)
-		(do-one-fd-event)))))
-	(begin
-	  (set! SOURCES.fds.count 0)
-	  #f)))))
-
-(define readable
-  (case-lambda
-   ((port/fd handler-thunk)
-    (readable port/fd handler-thunk #f #f))
-   ((port/fd handler-thunk expiration-time expiration-thunk)
-    (define who 'readable)
-    (with-arguments-validation (who)
-	((port/file-descriptor	port/fd)
-	 (procedure		handler-thunk)
-	 (time/false		expiration-time)
-	 (procedure/false	expiration-thunk))
-      (let ((fd (if (port? port/fd)
-		    (port-fd port/fd)
-		  port/fd)))
-	(%enqueue-fd-event-source fd
-				  (lambda ()
-				    (px.select-fd-readable? fd 0 0))
-				  handler-thunk expiration-time expiration-thunk))))))
-
-(define writable
-  (case-lambda
-   ((port/fd handler-thunk)
-    (writable port/fd handler-thunk #f #f))
-   ((port/fd handler-thunk expiration-time expiration-thunk)
-    (define who 'writable)
-    (with-arguments-validation (who)
-	((port/file-descriptor	port/fd)
-	 (procedure		handler-thunk)
-	 (time/false		expiration-time)
-	 (procedure/false	expiration-thunk))
-      (let ((fd (if (port? port/fd)
-		    (port-fd port/fd)
-		  port/fd)))
-	(%enqueue-fd-event-source fd (lambda ()
-				       (px.select-fd-writable? fd 0 0))
-				  handler-thunk expiration-time expiration-thunk))))))
-
-(define exception
-  (case-lambda
-   ((port/fd handler-thunk)
-    (exception port/fd handler-thunk #f #f))
-   ((port/fd handler-thunk expiration-time expiration-thunk)
-    (define who 'exception)
-    (with-arguments-validation (who)
-	((port/file-descriptor	port/fd)
-	 (procedure		handler-thunk)
-	 (time/false		expiration-time)
-	 (procedure/false	expiration-thunk))
-      (let ((fd (if (port? port/fd)
-		    (port-fd port/fd)
-		  port/fd)))
-	(%enqueue-fd-event-source fd (lambda ()
-				       (px.select-fd-exceptional? fd 0 0))
-				  handler-thunk expiration-time expiration-thunk))))))
-
-(define (forget-fd port/fd)
-  (define who 'exception)
-  (with-arguments-validation (who)
-      ((port/file-descriptor	port/fd))
-    (let ((fd (if (port? port/fd)
-		  (port-fd port/fd)
-		port/fd)))
-      (with-event-sources (SOURCES)
-	(set! SOURCES.fds.tail (remp (lambda (E)
-				       ($fx= fd ($fd-entry-fd E)))
-				 SOURCES.fds.tail))
-	(set! SOURCES.fds.rev-head (remp (lambda (E)
-					   ($fx= fd ($fd-entry-fd E)))
-				     SOURCES.fds.rev-head))))))
-*/
-
-
-/** --------------------------------------------------------------------
- ** Sources registration.
- ** ----------------------------------------------------------------- */
-
-void
-ccevents_fd_event_source_register (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
-/* Push a new file descriptor events source on the list of fd sources in
-   the group SOURCES. */
-{
-  if (sources->fds_head) {
-    fds->prev			= NULL;
-    fds->next			= sources->fds_head;
-    sources->fds_head->prev	= fds;
-  }
-}
-
-void
-ccevents_fd_event_source_forget (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
-/* Remove a file  descriptor events source from the  group SOURCES.  The
-   file descriptor source is *not* finalised in any way.
-
-   SOURCES is a  pointer to the events sources collector  from which the
-   event source will be removed.
-
-   FDS is a pointer to the fd events source struct. */
-{
-  for (ccevents_fd_source_t * iter = sources->fds_head; iter; iter = iter->next) {
-    if (iter == fds) {
-      if (iter->prev) {
-	iter->prev->next = iter->next;
-      }
-      if (iter->next) {
-	iter->next->prev = iter->prev;
-      }
-    }
-  }
-  fds->prev	= NULL;
-  fds->next	= NULL;
 }
 
 /* end of file */

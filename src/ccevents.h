@@ -26,7 +26,6 @@
 #ifndef CCEVENTS_H
 #define CCEVENTS_H 1
 
-
 /** --------------------------------------------------------------------
  ** Headers.
  ** ----------------------------------------------------------------- */
@@ -85,30 +84,28 @@ extern "C" {
 #  endif
 #endif
 
-
 /** --------------------------------------------------------------------
  ** Initialisation.
  ** ----------------------------------------------------------------- */
 
 ccevents_decl void ccevents_init (void);
 
-
 /** --------------------------------------------------------------------
  ** Forward declarations.
  ** ----------------------------------------------------------------- */
 
-typedef struct ccevents_sources_tag_t		ccevents_sources_t;
-typedef struct ccevents_fd_source_tag_t		ccevents_fd_source_t;
-typedef struct ccevents_task_source_tag_t	ccevents_task_source_t;
+typedef struct ccevents_group_t			ccevents_group_t;
+typedef struct ccevents_source_t		ccevents_source_t;
+typedef struct ccevents_fd_source_t		ccevents_fd_source_t;
+typedef struct ccevents_task_source_t		ccevents_task_source_t;
+typedef struct ccevents_timer_source_t		ccevents_timer_source_t;
 
-
 /** --------------------------------------------------------------------
  ** Constants.
  ** ----------------------------------------------------------------- */
 
 #define MAX_CONSECUTIVE_FD_EVENTS	5
 
-
 /** --------------------------------------------------------------------
  ** Version functions.
  ** ----------------------------------------------------------------- */
@@ -118,7 +115,6 @@ ccevents_decl int		cct_version_interface_current	(void);
 ccevents_decl int		cct_version_interface_revision	(void);
 ccevents_decl int		cct_version_interface_age	(void);
 
-
 /** --------------------------------------------------------------------
  ** Exceptional conditions.
  ** ----------------------------------------------------------------- */
@@ -207,7 +203,6 @@ ccevents_decl const ccevents_condition_timeout_overflow_t * ccevents_condition_t
 ccevents_decl const ccevents_condition_descriptor_timeout_overflow_t * ccevents_condition_timeout_overflow_descriptor;
 ccevents_decl bool ccevents_condition_is_a_timeout_overflow (const cce_condition_t * C);
 
-
 /** --------------------------------------------------------------------
  ** Timeval handling.
  ** ----------------------------------------------------------------- */
@@ -243,7 +238,6 @@ ccevents_decl ccevents_timeval_t ccevents_timeval_sub (cce_location_tag_t * ther
 ccevents_decl int ccevents_timeval_compare (ccevents_timeval_t A, ccevents_timeval_t B)
   __attribute__((const));
 
-
 /** --------------------------------------------------------------------
  ** Timeouts representation.
  ** ----------------------------------------------------------------- */
@@ -318,122 +312,175 @@ ccevents_timeout_microseconds (const ccevents_timeout_t * to)
   return to->microseconds;
 }
 
-
+/** --------------------------------------------------------------------
+ ** Base events sources.
+ ** ----------------------------------------------------------------- */
+
+typedef bool ccevents_source_event_inquirer_fun_t     (cce_location_tag_t * L, ccevents_group_t * grp, ccevents_source_t * src)
+  __attribute__((nonnull(1,2,3)));
+
+typedef void ccevents_source_event_handler_fun_t      (cce_location_tag_t * L, ccevents_group_t * grp, ccevents_source_t * src)
+  __attribute__((nonnull(1,2,3)));
+
+typedef void ccevents_source_expiration_handler_fun_t (cce_location_tag_t * L, ccevents_group_t * grp, ccevents_source_t * src)
+  __attribute__((nonnull(1,2,3)));
+
+typedef struct ccevents_source_vtable_t {
+  ccevents_source_event_inquirer_fun_t *	event_inquirer;
+  ccevents_source_event_handler_fun_t *		event_handler;
+} ccevents_source_vtable_t;
+
+typedef struct ccevents_source_queue_node_t {
+  ccevents_source_t *		next;
+  ccevents_source_t *		prev;
+} ccevents_source_queue_node_t;
+
+struct ccevents_source_t {
+  /* This struct is a node in the  list of event sources registered in a
+     group. */
+  ccevents_source_queue_node_t;
+
+  const ccevents_source_vtable_t *	vtable;
+
+  /* The expiration time for the next event in this event source. */
+  ccevents_timeout_t		expiration_time;
+  /* The expiration handler for this  event source.  Pointer to function
+     to be called whenever this event expires. */
+  ccevents_source_expiration_handler_fun_t * expiration_handler;
+};
+
+ccevents_decl ccevents_source_event_inquirer_fun_t	ccevents_source_query;
+ccevents_decl ccevents_source_event_handler_fun_t	ccevents_source_handle_event;
+ccevents_decl ccevents_source_expiration_handler_fun_t	ccevents_source_handle_expiration;
+
+ccevents_decl void ccevents_source_init (ccevents_source_t * src, const ccevents_source_vtable_t * vtable)
+  __attribute__((nonnull(1,2)));
+
+ccevents_decl void ccevents_source_set_timeout (ccevents_source_t * src,
+						ccevents_timeout_t expiration_time,
+						ccevents_source_expiration_handler_fun_t * expiration_handler)
+  __attribute__((nonnull(1,3)));
+
+ccevents_decl void ccevents_source_set (cce_location_tag_t * there, ccevents_source_t * src)
+  __attribute__((nonnull(1,2)));
+
+ccevents_decl bool ccevents_source_do_one_event (cce_location_tag_t * L,
+						 ccevents_group_t   * grp,
+						 ccevents_source_t  * src)
+  __attribute__((nonnull(1,2,3)));
+
 /** --------------------------------------------------------------------
  ** File descriptor events sources.
  ** ----------------------------------------------------------------- */
 
-typedef bool ccevents_fd_source_query_fun_t (cce_location_tag_t * L, ccevents_fd_source_t * fds);
-typedef void ccevents_fd_source_handler_fun_t (cce_location_tag_t * L, ccevents_fd_source_t * fds);
-typedef void ccevents_fd_source_expiration_handler_fun_t (cce_location_tag_t * L, ccevents_fd_source_t * fds);
+struct ccevents_fd_source_t {
+  ccevents_source_t;
 
-struct ccevents_fd_source_tag_t {
   /* The file descriptor. */
   int				fd;
 
   /* Pointer to function  to be called to query the  file descriptor for
      the expected event. */
-  ccevents_fd_source_query_fun_t *	query_fd_fun;
+  ccevents_source_event_inquirer_fun_t *	event_inquirer;
 
   /* Pointer  to  function to  be  called  whenever the  expected  event
      happens. */
-  ccevents_fd_source_handler_fun_t *	event_handler_fun;
-
-  /* The expiration time for this event. */
-  ccevents_timeout_t			expiration_time;
-
-  /* Pointer to function to be called whenever this event expires. */
-  ccevents_fd_source_expiration_handler_fun_t *	expiration_handler_fun;
-
-  ccevents_fd_source_t *	next;
-  ccevents_fd_source_t *	prev;
+  ccevents_source_event_handler_fun_t *		event_handler;
 };
 
-ccevents_decl void ccevents_fd_event_source_init (ccevents_fd_source_t * fds, int fd)
+ccevents_decl void ccevents_fd_event_source_init (ccevents_fd_source_t * fdsrc, int fd)
   __attribute__((nonnull(1)));
 
-ccevents_decl void ccevents_fd_event_source_set (cce_location_tag_t * there,
-						 ccevents_fd_source_t * fds,
-						 ccevents_fd_source_query_fun_t * query_fd_fun,
-						 ccevents_fd_source_handler_fun_t * event_handler_fun,
-						 ccevents_timeout_t expiration_time,
-						 ccevents_fd_source_expiration_handler_fun_t * expiration_handler)
-  __attribute__((nonnull(1, 2, 3, 4, 6)));
+ccevents_decl void ccevents_fd_event_source_set (cce_location_tag_t * there, ccevents_fd_source_t * fdsrc,
+						 ccevents_source_event_inquirer_fun_t * event_inquirer,
+						 ccevents_source_event_handler_fun_t * event_handler)
+  __attribute__((nonnull(1,2,3,4)));
 
-ccevents_decl bool ccevents_query_fd_readability (cce_location_tag_t * there, ccevents_fd_source_t * fds)
-  __attribute__((nonnull(1,2)));
-ccevents_decl bool ccevents_query_fd_writability (cce_location_tag_t * there, ccevents_fd_source_t * fds)
-  __attribute__((nonnull(1,2)));
-ccevents_decl bool ccevents_query_fd_exception   (cce_location_tag_t * there, ccevents_fd_source_t * fds)
-  __attribute__((nonnull(1,2)));
+ccevents_decl ccevents_source_event_inquirer_fun_t ccevents_query_fd_readability;
+ccevents_decl ccevents_source_event_inquirer_fun_t ccevents_query_fd_writability;
+ccevents_decl ccevents_source_event_inquirer_fun_t ccevents_query_fd_exception;
 
-ccevents_decl bool ccevents_fd_source_do_one_event (cce_location_tag_t * there, ccevents_fd_source_t * fds)
-  __attribute__((nonnull(1,2)));
-
-ccevents_decl void ccevents_fd_event_source_register (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
-  __attribute__((nonnull(1,2)));
-
-ccevents_decl void ccevents_fd_event_source_forget (ccevents_sources_t * sources, ccevents_fd_source_t * fds)
-  __attribute__((nonnull(1,2)));
-
-
 /** --------------------------------------------------------------------
  ** Task fragment event sources.
  ** ----------------------------------------------------------------- */
 
-struct ccevents_task_source_tag_t {
-  ccevents_task_source_t *	prev;
-  ccevents_task_source_t *	next;
+struct ccevents_task_source_t {
+  ccevents_source_t;
+  /* Pointer to function  to be called to query the  file descriptor for
+     the expected event. */
+  ccevents_source_event_inquirer_fun_t *	event_inquirer;
+
+  /* Pointer  to  function to  be  called  whenever the  expected  event
+     happens. */
+  ccevents_source_event_handler_fun_t *		event_handler;
 };
 
-
+ccevents_decl void ccevents_task_source_init (ccevents_task_source_t * src)
+  __attribute__((nonnull(1)));
+
+ccevents_decl void ccevents_task_source_set (cce_location_tag_t * there, ccevents_task_source_t * tksrc,
+					     ccevents_source_event_inquirer_fun_t     * event_inquirer,
+					     ccevents_source_event_handler_fun_t      * event_handler)
+  __attribute__((nonnull(1,2,3,4)));
+
 /** --------------------------------------------------------------------
  ** Interprocess signal event sources.
  ** ----------------------------------------------------------------- */
 
 typedef void ccevents_signal_handler_t (void);
 
-
 /** --------------------------------------------------------------------
- ** Events sources.
+ ** Sources groups.
  ** ----------------------------------------------------------------- */
 
-struct ccevents_sources_tag_t {
-  /* Boolean.  True if  a request to leave the loop  as soon as possible
-     was posted. */
-  bool		break_flag;
+typedef struct ccevents_group_queue_t {
+  /* Pointers to  the head and tail  of the list of  sources to enqueued
+     for the next run. */
+  ccevents_source_t *	sources_queue_head;
+  ccevents_source_t *	sources_queue_tail;
+} ccevents_group_queue_t;
 
-  ccevents_signal_handler_t *	signal_handlers;
-  /* Vector of  null or lists.   Each list contains  interprocess signal
-     handlers in the form of thunks to be run once. */
+/* Groups  are collection  of event  sources  that must  be queried  for
+   pending events with the same priority.
+*/
+struct ccevents_group_t {
+  /* Queue of event sources. */
+  ccevents_group_queue_t;
 
-  /* Non-negative fixnum.  Count of consecutive fd events served. */
-  size_t	fds_count;
+  /* True  if a  request  to leave  the  loop as  soon  as possible  was
+     posted. */
+  bool		request_to_leave_asap;
 
-  /* Non-negative fixnum.   Maximum number  of consecutive fd  events to
-     serve.  When the count reaches the watermark level: the loop avoids
-     servicing  fd events  and  tries  to serve  an  event from  another
-     source. */
-  size_t	fds_watermark;
+  /* Number of consecutive events served in this group. */
+  size_t	served_events_count;
 
-  /* Reverse list of fd entries already queried for the current run over
-     fd event sources. */
-  ccevents_fd_source_t *	fds_head;
-
-  /* List of fd entries still to query  in the current run over fd event
-     sources. */
-  ccevents_fd_source_t *	fds_tail;
-
-  /* Reverse list  of task entries  already queried for the  current run
-     over task event sources. */
-  ccevents_task_source_t *	tasks_rev_head;
-
-  /* List of  task entries still to  query in the current  run over task
-     event sources. */
-  ccevents_task_source_t *	tasks_tail;
+  /* Maximum number of consecutive events  to serve in this group.  When
+     the  count reaches  the  watermark level:  the  loop abandons  this
+     group. */
+  size_t	served_events_watermark;
 };
 
-
+ccevents_decl void ccevents_group_init (ccevents_group_t * grp)
+  __attribute__((nonnull(1)));
+
+ccevents_decl bool ccevents_group_queue_is_not_empty (const ccevents_group_t * grp)
+  __attribute__((nonnull(1)));
+
+ccevents_decl void ccevents_group_enqueue_source (ccevents_group_t * grp, ccevents_source_t * src)
+  __attribute__((nonnull(1,2)));
+
+ccevents_decl ccevents_source_t * ccevents_group_dequeue_source (ccevents_group_t * grp)
+  __attribute__((nonnull(1)));
+
+ccevents_decl bool ccevents_group_run_do_one_event (ccevents_group_t * grp)
+  __attribute__((nonnull(1)));
+
+ccevents_decl void ccevents_group_enter (ccevents_group_t * grp, size_t served_events_watermark)
+  __attribute__((nonnull(1)));
+
+ccevents_decl void ccevents_group_post_request_to_leave_asap (ccevents_group_t * grp)
+  __attribute__((nonnull(1)));
+
 /** --------------------------------------------------------------------
  ** Done.
  ** ----------------------------------------------------------------- */

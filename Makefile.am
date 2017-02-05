@@ -44,6 +44,9 @@ libccevents_la_SOURCES= \
 	src/ccevents-conditions.c	\
 	src/ccevents-timevals.c		\
 	src/ccevents-timeouts.c		\
+	src/ccevents-groups.c		\
+	src/ccevents-sources.c		\
+	src/ccevents-task-sources.c	\
 	src/ccevents-fd-sources.c
 
 #page
@@ -53,6 +56,7 @@ check_PROGRAMS	= \
 	tests/version			\
 	tests/timevals			\
 	tests/timeouts			\
+	tests/task-sources		\
 	tests/standalone-fd-sources
 
 TESTS				= $(check_PROGRAMS)
@@ -68,6 +72,9 @@ tests_timeouts_LDADD			= $(ccevents_tests_ldadd)
 
 tests_timevals_CPPFLAGS			= $(ccevents_tests_cppflags)
 tests_timevals_LDADD			= $(ccevents_tests_ldadd)
+
+tests_task_sources_CPPFLAGS		= $(ccevents_tests_cppflags)
+tests_task_sources_LDADD		= $(ccevents_tests_ldadd)
 
 tests_standalone_fd_sources_CPPFLAGS	= $(ccevents_tests_cppflags)
 tests_standalone_fd_sources_LDADD	= $(ccevents_tests_ldadd)

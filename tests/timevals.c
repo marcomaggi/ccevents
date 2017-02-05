@@ -45,8 +45,8 @@ test_timeval_initialisation_from_values (void)
     ccevents_timeval_t	T;
 
     if (cce_location(L)) {
-      cce_condition_free(cce_location_condition(L));
       cce_run_error_handlers(L);
+      cce_condition_free(cce_location_condition(L));
     } else {
       long	seconds		= 1;
       long	microseconds	= 2;
@@ -65,8 +65,8 @@ test_timeval_initialisation_from_values (void)
     ccevents_timeval_t	T;
 
     if (cce_location(L)) {
-      cce_condition_free(cce_location_condition(L));
       cce_run_error_handlers(L);
+      cce_condition_free(cce_location_condition(L));
     } else {
       long	seconds		= 1;
       long	microseconds	= -2;
@@ -87,8 +87,8 @@ test_timeval_initialisation_from_values (void)
     ccevents_timeval_t	T;
 
     if (cce_location(L)) {
-      cce_condition_free(cce_location_condition(L));
       cce_run_error_handlers(L);
+      cce_condition_free(cce_location_condition(L));
     } else {
       long	seconds		= 2;
       long	microseconds	= -1000000;
@@ -109,8 +109,8 @@ test_timeval_initialisation_from_values (void)
     ccevents_timeval_t	T;
 
     if (cce_location(L)) {
-      cce_condition_free(cce_location_condition(L));
       cce_run_error_handlers(L);
+      cce_condition_free(cce_location_condition(L));
     } else {
       long	seconds		= 2;
       long	microseconds	= -1000001;
@@ -133,8 +133,8 @@ test_timeval_initialisation_from_values (void)
     if (cce_location(L)) {
       cce_condition_t *	C = cce_location_condition(L);
       assert(cce_condition_is_a(C, ccevents_condition_timeval_overflow_descriptor));
-      cce_condition_free(C);
       cce_run_error_handlers(L);
+      cce_condition_free(C);
       flag = true;
     } else {
       long	seconds		= 0;
@@ -153,8 +153,8 @@ test_timeval_initialisation_from_timeval (void)
   ccevents_timeval_t	T;
 
   if (cce_location(L)) {
-    cce_condition_free(cce_location_condition(L));
     cce_run_error_handlers(L);
+    cce_condition_free(cce_location_condition(L));
   } else {
     struct timeval	tv = { .tv_sec = 1, .tv_usec = 2};
     T = ccevents_timeval_normalise(L, tv);
@@ -176,8 +176,8 @@ test_timeval_initialisation_invalid_from_values (void)
   if (cce_location(L)) {
     cce_condition_t *	C = cce_location_condition(L);
     assert(cce_condition_is_a(C, ccevents_condition_timeval_invalid_descriptor));
-    cce_condition_free(C);
     cce_run_error_handlers(L);
+    cce_condition_free(C);
     flag = true;
   } else {
     long	seconds		= -123;
@@ -196,8 +196,8 @@ test_timeval_initialisation_overflow_from_values (void)
   if (cce_location(L)) {
     cce_condition_t *	C = cce_location_condition(L);
     assert(cce_condition_is_a(C, ccevents_condition_timeval_overflow_descriptor));
-    cce_condition_free(C);
     cce_run_error_handlers(L);
+    cce_condition_free(C);
     flag = true;
   } else {
     long	seconds		= LONG_MAX;
@@ -218,8 +218,8 @@ test_timeval_initialisation_invalid_from_timeval (void)
   if (cce_location(L)) {
     cce_condition_t *	C = cce_location_condition(L);
     assert(cce_condition_is_a(C, ccevents_condition_timeval_invalid_descriptor));
-    cce_condition_free(C);
     cce_run_error_handlers(L);
+    cce_condition_free(C);
     flag = true;
   } else {
     struct timeval	T = { .tv_sec = -123, .tv_usec = 2 };
@@ -237,8 +237,8 @@ test_timeval_initialisation_overflow_from_timeval (void)
   if (cce_location(L)) {
     cce_condition_t *	C = cce_location_condition(L);
     assert(cce_condition_is_a(C, ccevents_condition_timeval_overflow_descriptor));
-    cce_condition_free(C);
     cce_run_error_handlers(L);
+    cce_condition_free(C);
     flag = true;
   } else {
     struct timeval	T = { .tv_sec = LONG_MAX, .tv_usec = LONG_MAX };
@@ -259,8 +259,8 @@ test_timeval_addition (void)
     ccevents_timeval_t	A, B, C;
 
     if (cce_location(L)) {
-      cce_condition_free(cce_location_condition(L));
       cce_run_error_handlers(L);
+      cce_condition_free(cce_location_condition(L));
     } else {
       A = ccevents_timeval_init(L, 10, 300);
       B = ccevents_timeval_init(L, 2, 44);
@@ -285,8 +285,8 @@ test_timeval_addition (void)
     if (cce_location(L)) {
       cce_condition_t *	C = cce_location_condition(L);
       assert(cce_condition_is_a(C, ccevents_condition_timeval_overflow_descriptor));
-      cce_condition_free(C);
       cce_run_error_handlers(L);
+      cce_condition_free(C);
       flag = true;
     } else {
       A = ccevents_timeval_init(L, LONG_MAX, 300);
@@ -306,8 +306,8 @@ test_timeval_addition (void)
     if (cce_location(L)) {
       cce_condition_t *	C = cce_location_condition(L);
       assert(cce_condition_is_a(C, ccevents_condition_timeval_overflow_descriptor));
-      cce_condition_free(C);
       cce_run_error_handlers(L);
+      cce_condition_free(C);
       flag = true;
     } else {
       A = ccevents_timeval_init(L, LONG_MAX, 300);
@@ -330,8 +330,8 @@ test_timeval_subtraction (void)
     ccevents_timeval_t	A, B, C;
 
     if (cce_location(L)) {
-      cce_condition_free(cce_location_condition(L));
       cce_run_error_handlers(L);
+      cce_condition_free(cce_location_condition(L));
     } else {
       A = ccevents_timeval_init(L, 10, 300);
       B = ccevents_timeval_init(L, 2, 44);
@@ -356,8 +356,8 @@ test_timeval_subtraction (void)
     if (cce_location(L)) {
       cce_condition_t *	C = cce_location_condition(L);
       assert(cce_condition_is_a(C, ccevents_condition_timeval_invalid_descriptor));
-      cce_condition_free(C);
       cce_run_error_handlers(L);
+      cce_condition_free(C);
       flag = true;
     } else {
       A = ccevents_timeval_init(L, 10, 300);
@@ -377,8 +377,8 @@ test_timeval_subtraction (void)
     if (cce_location(L)) {
       cce_condition_t *	C = cce_location_condition(L);
       assert(cce_condition_is_a(C, ccevents_condition_timeval_overflow_descriptor));
-      cce_condition_free(C);
       cce_run_error_handlers(L);
+      cce_condition_free(C);
       flag = true;
     } else {
       A = ccevents_timeval_init(L, LONG_MAX, 0);
@@ -401,8 +401,8 @@ test_timeval_comparison (void)
     ccevents_timeval_t	A, B;
 
     if (cce_location(L)) {
-      cce_condition_free(cce_location_condition(L));
       cce_run_error_handlers(L);
+      cce_condition_free(cce_location_condition(L));
     } else {
       A = ccevents_timeval_init(L, 0, 0);
       B = ccevents_timeval_init(L, 0, 0);
@@ -419,8 +419,8 @@ test_timeval_comparison (void)
     ccevents_timeval_t	A, B;
 
     if (cce_location(L)) {
-      cce_condition_free(cce_location_condition(L));
       cce_run_error_handlers(L);
+      cce_condition_free(cce_location_condition(L));
     } else {
       A = ccevents_timeval_init(L, 1, 0);
       B = ccevents_timeval_init(L, 0, 0);
@@ -437,8 +437,8 @@ test_timeval_comparison (void)
     ccevents_timeval_t	A, B;
 
     if (cce_location(L)) {
-      cce_condition_free(cce_location_condition(L));
       cce_run_error_handlers(L);
+      cce_condition_free(cce_location_condition(L));
     } else {
       A = ccevents_timeval_init(L, 0, 1);
       B = ccevents_timeval_init(L, 0, 0);
@@ -455,8 +455,8 @@ test_timeval_comparison (void)
     ccevents_timeval_t	A, B;
 
     if (cce_location(L)) {
-      cce_condition_free(cce_location_condition(L));
       cce_run_error_handlers(L);
+      cce_condition_free(cce_location_condition(L));
     } else {
       A = ccevents_timeval_init(L, 0, 0);
       B = ccevents_timeval_init(L, 1, 0);
@@ -473,8 +473,8 @@ test_timeval_comparison (void)
     ccevents_timeval_t	A, B;
 
     if (cce_location(L)) {
-      cce_condition_free(cce_location_condition(L));
       cce_run_error_handlers(L);
+      cce_condition_free(cce_location_condition(L));
     } else {
       A = ccevents_timeval_init(L, 0, 0);
       B = ccevents_timeval_init(L, 0, 1);

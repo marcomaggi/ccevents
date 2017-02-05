@@ -126,6 +126,9 @@ entitled ``@gnu{} Free Documentation License''.
 * conditions::                  Exceptional condition objects.
 * timevals::                    Handling time spans.
 * timeouts::                    Handling event expiration times.
+* sources::                     Events sources basics.
+* groups::                      Groups of event sources.
+* tasks::                       Performing tasks in steps.
 * fd::                          Event source for file descriptors.
 
 Appendices
@@ -149,17 +152,31 @@ Indexes
 
 
 This document describes version @value{VERSION} of @value{PACKAGE}, a C language library
-implementing an event loop.  It is written in C11 with @gcc{} extensions.
+implementing an event loop.  It is written in C11 with @gcc{} extensions.  The library is meant to
+work on @gnu{}+Linux platforms.
 
-This package depends on the package CCExceptions, at least version 0.2; @ref{references} for details
-on downloading it.
+There are plenty of event loop libraries already, for example Libuv:
+
+@center @url{http://libuv.org/}
+
+@noindent
+and Libev:
+
+@center @url{http://software.schmorp.de/pkg/libev.html}
+
+@noindent
+while @value{PACKAGE} will, maybe, never reach their level of features and reliability: it is an
+interesting exercise in programming.
+
+This package depends on the package CCExceptions, at least version 0.2, to handle exceptional
+conditions; @ref{references} for details on downloading it.
 
 @value{PACKAGE} installs the single header file @file{ccevents.h}.  All the function names in the
 @api{} are prefixed with @code{cct_}; all the constant names are prefixed with @code{CCT_}; all the
 type names are prefixed with @code{cct_} and suffixed with @code{_t}.
 
 The events loop implementation is inspired by the architecture of the event loop of
-@url{http://www.tcl.tk/, Tcl}; though no code comes from Tcl.
+@url{http://www.tcl.tk/, Tcl}; though no code comes from Tcl itself.
 
 Notice that, before using the library, we need to call the global initialisation function
 @cfunc{ccevents_init}.
@@ -181,7 +198,8 @@ PKG_CHECK_MODULES([CCEVENTS],[ccevents >= 0.1])
 @end example
 
 @noindent
-which will set the variables @code{CCEVENTS_LIBS} and @code{CCEVENTS_CFLAGS}.
+which will set the variables @code{CCEVENTS_LIBS} and @code{CCEVENTS_CFLAGS}.  The macro
+@code{PKG_CHECK_MODULES} is available in recent versions of @gnu{} Autoconf.
 
 Alternatively we can use the raw @gnu{} Autoconf macros:
 
@@ -912,14 +930,468 @@ expiration time.
 @end deftypefun
 
 @c page
+@node sources
+@chapter Events sources basics
+
+
+Events sources are the basic building blocks of events loops managed by @value{PACKAGE}.  Events
+always come from a ``source'', be it an operating system timer, a single file descriptor, a group of
+network sockets representing connections to a server, a file system change monitored with the
+@samp{inotify} @api{}, et cetera.
+
+@menu
+* sources typedefs::            Type definitions.
+* sources api::                 Application programming interface.
+* sources example::             Example of events source definition.
+@end menu
+
+@c page
+@node sources typedefs
+@section Type definitions
+
+
+@value{PACKAGE} defines some predefined events source types, and we can define new ones.  All of
+them are subtypes of @objtype{ccevents_source_t}.
+
+
+@deftp {Struct Typedef} ccevents_source_t
+Base structure for all the events sources.  Every events source is meant to be associated to a
+group, @ref{groups, Groups of event sources}.
+
+Every events source contains an expiration timeout; it is meant to be used in one of two ways:
+
+@itemize
+@item
+The next event from the source must be served before the timeout expires, otherwise special handling
+is triggered.
+
+@item
+The whole use of a source must be completed before the timeout expires, otherwise special handling
+is triggered.
+@end itemize
+
+@noindent
+By default, the timeout is set to ``never expire'' and an internal expiration handler that does
+nothing is registered in the source structure.
+@end deftp
+
+
+@deftypefn {Function Type} bool ccevents_source_event_inquirer_fun_t (cce_location_tag_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
+Function prototype of event inquiry functions.  A function of this type is meant to query the event
+source referenced by @var{src} to determine if an event is pending or not:
+
+@itemize
+@item
+If an event is pending: it must return @true{}.
+
+@item
+If no event is pending: it must return @false{}.
+
+@item
+If inquiring for events raises an exceptional condition: a non--local exit must be performed by
+jumping to @var{there}.
+@end itemize
+
+The group referenced by @var{grp} must be the one to which @var{src} is associated.  When this
+function is called @var{src} must have been dequeued from @var{grp}: it is up to the handler, or an
+exceptional condition handler, to re--enqueue @var{src} into @var{grp} or not.  Usually, is no event
+is pending: the inquirer function re--enqueues @var{src} into @var{grp}.
+@end deftypefn
+
+
+@deftypefn {Function Type} void ccevents_source_event_handler_fun_t (cce_location_tag_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
+Function prototype of event handler functions.  A function of this type is meant to serve a pending
+event on the event source referenced by @var{src}.  If serving the event raises an exceptional
+condition: a non--local exit must be performed by jumping to @var{there}.
+
+Functions of this type are meant to be called only after the event inquirer function, applied to the
+same operands, returned @true{}.
+
+The group referenced by @var{grp} must be the one to which @var{src} is associated.  When this
+function is called @var{src} must have been dequeued from @var{grp}: it is up to the handler, or an
+exceptional condition handler, to re--enqueue @var{src} into @var{grp} or not, selecting the
+appropriate event handler.
+
+Typically, an events source has multiple event handlers that are selected in turn; after an event
+handler has served an event (say: by reading data from a network socket), it re--enqueues the source
+in the group selecting another event handler (say: to write data to the same network socket).
+@end deftypefn
+
+
+@deftypefn {Function Type} void ccevents_source_expiration_handler_fun_t (cce_location_tag_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
+Function prototype of expiration handler functions.  A function of this type is meant to react to a
+timeout expiration associated to the event source referenced by @var{src}.  If handling the timeout
+raises an exceptional condition: a non--local exit must be performed by jumping to @var{there}.
+
+The group referenced by @var{grp} must be the one to which @var{src} is associated.  When this
+function is called @var{src} must have been dequeued from @var{grp}: it is up to the handler, or an
+exceptional condition handler, to re--enqueue @var{src} into @var{grp} or not.
+@end deftypefn
+
+
+@deftp {Struct Typedef} ccevents_source_vtable_t
+Structure type representing a table of methods acting on an events source.  Every subtype of
+@objtype{ccevents_source_t} must define an instance of this table and use it in a call to
+@cfunc{ccevents_source_init}.  It has the following public fields:
+
+@table @code
+@item ccevents_source_event_inquirer_fun_t * event_inquirer
+Pointer to the event inquirer function.  It is called to determine if the events source has a
+pending event or not.
+
+@item ccevents_source_event_handler_fun_t * event_handler
+Pointer to the event handler function.  It is called when to serve a pending event.
+@end table
+
+See @cfunc{ccevents_source_do_one_event} for details on how these functions are used.
+@end deftp
+
+@c page
+@node sources api
+@section Application programming interface
+
+
+@deftypefun void ccevents_source_init (ccevents_source_t * @var{src}, const ccevents_source_vtable_t * @var{vtable})
+Initialise an already allocated events source structure referenced by @var{src}.  This function is
+typically invoked by the initialisation function of the events source subtype.  Register @var{vtable}
+as table of function pointers acting on this specific events source type.
+
+Set the event expiration timeout to never: if this setting is not overridden with
+@cfunc{ccevents_source_set_timeout}, waiting for events on this source will never expire.
+@end deftypefun
+
+
+@deftypefun void ccevents_source_set_timeout (ccevents_source_t * @var{src}, ccevents_timeout_t @var{expiration_time}, ccevents_source_expiration_handler_fun_t * @var{expiration_handler})
+Setup a new expiration timeout.  This function does @strong{not} start the timeout, this operation
+is performed by @cfunc{ccevents_source_set}.
+@end deftypefun
+
+
+@deftypefun void ccevents_source_set (cce_location_tag_t * @var{there}, ccevents_source_t * @var{src})
+Start the waiting for the next event.  The expiration timeout is started by registering the current
+calendar time.  If an exceptional condition is raised: a non--local exit is performed by jumping to
+@var{there}.  This function is typically invoked by the set function of the events source subtype.
+@end deftypefun
+
+
+@deftypefun bool ccevents_source_do_one_event (cce_location_tag_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
+Consume one event from the events source referenced by @var{src} if there is one.  Return @true{} if
+one event was served or the timeout expired; otherwise @false{}.  If an exceptional condition is
+raised: a non--local exit is performed by jumping to @var{there}.
+
+The group referenced by @var{grp} must be the one to which @var{src} is associated.  When this
+function is called @var{src} must have been dequeued from @var{grp}: it is up to the handlers, or an
+exceptional condition handler, to re--enqueue @var{src} into @var{grp} or not.
+
+Serving an event is done with the following steps:
+
+@enumerate
+@item
+Query the events source for the availability of an event.  If no event is pending: return @false{}.
+If the event inquiry function raises an exceptional condition: a non--local exit is performed by
+jumping to @var{there}.
+
+@item
+Check the expiration timeout: if the timeout has expired, call the expiration handler and return
+@true{}.  If the expiration handler function raises an exceptional condition: a non--local exit is
+performed by jumping to @var{there}.
+
+@item
+If an event is pending: call the event handler function and return @true{}.  If the event handler
+function raises an exceptional condition: a non--local exit is performed by jumping to @var{there}.
+@end enumerate
+@end deftypefun
+
+@c page
+@node sources example
+@section Example of events source definition
+
+
+To understand how events sources are subtyped and used, let's look at a possible implementation of
+the task events source defined by @value{PACKAGE}:
+
+@smallexample
+typedef struct ccevents_task_source_t @{
+  ccevents_source_t;
+  ccevents_source_event_inquirer_fun_t * event_inquirer;
+  ccevents_source_event_handler_fun_t  * event_handler;
+@} ccevents_task_source_t;
+
+static bool
+method_event_inquirer (cce_location_tag_t * there,
+                       ccevents_group_t   * grp,
+                       ccevents_source_t  * src)
+@{
+  ccevents_task_source_t * tksrc = (ccevents_task_source_t *) src;
+  return tksrc->event_inquirer(there, grp, tksrc);
+@}
+
+static void
+method_event_handler (cce_location_tag_t * there,
+                      ccevents_group_t   * grp,
+                      ccevents_source_t  * src)
+@{
+  ccevents_task_source_t * tksrc = (ccevents_task_source_t *) src;
+  return tksrc->event_handler(there, grp, tksrc);
+@}
+
+static const ccevents_source_vtable_t methods_table = @{
+  .event_inquirer       = method_event_inquirer,
+  .event_handler        = method_event_handler,
+@};
+
+void
+ccevents_task_source_init (ccevents_task_source_t * tksrc)
+@{
+  ccevents_source_init(tksrc, &methods_table);
+@}
+
+void
+ccevents_task_source_set (cce_location_tag_t * there,
+    ccevents_task_source_t               * tksrc,
+    ccevents_source_event_inquirer_fun_t * event_inquirer,
+    ccevents_source_event_handler_fun_t  * event_handler)
+@{
+  ccevents_source_set(there, tksrc);
+  tksrc->event_inquirer = event_inquirer;
+  tksrc->event_handler  = event_handler;
+@}
+@end smallexample
+
+@noindent
+this module is used as follows:
+
+@smallexample
+#include <ccevents.h>
+
+bool
+event_inquirer (cce_location_tag_t * there,
+                ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  // The next step is always ready to be executed.
+  return true;
+@}
+void
+expiration_handler (cce_location_tag_t * there,
+                    ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  // Handle the expiration here.
+@}
+
+void
+step1 (cce_location_tag_t * there,
+       ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  ccevents_task_source_t *    tksrc = (ccevents_task_source_t *) src;
+  // Perform the first step here.
+  ccevents_task_source_set(there, tksrc, event_inquirer, step2);
+  ccevents_group_enqueue_source(grp, tksrc);
+@}
+void
+step2 (cce_location_tag_t * there,
+       ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  ccevents_task_source_t *    tksrc = (ccevents_task_source_t *) src;
+  // Perform the second step here.
+  ccevents_task_source_set(there, tksrc, event_inquirer, step3);
+  ccevents_group_enqueue_source(grp, tksrc);
+@}
+void
+step3 (cce_location_tag_t * there,
+       ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  // Perform the third step here.
+@}
+
+void
+doit (void)
+@{
+  ccevents_group_t              grp[1];
+  ccevents_task_source_t        tksrc[1];
+  cce_location_t                L;
+
+  if (cce_location(L)) @{
+    cce_run_error_handlers(L);
+    cce_condition_free(cce_location_condition(L));
+  @} else @{
+    ccevents_task_source_init(tksrc);
+    ccevents_task_source_set(L, tksrc, event_inquirer, step1);
+    ccevents_group_init(grp);
+    ccevents_group_enqueue_source(grp, tksrc);
+    ccevents_group_enter(grp, 3);
+    cce_run_cleanup_handlers(L);
+  @}
+@}
+@end smallexample
+
+@c page
+@node groups
+@chapter Groups of event sources
+
+
+Groups are collection of event sources that must be queried for pending events with the same
+priority.  Multiple groups are used to establish a priority order between sets of sources.  Events
+from higher priority groups should be served before events from lower priority groups.  To avoid
+starving lower groups: every, say, @math{10} events served from a higher group, @math{1} event is
+served from a lower group.
+
+
+@deftp {Struct Typedef} ccevents_group_t
+Type of groups of event sources.
+@end deftp
+
+
+@deftypefun void ccevents_group_init (ccevents_group_t * @var{grp})
+Initialise an already allocated group structure.  The internal queue of event sources is initialised
+to empty.
+@end deftypefun
+
+
+@deftypefun bool ccevents_group_queue_is_not_empty (const ccevents_group_t * @var{grp})
+Return @true{} if the group has at least one event source in the queue; otherwise return @false{}.
+@end deftypefun
+
+
+@deftypefun void ccevents_group_enqueue_source (ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
+Enqueue the events source @var{src} in the group @var{grp}.
+@end deftypefun
+
+
+@deftypefun {ccevents_source_t *} ccevents_group_dequeue_source (ccevents_group_t * @var{grp})
+Dequeue an events source from the group @var{grp} and return it.  Return @cnull{} if the group is
+empty.
+@end deftypefun
+
+
+@deftypefun bool ccevents_group_run_do_one_event (ccevents_group_t * @var{grp})
+Dequeue the next events source in @var{grp} and serve one event from it.  Return @true{} if, after
+serving one event: more event sources are waiting to be served; otherwise return @false{} if no more
+events sources are waiting.
+@end deftypefun
+
+
+@deftypefun void ccevents_group_enter (ccevents_group_t * @var{grp}, size_t @var{served_events_watermark})
+Enter the loop for this group and serve events until: a request to exit is posted; no more events
+sources are enqueued; the number of served events becomes equal to @var{served_events_watermark}.
+@end deftypefun
+
+
+@deftypefun void ccevents_group_post_request_to_leave_asap (ccevents_group_t * @var{grp})
+Post a request to exit as soon as possible the loop for this group.  This function is meant to be
+called by an event handler to cause a premature return from a call to @cfunc{ccevents_group_enter}.
+@end deftypefun
+
+@c page
+@node tasks
+@chapter Performing tasks in steps
+
+
+The task source is the most basic events source defined by @value{PACKAGE}.
+
+
+@deftp {Struct Typedef} ccevents_task_source_t
+Type of task events source.  It is ``derived'' from @objtype{ccevents_source_t}, meaning that the
+first field of @objtype{ccevents_task_source_t} is an anonymous field of type
+@objtype{ccevents_source_t}.
+@end deftp
+
+
+@deftypefun void ccevents_task_source_init (ccevents_task_source_t * @var{src})
+Initialise an already allocated task source structure referenced by @var{src}.  Apply
+@cfunc{ccevents_source_init} to @var{src}.
+@end deftypefun
+
+
+@deftypefun void ccevents_task_source_set (cce_location_tag_t * @var{there}, ccevents_task_source_t * @var{tksrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
+Start the next waiting for events in @var{tksrc}.  Apply @cfunc{ccevents_source_set} to @var{src}.
+If an exceptional condition is raised: perform a non--local exit by jumping to @var{there}.
+
+The @var{event_handler} is meant perform a task step and to call this function again to select the
+next step.
+@end deftypefun
+
+
+The task source is meant to be used as follows:
+
+@smallexample
+#include <ccevents.h>
+
+bool
+event_inquirer (cce_location_tag_t * there,
+                ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  // The next step is always ready to be executed.
+  return true;
+@}
+void
+expiration_handler (cce_location_tag_t * there,
+                    ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  // Handle the expiration here.
+@}
+
+void
+step1 (cce_location_tag_t * there,
+       ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  ccevents_task_source_t *    tksrc = (ccevents_task_source_t *) src;
+  // Perform the first step here.
+  ccevents_task_source_set(there, tksrc, event_inquirer, step2);
+  ccevents_group_enqueue_source(grp, tksrc);
+@}
+void
+step2 (cce_location_tag_t * there,
+       ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  ccevents_task_source_t *    tksrc = (ccevents_task_source_t *) src;
+  // Perform the second step here.
+  ccevents_task_source_set(there, tksrc, event_inquirer, step3);
+  ccevents_group_enqueue_source(grp, tksrc);
+@}
+void
+step3 (cce_location_tag_t * there,
+       ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  // Perform the third step here.
+@}
+
+void
+doit (void)
+@{
+  ccevents_group_t              grp[1];
+  ccevents_task_source_t        tksrc[1];
+  cce_location_t                L;
+
+  if (cce_location(L)) @{
+    cce_run_error_handlers(L);
+    cce_condition_free(cce_location_condition(L));
+  @} else @{
+    ccevents_task_source_init(tksrc);
+    ccevents_task_source_set(L, tksrc, event_inquirer, step1);
+    ccevents_group_init(grp);
+    ccevents_group_enqueue_source(grp, tksrc);
+    ccevents_group_enter(grp, 3);
+    cce_run_cleanup_handlers(L);
+  @}
+@}
+@end smallexample
+
+@c page
 @node fd
 @chapter Event source for file descriptors
 
+
+The @api{} documented in this chapter implements an event source associated to a single file
+descriptor.  This @api{} is @strong{not} suitable for server programs that need to serve a ``high''
+number of connections per second, but it should be easy to use, for example, to organise
+communication between processes through pipes or socket pairs.
 
 @menu
 * fd typedefs::                 Type definitions.
 * fd init::                     Initialisation and setup.
 * fd query::                    Predefined query functions.
+* fd do::                       Serving events.
+* fd registry::                 Registering into event sources.
 @end menu
 
 @c page
@@ -937,31 +1409,26 @@ Type of structures representing events from file descriptors.
 @section Initialisation and setup
 
 
-@deftypefun void ccevents_fd_event_source_init (ccevents_fd_source_t * @var{fds}, int @var{fd})
+@deftypefun void ccevents_fd_event_source_init (ccevents_fd_source_t * @var{fdsrc}, int @var{fd})
 Initialise an already allocated file descriptor event source.  Usually, we call this function only
-once for each file descriptor event source.  @var{FDS} is a pointer to an already allocated fd
+once for each file descriptor event source.  @var{fdsrc} is a pointer to an already allocated fd
 events source struct.  @var{FD} is the file descriptor.
 @end deftypefun
 
 
-@deftypefun void ccevents_fd_event_source_set (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fds}, ccevents_fd_source_query_fun_t * @var{query_fd_fun}, ccevents_fd_source_handler_fun_t * @var{event_handler_fun}, cevents_timeout_t @var{expiration_time}, ccevents_fd_source_expiration_handler_fun_t * @var{expiration_handler_fun})
+@deftypefun void ccevents_fd_event_source_set (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fdsrc}, ccevents_fd_source_query_fun_t * @var{query_fd_fun}, ccevents_fd_source_handler_fun_t * @var{event_handler_fun})
 Set up an already initialised file descriptor event source to wait for an event.  This function
 starts the timeout representing the expiration time.  After the event represented by the arguments
-has been served or has expired: this function can be called again for the same @var{fds} to set up
+has been served or has expired: this function can be called again for the same @var{fdsrc} to set up
 waiting for another event.  If an error occurs: raise an exception by performing a non--local exit
 to @var{there}.
 
-@var{FDS} is a pointer to an already initialised file descriptor events source.
+@var{fdsrc} is a pointer to an already initialised file descriptor events source.
 
 @var{QUERY_FD_FUN} is a pointer to the function used to query the file descriptor for events.  This
 function decides which events are expected: readability, writability, exceptional condition.
 
 @var{EVENT_HANDLER_FUN} is a pointer to the function used to handle a file descriptor event.
-
-@var{EXPIRATION_TIME} is the expiration time for the current event waiting.
-
-@var{EXPIRATION_HANDLER_FUN} is a pointer to the function used to handle expired waiting for the
-event.
 @end deftypefun
 
 
@@ -1009,7 +1476,7 @@ if (cce_location(L)) @{
 @section Predefined query functions
 
 
-@deftypefun bool ccevents_query_fd_readability (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fds})
+@deftypefun bool ccevents_query_fd_readability (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fdsrc})
 Query a file descriptor for readability.  Return @true{} if the file descriptor is readable,
 otherwise return @false{}.  If an error occurs: the value of @code{errno} might be mutated; an
 exception is raised by performing a non--local exit to @var{there}.
@@ -1018,7 +1485,7 @@ Beware that some file descriptors are always readable.
 @end deftypefun
 
 
-@deftypefun bool ccevents_query_fd_writability (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fds})
+@deftypefun bool ccevents_query_fd_writability (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fdsrc})
 Query a file descriptor for writability.  Return @true{} if the file descriptor is writable,
 otherwise return @false{}.  If an error occurs: the value of @code{errno} might be mutated; an
 exception is raised by performing a non--local exit to @var{there}.
@@ -1027,11 +1494,67 @@ Beware that some file descriptors are always writable.
 @end deftypefun
 
 
-@deftypefun bool ccevents_query_fd_exception (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fds})
+@deftypefun bool ccevents_query_fd_exception (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fdsrc})
 Query a file descriptor for an exception; this is useful when the file descriptor is a network
 socket.  Return @true{} if the file descriptor has received an exception signal, otherwise return
 @false{}.  If an error occurs: the value of @code{errno} might be mutated; an exception is raised by
 performing a non--local exit to @var{there}.
+@end deftypefun
+
+@c page
+@node fd do
+@section Serving events
+
+
+The normal way of using a file descriptor's event source is to register it into a
+@objtype{ccevents_sources_tag_t} instance and then call @cfunc{ccevents_enter}; but we can also
+serve a single event from a single file descriptor's event source.
+
+
+@deftypefun bool ccevents_fd_source_do_one_event (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fdsrc})
+Attempt to serve an event fro the event source @var{fdsrc}.  Do the following:
+
+@enumerate
+@item
+Query the file descriptor associated to the event source @var{fdsrc}.  This function will always
+query the event source first.
+
+@item
+If the event waiting's timeout has expired: call the selected expiration handler, then return
+@true{}.
+
+@item
+If an event is pending: serve it by calling the selected event handler, then return @true{}.
+
+@item
+If no event is pending: do nothing and return @false{}.
+@end enumerate
+
+If an error occurs while serving the request: raise an exception by
+performing a non--local exit to @var{there}.
+
+After this function has returned @true{}: the event source has served its purpose, so either it is
+removed from the events loop or it is reset to serve a new event by calling
+@cfunc{ccevents_fd_event_source_set}.
+@end deftypefun
+
+@c page
+@node fd registry
+@section Registering into event sources
+
+
+To be part of an event loop a file descriptor's event source must be registered into an enclosing
+event sources set.
+
+
+@deftypefun void ccevents_fd_event_source_register (ccevents_sources_t * @var{sources}, ccevents_fd_source_t * @var{fdsrc})
+Add the file descriptor's event source @var{fdsrc} to the event sources collection @var{sources}.
+@end deftypefun
+
+
+@deftypefun void ccevents_fd_event_source_forget (ccevents_sources_t * @var{sources}, ccevents_fd_source_t * @var{fdsrc})
+Remove the file descriptor's event source @var{fdsrc} from the event sources collection
+@var{sources}.
 @end deftypefun
 
 @c page
