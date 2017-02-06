@@ -97,7 +97,7 @@ ccevents_group_run_do_one_event (ccevents_group_t * grp)
   if (next_source) {
     /* We establish  a location  here to  catch and  discard exceptional
        conditions raised by the events source. */
-    cce_location_t	L;
+    cce_location_t	L[1];
 
     if (cce_location(L)) {
       cce_run_error_handlers(L);

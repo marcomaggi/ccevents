@@ -40,7 +40,7 @@ test_timeval_initialisation_from_values (void)
 {
   /* Small positive values. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool			flag = false;
     ccevents_timeval_t	T;
 
@@ -60,7 +60,7 @@ test_timeval_initialisation_from_values (void)
   }
   /* Negative microseconds: small value. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool			flag = false;
     ccevents_timeval_t	T;
 
@@ -82,7 +82,7 @@ test_timeval_initialisation_from_values (void)
   /* Negative microseconds: big value,  correct overflow of microseconds
      into seconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool			flag = false;
     ccevents_timeval_t	T;
 
@@ -104,7 +104,7 @@ test_timeval_initialisation_from_values (void)
   /* Negative microseconds: big value,  correct overflow of microseconds
      into seconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool			flag = false;
     ccevents_timeval_t	T;
 
@@ -127,7 +127,7 @@ test_timeval_initialisation_from_values (void)
      the  microseconds on  the seconds  fields causes  the latter  to be
      negative. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool			flag = false;
 
     if (cce_location(L)) {
@@ -148,7 +148,7 @@ test_timeval_initialisation_from_values (void)
 static void
 test_timeval_initialisation_from_timeval (void)
 {
-  cce_location_t	L;
+  cce_location_t	L[1];
   bool			flag = false;
   ccevents_timeval_t	T;
 
@@ -170,7 +170,7 @@ test_timeval_initialisation_from_timeval (void)
 static void
 test_timeval_initialisation_invalid_from_values (void)
 {
-  cce_location_t	L;
+  cce_location_t	L[1];
   bool			flag = false;
 
   if (cce_location(L)) {
@@ -190,7 +190,7 @@ test_timeval_initialisation_invalid_from_values (void)
 static void
 test_timeval_initialisation_overflow_from_values (void)
 {
-  cce_location_t	L;
+  cce_location_t	L[1];
   bool			flag = false;
 
   if (cce_location(L)) {
@@ -212,7 +212,7 @@ test_timeval_initialisation_overflow_from_values (void)
 static void
 test_timeval_initialisation_invalid_from_timeval (void)
 {
-  cce_location_t	L;
+  cce_location_t	L[1];
   bool			flag = false;
 
   if (cce_location(L)) {
@@ -231,7 +231,7 @@ test_timeval_initialisation_invalid_from_timeval (void)
 static void
 test_timeval_initialisation_overflow_from_timeval (void)
 {
-  cce_location_t	L;
+  cce_location_t	L[1];
   bool			flag = false;
 
   if (cce_location(L)) {
@@ -254,7 +254,7 @@ test_timeval_addition (void)
 {
   /* Successful addition. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool		flag = false;
     ccevents_timeval_t	A, B, C;
 
@@ -278,7 +278,7 @@ test_timeval_addition (void)
 
   /* Overflow adding seconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool		flag = false;
     ccevents_timeval_t	A, B;
 
@@ -299,7 +299,7 @@ test_timeval_addition (void)
 
   /* Overflow distributing microseconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool		flag = false;
     ccevents_timeval_t	A, B;
 
@@ -325,7 +325,7 @@ test_timeval_subtraction (void)
 {
   /* Successful subtraction. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool		flag = false;
     ccevents_timeval_t	A, B, C;
 
@@ -349,7 +349,7 @@ test_timeval_subtraction (void)
 
   /* Invalid value subtracting seconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool		flag = false;
     ccevents_timeval_t	A, B;
 
@@ -370,7 +370,7 @@ test_timeval_subtraction (void)
 
   /* Overflow distributing microseconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool		flag = false;
     ccevents_timeval_t	A, B;
 
@@ -396,7 +396,7 @@ test_timeval_comparison (void)
 {
   /* Equal structs. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool		flag = false;
     ccevents_timeval_t	A, B;
 
@@ -414,7 +414,7 @@ test_timeval_comparison (void)
 
   /* Greater structs by seconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool		flag = false;
     ccevents_timeval_t	A, B;
 
@@ -432,7 +432,7 @@ test_timeval_comparison (void)
 
   /* Greater structs by microseconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool		flag = false;
     ccevents_timeval_t	A, B;
 
@@ -450,7 +450,7 @@ test_timeval_comparison (void)
 
   /* Less structs by seconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool		flag = false;
     ccevents_timeval_t	A, B;
 
@@ -468,7 +468,7 @@ test_timeval_comparison (void)
 
   /* Less structs by microseconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     bool		flag = false;
     ccevents_timeval_t	A, B;
 

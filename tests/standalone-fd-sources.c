@@ -59,7 +59,7 @@ test_standalone_readability (void)
   volatile bool		error_flag = false;
   volatile bool		event_flag = false;
   volatile bool		timeout_flag = false;
-  cce_location_t	L;
+  cce_location_t	L[1];
 
   /* X[0] is the readable end.  X[1] is the writable end. */
   pipe(X);
@@ -73,12 +73,12 @@ test_standalone_readability (void)
     ccevents_fd_source_t	fdsrc[1];
     ccevents_timeout_t		expiration_time = *CCEVENTS_TIMEOUT_NEVER;
 
-    void event_handler (cce_location_tag_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
+    void event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
 			ccevents_source_t * fdsrc CCEVENTS_UNUSED)
     {
       event_flag = true;
     }
-    void expiration_handler (cce_location_tag_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
+    void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
 			     ccevents_source_t * fdsrc CCEVENTS_UNUSED)
     {
       timeout_flag = true;
@@ -130,7 +130,7 @@ test_standalone_writability (void)
   volatile bool		error_flag = false;
   volatile bool		event_flag = false;
   volatile bool		timeout_flag = false;
-  cce_location_t	L;
+  cce_location_t	L[1];
 
   /* X[0] is the readable end.  X[1] is the writable end. */
   pipe(X);
@@ -144,12 +144,12 @@ test_standalone_writability (void)
     ccevents_fd_source_t	fds[1];
     ccevents_timeout_t		expiration_time = *CCEVENTS_TIMEOUT_NEVER;
 
-    void event_handler (cce_location_tag_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
+    void event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
 			ccevents_source_t * fds CCEVENTS_UNUSED)
     {
       event_flag = true;
     }
-    void expiration_handler (cce_location_tag_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
+    void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
 			     ccevents_source_t * fds CCEVENTS_UNUSED)
     {
       timeout_flag = true;
@@ -201,7 +201,7 @@ test_standalone_exception (void)
     .sin_addr.s_addr	= htonl(INADDR_ANY),
     .sin_port		= htons(8080)
   };
-  cce_location_t	L;
+  cce_location_t	L[1];
   volatile bool		error_flag = false;
 
   if (cce_location(L)) {
@@ -245,7 +245,7 @@ test_standalone_exception (void)
       char			except_buf[2] = { '\0', '\0' };
       int			except_len = 0;
 
-      void readable_event_handler (cce_location_tag_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
+      void readable_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
       {
 	ccevents_fd_source_t * fds = (ccevents_fd_source_t *) src;
 	int	len;
@@ -254,7 +254,7 @@ test_standalone_exception (void)
 	//fprintf(stderr, "%s: read %d bytes\n", __func__, len);
 	read_len += len;
       }
-      void exception_event_handler (cce_location_tag_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
+      void exception_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
       {
 	ccevents_fd_source_t * fds = (ccevents_fd_source_t *) src;
 	int	len;
@@ -263,7 +263,7 @@ test_standalone_exception (void)
 	//fprintf(stderr, "%s: read %d bytes\n", __func__, len);
 	except_len += len;
       }
-      void expiration_handler (cce_location_tag_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
+      void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
 			       ccevents_source_t * src CCEVENTS_UNUSED)
       {
 	timeout_flag = true;
@@ -349,7 +349,7 @@ test_talking_processes_with_groups (void)
   {
     int				read_fd		= backwards_pipe[0];
     int				write_fd	= forwards_pipe[1];
-    cce_location_t		L;
+    cce_location_t		L[1];
     ccevents_timeout_t		expiration_time = *CCEVENTS_TIMEOUT_NEVER;
     ccevents_group_t		grp[1];
     ccevents_fd_source_t	read_source[1];
@@ -357,16 +357,16 @@ test_talking_processes_with_groups (void)
     volatile int		state = 0;
 
     /* Location handler to close the file descriptors. */
-    void close_read_fd_handler (cce_location_tag_t * there CCEVENTS_UNUSED, void * H CCEVENTS_UNUSED)
+    void close_read_fd_handler (cce_location_t * there CCEVENTS_UNUSED, cce_handler_t * H CCEVENTS_UNUSED)
     {
       close(read_fd);
     }
-    void close_write_fd_handler (cce_location_tag_t * there CCEVENTS_UNUSED, void * H CCEVENTS_UNUSED)
+    void close_write_fd_handler (cce_location_t * there CCEVENTS_UNUSED, cce_handler_t * H CCEVENTS_UNUSED)
     {
       close(write_fd);
     }
-    cce_handler_tag_t	H1 = { .handler_function = close_read_fd_handler  };
-    cce_handler_tag_t	H2 = { .handler_function = close_write_fd_handler };
+    cce_handler_t	H1 = { .handler_function = close_read_fd_handler  };
+    cce_handler_t	H2 = { .handler_function = close_write_fd_handler };
     cce_register_cleanup_handler(L, &H1);
     cce_register_cleanup_handler(L, &H2);
 
@@ -375,7 +375,7 @@ test_talking_processes_with_groups (void)
     auto ccevents_source_event_handler_fun_t master_expiration_handler;
 
     /* Master's write event handler. */
-    void master_write_event_handler (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+    void master_write_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
     {
       ccevents_fd_source_t * fdsrc = (ccevents_fd_source_t *) src;
       fprintf(stderr, "%s: master state %d\n", __func__, state);
@@ -411,7 +411,7 @@ test_talking_processes_with_groups (void)
     }
 
     /* Master's read event handler. */
-    void master_read_event_handler (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+    void master_read_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
     {
       ccevents_fd_source_t * fdsrc = (ccevents_fd_source_t *) src;
       fprintf(stderr, "%s: master state %d\n", __func__, state);
@@ -459,7 +459,7 @@ test_talking_processes_with_groups (void)
       }
     }
 
-    void master_expiration_handler (cce_location_tag_t * there CCEVENTS_UNUSED,
+    void master_expiration_handler (cce_location_t * there CCEVENTS_UNUSED,
 				    ccevents_group_t * grp CCEVENTS_UNUSED,
 				    ccevents_source_t * src CCEVENTS_UNUSED)
     {
@@ -490,7 +490,7 @@ test_talking_processes_with_groups (void)
   {
     int				read_fd		= forwards_pipe[0];
     int				write_fd	= backwards_pipe[1];
-    cce_location_t		L;
+    cce_location_t		L[1];
     ccevents_timeout_t		expiration_time = *CCEVENTS_TIMEOUT_NEVER;
     ccevents_group_t		grp[1];
     ccevents_fd_source_t	read_source[1];
@@ -499,16 +499,16 @@ test_talking_processes_with_groups (void)
     bool			error_flag = false;
 
     /* Location handler to close the file descriptors. */
-    void close_read_fd_handler (cce_location_tag_t * there CCEVENTS_UNUSED, void * H CCEVENTS_UNUSED)
+    void close_read_fd_handler (cce_location_t * there CCEVENTS_UNUSED, cce_handler_t * H CCEVENTS_UNUSED)
     {
       close(read_fd);
     }
-    void close_write_fd_handler (cce_location_tag_t * there CCEVENTS_UNUSED, void * H CCEVENTS_UNUSED)
+    void close_write_fd_handler (cce_location_t * there CCEVENTS_UNUSED, cce_handler_t * H CCEVENTS_UNUSED)
     {
       close(write_fd);
     }
-    cce_handler_tag_t	H1 = { .handler_function = close_read_fd_handler  };
-    cce_handler_tag_t	H2 = { .handler_function = close_write_fd_handler };
+    cce_handler_t	H1 = { .handler_function = close_read_fd_handler  };
+    cce_handler_t	H2 = { .handler_function = close_write_fd_handler };
     cce_register_cleanup_handler(L, &H1);
     cce_register_cleanup_handler(L, &H2);
 
@@ -517,7 +517,7 @@ test_talking_processes_with_groups (void)
     auto ccevents_source_event_handler_fun_t slave_expiration_handler;
 
     /* Slave's read event handler. */
-    void slave_read_event_handler (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+    void slave_read_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
     {
       ccevents_fd_source_t * fdsrc = (ccevents_fd_source_t *) src;
       fprintf(stderr, "%s: slave state %d\n", __func__, state);
@@ -566,7 +566,7 @@ test_talking_processes_with_groups (void)
     }
 
     /* Slave's write event handler. */
-    void slave_write_event_handler (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+    void slave_write_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
     {
       ccevents_fd_source_t * fdsrc = (ccevents_fd_source_t *) src;
       fprintf(stderr, "%s: slave state %d\n", __func__, state);
@@ -600,7 +600,7 @@ test_talking_processes_with_groups (void)
       }
     }
 
-    void slave_expiration_handler (cce_location_tag_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
+    void slave_expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
 				   ccevents_source_t * src CCEVENTS_UNUSED)
     {
       return;
@@ -632,7 +632,7 @@ test_talking_processes_with_groups (void)
   /* Create the slave process and run  the thing.  The parent process is
      the master.  The slave process is the child. */
   {
-    cce_location_t	L;
+    cce_location_t	L[1];
     pid_t		pid;
 
     if (cce_location(L)) {

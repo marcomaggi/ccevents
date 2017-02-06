@@ -38,7 +38,7 @@
 static void
 test_timeout_initialisation (void)
 {
-  cce_location_t	L;
+  cce_location_t	L[1];
   ccevents_timeout_t	to;
   bool			flag = false;
 
@@ -61,7 +61,7 @@ test_timeout_initialisation_correct_milliseconds_overflow (void)
 {
   /* Positive milliseconds overflow. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	to;
     bool		flag = false;
 
@@ -81,7 +81,7 @@ test_timeout_initialisation_correct_milliseconds_overflow (void)
   }
   /* LONG_MAX milliseconds overflow. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	to;
     bool		flag = false;
 
@@ -101,7 +101,7 @@ test_timeout_initialisation_correct_milliseconds_overflow (void)
   }
   /* Negative milliseconds distribution. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	to;
     bool		flag = false;
 
@@ -121,7 +121,7 @@ test_timeout_initialisation_correct_milliseconds_overflow (void)
   }
   /* LONG_MIN milliseconds distribution. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	to;
     bool		flag = false;
 
@@ -147,7 +147,7 @@ test_timeout_initialisation_correct_microseconds_overflow (void)
 {
   /* Positive microseconds overflow. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	to;
     bool			flag = false;
 
@@ -167,7 +167,7 @@ test_timeout_initialisation_correct_microseconds_overflow (void)
   }
   /* Negative microseconds distribution. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	to;
     bool		flag = false;
 
@@ -187,7 +187,7 @@ test_timeout_initialisation_correct_microseconds_overflow (void)
   }
   /* Negative microseconds distribution. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	to;
     bool		flag = false;
 
@@ -207,7 +207,7 @@ test_timeout_initialisation_correct_microseconds_overflow (void)
   }
   /* LONG_MIN milliseconds distribution. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	to;
     bool		flag = false;
 
@@ -233,7 +233,7 @@ test_timeout_initialisation_double_microseconds_overflow (void)
 /* The microseconds value  overflows into both the  milliseconds and the
    seconds fields. */
 {
-  cce_location_t	L;
+  cce_location_t	L[1];
   ccevents_timeout_t	to;
   bool			flag = false;
 
@@ -255,7 +255,7 @@ test_timeout_initialisation_double_microseconds_overflow (void)
 static void
 test_condition_invalid_milliseconds_overflow (void)
 {
-  cce_location_t	L;
+  cce_location_t	L[1];
   ccevents_timeout_t	to;
   bool			flag = false;
 
@@ -278,7 +278,7 @@ test_condition_invalid_milliseconds_overflow (void)
 static void
 test_condition_invalid_microseconds_overflow (void)
 {
-  cce_location_t	L;
+  cce_location_t	L[1];
   ccevents_timeout_t	to;
   bool			flag = false;
 
@@ -301,7 +301,7 @@ test_condition_invalid_microseconds_overflow (void)
 static void
 test_condition_invalid_seconds (void)
 {
-  cce_location_t	L;
+  cce_location_t	L[1];
   ccevents_timeout_t	to;
   bool			flag = false;
 
@@ -324,7 +324,7 @@ test_condition_invalid_seconds (void)
 void
 test_timeout_getters (void)
 {
-  cce_location_t	L;
+  cce_location_t	L[1];
   ccevents_timeout_t	to;
   bool			flag = false;
 
@@ -360,7 +360,7 @@ test_timeout_predicates (void)
 {
   /* Infinite time span. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	to;
     bool			flag = false;
 
@@ -376,7 +376,7 @@ test_timeout_predicates (void)
   }
   /* Not infinite time span. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	to;
     bool			flag = false;
 
@@ -398,7 +398,7 @@ test_timeout_span_comparisons (void)
 {
   /* Equal. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	A;
     ccevents_timeout_t	B;
     bool		flag = false;
@@ -416,7 +416,7 @@ test_timeout_span_comparisons (void)
   }
   /* Less by seconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	A;
     ccevents_timeout_t	B;
     bool		flag = false;
@@ -434,7 +434,7 @@ test_timeout_span_comparisons (void)
   }
   /* Less by milliseconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	A;
     ccevents_timeout_t	B;
     bool		flag = false;
@@ -452,7 +452,7 @@ test_timeout_span_comparisons (void)
   }
   /* Less by microseconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	A;
     ccevents_timeout_t	B;
     bool		flag = false;
@@ -470,7 +470,7 @@ test_timeout_span_comparisons (void)
   }
   /* Greater by seconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	A;
     ccevents_timeout_t	B;
     bool		flag = false;
@@ -488,7 +488,7 @@ test_timeout_span_comparisons (void)
   }
   /* Greater by milliseconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	A;
     ccevents_timeout_t	B;
     bool		flag = false;
@@ -506,7 +506,7 @@ test_timeout_span_comparisons (void)
   }
   /* Greater by microseconds. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	A;
     ccevents_timeout_t	B;
     bool		flag = false;
@@ -530,7 +530,7 @@ test_timeout_expiration_time_comparisons (void)
 {
   /* Less. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	A;
     ccevents_timeout_t	B;
     bool		flag = false;
@@ -552,7 +552,7 @@ test_timeout_expiration_time_comparisons (void)
   }
   /* Greater. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	A;
     ccevents_timeout_t	B;
     bool		flag = false;
@@ -580,7 +580,7 @@ test_timeout_operations (void)
 {
   /* Start and expire. */
   if (1) {
-    cce_location_t	L;
+    cce_location_t	L[1];
     ccevents_timeout_t	to;
     struct timespec	sleep_span = { .tv_sec = 1, .tv_nsec = 0 };
     struct timespec	remaining_time;

@@ -35,14 +35,14 @@
  ** ----------------------------------------------------------------- */
 
 static bool
-default_event_query (cce_location_tag_t *	L	CCEVENTS_UNUSED,
+default_event_query (cce_location_t *	L	CCEVENTS_UNUSED,
 		     ccevents_group_t *		grp	CCEVENTS_UNUSED,
 		     ccevents_source_t *	fdsrc	CCEVENTS_UNUSED)
 {
   return false;
 }
 static void
-default_event_handler (cce_location_tag_t *	L	CCEVENTS_UNUSED,
+default_event_handler (cce_location_t *	L	CCEVENTS_UNUSED,
 		       ccevents_group_t *	grp	CCEVENTS_UNUSED,
 		       ccevents_source_t *	fdsrc	CCEVENTS_UNUSED)
 {
@@ -54,13 +54,13 @@ default_event_handler (cce_location_tag_t *	L	CCEVENTS_UNUSED,
  ** ----------------------------------------------------------------- */
 
 static bool
-method_event_inquirer (cce_location_tag_t * L, ccevents_group_t * grp, ccevents_source_t * src)
+method_event_inquirer (cce_location_t * L, ccevents_group_t * grp, ccevents_source_t * src)
 {
   ccevents_fd_source_t *	fdsrc = (ccevents_fd_source_t *) src;
   return fdsrc->event_inquirer(L, grp, fdsrc);
 }
 static void
-method_event_handler (cce_location_tag_t * L, ccevents_group_t * grp, ccevents_source_t * src)
+method_event_handler (cce_location_t * L, ccevents_group_t * grp, ccevents_source_t * src)
 {
   ccevents_fd_source_t *	fdsrc = (ccevents_fd_source_t *) src;
   return fdsrc->event_handler(L, grp, fdsrc);
@@ -86,7 +86,7 @@ ccevents_fd_event_source_init (ccevents_fd_source_t * fdsrc, int fd)
   fdsrc->event_handler		= default_event_handler;
 }
 void
-ccevents_fd_event_source_set (cce_location_tag_t * there,
+ccevents_fd_event_source_set (cce_location_t * there,
 			      ccevents_fd_source_t * fdsrc,
 			      ccevents_source_event_inquirer_fun_t * event_inquirer,
 			      ccevents_source_event_handler_fun_t * event_handler)
@@ -113,7 +113,7 @@ ccevents_fd_event_source_set (cce_location_tag_t * there,
  ** ----------------------------------------------------------------- */
 
 bool
-ccevents_query_fd_readability (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_query_fd_readability (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 /* Query a file descriptor for readability. */
 {
   /* Remember that "select()" might mutate this struct. */
@@ -142,7 +142,7 @@ ccevents_query_fd_readability (cce_location_tag_t * there, ccevents_group_t * gr
 }
 
 bool
-ccevents_query_fd_writability (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_query_fd_writability (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 /* Query a file descriptor for writability. */
 {
   /* Remember that "select()" might mutate this struct. */
@@ -172,7 +172,7 @@ ccevents_query_fd_writability (cce_location_tag_t * there, ccevents_group_t * gr
 }
 
 bool
-ccevents_query_fd_exception (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_query_fd_exception (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 /* Query a file descriptor for exception. */
 {
   /* Remember that "select()" might mutate this struct. */

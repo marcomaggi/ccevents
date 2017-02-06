@@ -67,7 +67,7 @@ const ccevents_timeout_t * CCEVENTS_TIMEOUT_NOW = &TIMEOUT_NOW;
  ** ----------------------------------------------------------*/
 
 static void
-normalise_little_into_big (cce_location_tag_t * there,
+normalise_little_into_big (cce_location_t * there,
 			   long * hugep, long * bigsp, long * littlesp)
 /* To make it clear, let's assume:
  *
@@ -132,7 +132,7 @@ normalise_little_into_big (cce_location_tag_t * there,
 }
 
 void
-ccevents_timeout_init (cce_location_tag_t * there, ccevents_timeout_t * to,
+ccevents_timeout_init (cce_location_t * there, ccevents_timeout_t * to,
 		       long seconds, long milliseconds, long microseconds)
 /* Initialise  an   already  allocated  timeout  structure.    Raise  an
    exception if  the time  span values  would cause  an overflow  in the
@@ -272,7 +272,7 @@ ccevents_timeout_compare_expiration_time (const ccevents_timeout_t * A, const cc
  ** ----------------------------------------------------------*/
 
 void
-ccevents_timeout_start (cce_location_tag_t * there, ccevents_timeout_t * to)
+ccevents_timeout_start (cce_location_t * there, ccevents_timeout_t * to)
 {
   if (ccevents_timeout_infinite_time_span(to)) {
     to->tv_sec  = LONG_MAX;

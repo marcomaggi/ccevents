@@ -33,13 +33,13 @@
  ** ----------------------------------------------------------------- */
 
 static bool
-method_event_inquirer (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+method_event_inquirer (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 {
   ccevents_task_source_t *	tksrc = (ccevents_task_source_t *) src;
   return tksrc->event_inquirer(there, grp, tksrc);
 }
 static void
-method_event_handler (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+method_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 {
   ccevents_task_source_t *	tksrc = (ccevents_task_source_t *) src;
   return tksrc->event_handler(there, grp, tksrc);
@@ -62,7 +62,7 @@ ccevents_task_source_init (ccevents_task_source_t * tksrc)
 }
 
 void
-ccevents_task_source_set (cce_location_tag_t * there, ccevents_task_source_t * tksrc,
+ccevents_task_source_set (cce_location_t * there, ccevents_task_source_t * tksrc,
 			  ccevents_source_event_inquirer_fun_t     * event_inquirer,
 			  ccevents_source_event_handler_fun_t      * event_handler)
 /* Set up an already initialised source to wait for an event.  Start the

@@ -168,7 +168,7 @@ and Libev:
 while @value{PACKAGE} will, maybe, never reach their level of features and reliability: it is an
 interesting exercise in programming.
 
-This package depends on the package CCExceptions, at least version 0.2, to handle exceptional
+This package depends on the package CCExceptions, at least version 0.3, to handle exceptional
 conditions; @ref{references} for details on downloading it.
 
 @value{PACKAGE} installs the single header file @file{ccevents.h}.  All the function names in the
@@ -371,7 +371,7 @@ Return @true{} if @var{C} is an exceptional condition object of with type descri
 To catch this exceptional condition we can to:
 
 @smallexample
-cce_location_t        L;
+cce_location_t        L[1];
 ccevents_timeval_t    to;
 
 if (cce_location(L)) @{
@@ -445,7 +445,7 @@ Return @true{} if @var{C} is an exceptional condition object of with type descri
 To catch this exceptional condition we can to:
 
 @smallexample
-cce_location_t        L;
+cce_location_t        L[1];
 ccevents_timeval_t    to;
 
 if (cce_location(L)) @{
@@ -519,7 +519,7 @@ Return @true{} if @var{C} is an exceptional condition object of with type descri
 To catch this exceptional condition we can to:
 
 @smallexample
-cce_location_t        L;
+cce_location_t        L[1];
 ccevents_timeval_t    to;
 
 if (cce_location(L)) @{
@@ -597,7 +597,7 @@ Return @true{} if @var{C} is an exceptional condition object of with type descri
 To catch this exceptional condition we can to:
 
 @smallexample
-cce_location_t        L;
+cce_location_t        L[1];
 ccevents_timeout_t    to;
 
 if (cce_location(L)) @{
@@ -666,7 +666,7 @@ Return @true{} if @var{C} is an exceptional condition object of with type descri
 To catch this exceptional condition we can to:
 
 @smallexample
-cce_location_t        L;
+cce_location_t        L[1];
 ccevents_timeout_t    to;
 
 if (cce_location(L)) @{
@@ -716,7 +716,7 @@ An anonymous field.
 @end deftp
 
 
-@deftypefun ccevents_timeval_t ccevents_timeval_init (cce_location_tag_t * there, long @var{seconds}, long @var{microseconds})
+@deftypefun ccevents_timeval_t ccevents_timeval_init (cce_location_t * there, long @var{seconds}, long @var{microseconds})
 Build and return a timeval structure initialised and normalised with the given arguments.  If an
 error occurs while normalising: an exception is raised by performing a non--local exit to
 @var{there}.
@@ -726,7 +726,7 @@ The argument @var{seconds} is meant to be in the range @samp{[0, LONG_MAX]}.  Th
 @end deftypefun
 
 
-@deftypefun ccevents_timeval_t ccevents_timeval_normalise (cce_location_tag_t * @var{there}, struct timeval @var{T})
+@deftypefun ccevents_timeval_t ccevents_timeval_normalise (cce_location_t * @var{there}, struct timeval @var{T})
 Build and return a timeval structure initialised and normalised with the given arguments.  If an
 error occurs while normalising: an exception is raised by performing a non--local exit to
 @var{there}.
@@ -736,14 +736,14 @@ The field @code{tv_sec} of @var{T} is meant to be in the range @samp{[0, LONG_MA
 @end deftypefun
 
 
-@deftypefun ccevents_timeval_t ccevents_timeval_add (cce_location_tag_t * @var{there}, ccevents_timeval_t @var{A}, ccevents_timeval_t @var{B})
+@deftypefun ccevents_timeval_t ccevents_timeval_add (cce_location_t * @var{there}, ccevents_timeval_t @var{A}, ccevents_timeval_t @var{B})
 Add the two timeval values @var{A} and @var{B} and return a normalised timeval value.  If an error
 occurs while adding or normalising: an exception is raised by performing a non--local exit to
 @var{there}.
 @end deftypefun
 
 
-@deftypefun ccevents_timeval_t ccevents_timeval_sub (cce_location_tag_t * @var{there}, ccevents_timeval_t @var{A}, ccevents_timeval_t @var{B})
+@deftypefun ccevents_timeval_t ccevents_timeval_sub (cce_location_t * @var{there}, ccevents_timeval_t @var{A}, ccevents_timeval_t @var{B})
 Subtract @var{B} from @var{A} and return a normalised timeval value representing the difference.  If
 an error occurs while subtracting or normalising: an exception is raised by performing a non--local
 exit to @var{there}.
@@ -810,7 +810,7 @@ To copy a timeout data structure we can use the C language @code{=} operator.
 @section Constructors
 
 
-@deftypefun void ccevents_timeout_init (cce_location_tag_t * @var{there}, ccevents_timeout_t * @var{to}, long @var{seconds}, long @var{milliseconds}, long @var{microseconds})
+@deftypefun void ccevents_timeout_init (cce_location_t * @var{there}, ccevents_timeout_t * @var{to}, long @var{seconds}, long @var{milliseconds}, long @var{microseconds})
 Initialise an already allocated timeout structure.  The arguments @var{seconds}, @var{milliseconds}
 and @var{microseconds} represent a time span towards the future:
 
@@ -915,7 +915,7 @@ if @code{@var{A} == @var{B}}, @code{+1} if @code{@var{A} > @var{B}}.
 @section Operations
 
 
-@deftypefun void ccevents_timeout_start (cce_location_tag_t * @var{there}, ccevents_timeout_t * @var{to})
+@deftypefun void ccevents_timeout_start (cce_location_t * @var{there}, ccevents_timeout_t * @var{to})
 Start the timer associated to the already initialised @var{to} object: acquire the current absolute
 time and compute the time instant that will expire the timeout.  The expiration time is stored in
 the structure referenced by @var{to}.  As a special case: if the time span is infinite, the
@@ -976,7 +976,7 @@ nothing is registered in the source structure.
 @end deftp
 
 
-@deftypefn {Function Type} bool ccevents_source_event_inquirer_fun_t (cce_location_tag_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
+@deftypefn {Function Type} bool ccevents_source_event_inquirer_fun_t (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
 Function prototype of event inquiry functions.  A function of this type is meant to query the event
 source referenced by @var{src} to determine if an event is pending or not:
 
@@ -999,7 +999,7 @@ is pending: the inquirer function re--enqueues @var{src} into @var{grp}.
 @end deftypefn
 
 
-@deftypefn {Function Type} void ccevents_source_event_handler_fun_t (cce_location_tag_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
+@deftypefn {Function Type} void ccevents_source_event_handler_fun_t (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
 Function prototype of event handler functions.  A function of this type is meant to serve a pending
 event on the event source referenced by @var{src}.  If serving the event raises an exceptional
 condition: a non--local exit must be performed by jumping to @var{there}.
@@ -1018,7 +1018,7 @@ in the group selecting another event handler (say: to write data to the same net
 @end deftypefn
 
 
-@deftypefn {Function Type} void ccevents_source_expiration_handler_fun_t (cce_location_tag_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
+@deftypefn {Function Type} void ccevents_source_expiration_handler_fun_t (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
 Function prototype of expiration handler functions.  A function of this type is meant to react to a
 timeout expiration associated to the event source referenced by @var{src}.  If handling the timeout
 raises an exceptional condition: a non--local exit must be performed by jumping to @var{there}.
@@ -1067,14 +1067,14 @@ is performed by @cfunc{ccevents_source_set}.
 @end deftypefun
 
 
-@deftypefun void ccevents_source_set (cce_location_tag_t * @var{there}, ccevents_source_t * @var{src})
+@deftypefun void ccevents_source_set (cce_location_t * @var{there}, ccevents_source_t * @var{src})
 Start the waiting for the next event.  The expiration timeout is started by registering the current
 calendar time.  If an exceptional condition is raised: a non--local exit is performed by jumping to
 @var{there}.  This function is typically invoked by the set function of the events source subtype.
 @end deftypefun
 
 
-@deftypefun bool ccevents_source_do_one_event (cce_location_tag_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
+@deftypefun bool ccevents_source_do_one_event (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
 Consume one event from the events source referenced by @var{src} if there is one.  Return @true{} if
 one event was served or the timeout expired; otherwise @false{}.  If an exceptional condition is
 raised: a non--local exit is performed by jumping to @var{there}.
@@ -1118,7 +1118,7 @@ typedef struct ccevents_task_source_t @{
 @} ccevents_task_source_t;
 
 static bool
-method_event_inquirer (cce_location_tag_t * there,
+method_event_inquirer (cce_location_t * there,
                        ccevents_group_t   * grp,
                        ccevents_source_t  * src)
 @{
@@ -1127,7 +1127,7 @@ method_event_inquirer (cce_location_tag_t * there,
 @}
 
 static void
-method_event_handler (cce_location_tag_t * there,
+method_event_handler (cce_location_t * there,
                       ccevents_group_t   * grp,
                       ccevents_source_t  * src)
 @{
@@ -1147,7 +1147,7 @@ ccevents_task_source_init (ccevents_task_source_t * tksrc)
 @}
 
 void
-ccevents_task_source_set (cce_location_tag_t * there,
+ccevents_task_source_set (cce_location_t * there,
     ccevents_task_source_t               * tksrc,
     ccevents_source_event_inquirer_fun_t * event_inquirer,
     ccevents_source_event_handler_fun_t  * event_handler)
@@ -1165,21 +1165,21 @@ this module is used as follows:
 #include <ccevents.h>
 
 bool
-event_inquirer (cce_location_tag_t * there,
+event_inquirer (cce_location_t * there,
                 ccevents_group_t * grp, ccevents_source_t * src)
 @{
   // The next step is always ready to be executed.
   return true;
 @}
 void
-expiration_handler (cce_location_tag_t * there,
+expiration_handler (cce_location_t * there,
                     ccevents_group_t * grp, ccevents_source_t * src)
 @{
   // Handle the expiration here.
 @}
 
 void
-step1 (cce_location_tag_t * there,
+step1 (cce_location_t * there,
        ccevents_group_t * grp, ccevents_source_t * src)
 @{
   ccevents_task_source_t *    tksrc = (ccevents_task_source_t *) src;
@@ -1188,7 +1188,7 @@ step1 (cce_location_tag_t * there,
   ccevents_group_enqueue_source(grp, tksrc);
 @}
 void
-step2 (cce_location_tag_t * there,
+step2 (cce_location_t * there,
        ccevents_group_t * grp, ccevents_source_t * src)
 @{
   ccevents_task_source_t *    tksrc = (ccevents_task_source_t *) src;
@@ -1197,7 +1197,7 @@ step2 (cce_location_tag_t * there,
   ccevents_group_enqueue_source(grp, tksrc);
 @}
 void
-step3 (cce_location_tag_t * there,
+step3 (cce_location_t * there,
        ccevents_group_t * grp, ccevents_source_t * src)
 @{
   // Perform the third step here.
@@ -1208,7 +1208,7 @@ doit (void)
 @{
   ccevents_group_t              grp[1];
   ccevents_task_source_t        tksrc[1];
-  cce_location_t                L;
+  cce_location_t                L[1];
 
   if (cce_location(L)) @{
     cce_run_error_handlers(L);
@@ -1302,7 +1302,7 @@ Initialise an already allocated task source structure referenced by @var{src}.  
 @end deftypefun
 
 
-@deftypefun void ccevents_task_source_set (cce_location_tag_t * @var{there}, ccevents_task_source_t * @var{tksrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
+@deftypefun void ccevents_task_source_set (cce_location_t * @var{there}, ccevents_task_source_t * @var{tksrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
 Start the next waiting for events in @var{tksrc}.  Apply @cfunc{ccevents_source_set} to @var{src}.
 If an exceptional condition is raised: perform a non--local exit by jumping to @var{there}.
 
@@ -1317,21 +1317,21 @@ The task source is meant to be used as follows:
 #include <ccevents.h>
 
 bool
-event_inquirer (cce_location_tag_t * there,
+event_inquirer (cce_location_t * there,
                 ccevents_group_t * grp, ccevents_source_t * src)
 @{
   // The next step is always ready to be executed.
   return true;
 @}
 void
-expiration_handler (cce_location_tag_t * there,
+expiration_handler (cce_location_t * there,
                     ccevents_group_t * grp, ccevents_source_t * src)
 @{
   // Handle the expiration here.
 @}
 
 void
-step1 (cce_location_tag_t * there,
+step1 (cce_location_t * there,
        ccevents_group_t * grp, ccevents_source_t * src)
 @{
   ccevents_task_source_t *    tksrc = (ccevents_task_source_t *) src;
@@ -1340,7 +1340,7 @@ step1 (cce_location_tag_t * there,
   ccevents_group_enqueue_source(grp, tksrc);
 @}
 void
-step2 (cce_location_tag_t * there,
+step2 (cce_location_t * there,
        ccevents_group_t * grp, ccevents_source_t * src)
 @{
   ccevents_task_source_t *    tksrc = (ccevents_task_source_t *) src;
@@ -1349,7 +1349,7 @@ step2 (cce_location_tag_t * there,
   ccevents_group_enqueue_source(grp, tksrc);
 @}
 void
-step3 (cce_location_tag_t * there,
+step3 (cce_location_t * there,
        ccevents_group_t * grp, ccevents_source_t * src)
 @{
   // Perform the third step here.
@@ -1360,7 +1360,7 @@ doit (void)
 @{
   ccevents_group_t              grp[1];
   ccevents_task_source_t        tksrc[1];
-  cce_location_t                L;
+  cce_location_t                L[1];
 
   if (cce_location(L)) @{
     cce_run_error_handlers(L);
@@ -1417,7 +1417,7 @@ structure.  @var{FD} is the file descriptor.
 @end deftypefun
 
 
-@deftypefun void ccevents_fd_event_source_set (cce_location_tag_t * @var{there}, ccevents_fd_source_t * @var{fdsrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
+@deftypefun void ccevents_fd_event_source_set (cce_location_t * @var{there}, ccevents_fd_source_t * @var{fdsrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
 Set up an already initialised file descriptor events source to wait for an event.  This function
 applies @cfunc{ccevents_source_set} to the arguments @var{there} and @var{fdsrc}.  If an error
 occurs: raise an exception by performing a non--local exit to @var{there}.
@@ -1442,16 +1442,16 @@ ccevents_group_t        grp[1];
 ccevents_fd_source_t    fdsrc[1];
 ccevents_timeout_t      expiration_time;
 int                     X[2];
-cce_location_t          L;
+cce_location_t          L[1];
 
-void event_handler (cce_location_tag_t * there,
+void event_handler (cce_location_t * there,
                     ccevents_group_t   * grp,
                     ccevents_source_t  * src)
 @{
   // We should do something here.
   return;
 @}
-void expiration_handler (cce_location_tag_t * there,
+void expiration_handler (cce_location_t * there,
                          ccevents_group_t   * grp,
                          ccevents_source_t  * src)
 @{
@@ -1487,7 +1487,7 @@ if (cce_location(L)) @{
 @section Predefined query functions
 
 
-@deftypefun bool ccevents_query_fd_readability (cce_location_tag_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{fdsrc})
+@deftypefun bool ccevents_query_fd_readability (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{fdsrc})
 Query a file descriptor for readability.  This function matches the type
 @objtype{ccevents_source_event_inquirer_fun_t}.  Return @true{} if the file descriptor is readable,
 otherwise return @false{}.  If an error occurs: the value of @code{errno} might be mutated; an
@@ -1500,7 +1500,7 @@ Beware that some file descriptors are always readable.
 @end deftypefun
 
 
-@deftypefun bool ccevents_query_fd_writability (cce_location_tag_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{fdsrc})
+@deftypefun bool ccevents_query_fd_writability (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{fdsrc})
 Query a file descriptor for writability.  This function matches the type
 @objtype{ccevents_source_event_inquirer_fun_t}.  Return @true{} if the file descriptor is writable,
 otherwise return @false{}.  If an error occurs: the value of @code{errno} might be mutated; an
@@ -1513,7 +1513,7 @@ Beware that some file descriptors are always writable.
 @end deftypefun
 
 
-@deftypefun bool ccevents_query_fd_exception (cce_location_tag_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{fdsrc})
+@deftypefun bool ccevents_query_fd_exception (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{fdsrc})
 Query a file descriptor for an exception; this is useful when the file descriptor is a network
 socket.  This function matches the type @objtype{ccevents_source_event_inquirer_fun_t}.  Return
 @true{} if the file descriptor has received an exception signal, otherwise return @false{}.  If an

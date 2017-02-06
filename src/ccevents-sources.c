@@ -32,7 +32,7 @@
 #include "ccevents-internals.h"
 
 static void
-default_expiration_handler (cce_location_tag_t * L   CCEVENTS_UNUSED,
+default_expiration_handler (cce_location_t * L   CCEVENTS_UNUSED,
 			    ccevents_group_t   * grp CCEVENTS_UNUSED,
 			    ccevents_source_t  * src CCEVENTS_UNUSED)
 {
@@ -61,7 +61,7 @@ ccevents_source_set_timeout (ccevents_source_t * src, ccevents_timeout_t expirat
 }
 
 void
-ccevents_source_set (cce_location_tag_t * there, ccevents_source_t * src)
+ccevents_source_set (cce_location_t * there, ccevents_source_t * src)
 /* Set up an already initialised source to wait for an event.  Start the
    expiration timer.
 */
@@ -74,7 +74,7 @@ ccevents_source_set (cce_location_tag_t * there, ccevents_source_t * src)
 }
 
 bool
-ccevents_source_query (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_source_query (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 /* Query SRC for a pending event to be served.  Return TRUE if a pending
    event exists, otherwise return FALSE.
 
@@ -90,7 +90,7 @@ ccevents_source_query (cce_location_tag_t * there, ccevents_group_t * grp, cceve
 }
 
 void
-ccevents_source_handle_event (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_source_handle_event (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 /* Handle a  pending event for SRC.   This function must be  called only
    after  a  call  to  "ccevents_source_query()"  applied  to  the  same
    operands returns TRUE.
@@ -107,7 +107,7 @@ ccevents_source_handle_event (cce_location_tag_t * there, ccevents_group_t * grp
 }
 
 void
-ccevents_source_handle_expiration (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_source_handle_expiration (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 /* Handle a timeout expiration event for SRC.
 
    If handling  the event raises  an exceptional condition:  a non-local
@@ -122,7 +122,7 @@ ccevents_source_handle_expiration (cce_location_tag_t * there, ccevents_group_t 
 }
 
 bool
-ccevents_source_do_one_event (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_source_do_one_event (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 /* Consume one event  from SRC, if there is a  pending one.  Return TRUE
    if one event was served or the timeout expired; otherwise FALSE.
 

@@ -101,7 +101,7 @@ AC_CACHE_SAVE
 dnl page
 #### external libraries
 
-PKG_CHECK_MODULES([CCEXCEPTIONS],[ccexceptions >= 0.2])
+PKG_CHECK_MODULES([CCEXCEPTIONS],[ccexceptions >= 0.3])
 
 AC_CACHE_SAVE
 

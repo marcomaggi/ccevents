@@ -41,7 +41,7 @@
 
 
 ccevents_timeval_t
-ccevents_timeval_normalise (cce_location_tag_t * there, struct timeval T)
+ccevents_timeval_normalise (cce_location_t * there, struct timeval T)
 /* Normalise  the structure  "T" and  return the  result.  The  returned
  * structure is guaranteed to have:
  *
@@ -95,7 +95,7 @@ ccevents_timeval_normalise (cce_location_tag_t * there, struct timeval T)
   }
 }
 ccevents_timeval_t
-ccevents_timeval_init (cce_location_tag_t * there, long seconds, long microseconds)
+ccevents_timeval_init (cce_location_t * there, long seconds, long microseconds)
 {
   struct timeval	T = { .tv_sec = seconds, .tv_usec = microseconds };
   if (0 > seconds) {
@@ -106,7 +106,7 @@ ccevents_timeval_init (cce_location_tag_t * there, long seconds, long microsecon
 
 
 ccevents_timeval_t
-ccevents_timeval_add (cce_location_tag_t * there, ccevents_timeval_t A, ccevents_timeval_t B)
+ccevents_timeval_add (cce_location_t * there, ccevents_timeval_t A, ccevents_timeval_t B)
 /* Add two  normalised timeval  structures and  return the  result.  The
  * returned structure is guaranteed to have:
  *
@@ -142,7 +142,7 @@ ccevents_timeval_add (cce_location_tag_t * there, ccevents_timeval_t A, ccevents
 
 
 ccevents_timeval_t
-ccevents_timeval_sub (cce_location_tag_t * there, ccevents_timeval_t A, ccevents_timeval_t B)
+ccevents_timeval_sub (cce_location_t * there, ccevents_timeval_t A, ccevents_timeval_t B)
 /* Subtract B from A  and return the result: R = A -  B.  Assume A and B
  * are normalised, that is:
  *
