@@ -22,7 +22,7 @@ This package installs  a C language library implementing  an event loop.
 It is written in C11 with GCC extensions.
 
   This package  depends on  the package  CCExceptions, at  least version
-0.2.
+0.3.
 
   The package  makes use  of the  GNU Autotools  and it  is tested  on a
 GNU+Linux system.
