@@ -17,7 +17,7 @@
 #include <ccevents.h>
 
 int
-main (int argc, const char *const argv[])
+main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
   ccevents_init();
   printf("version number string: %s\n", cct_version_string());

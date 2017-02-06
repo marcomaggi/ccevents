@@ -138,19 +138,19 @@ test_multi_tasks (void)
     tsk->step3_flag		= false;
   }
 
-  bool event_inquirer (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+  bool event_inquirer (cce_location_tag_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
   /* The next step is always ready to be executed. */
   {
     task_t *	tsk = (task_t *) src;
     fprintf(stderr, "%s: query for readiness\n", tsk->name);
     return true;
   }
-  void expiration_handler (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+  void expiration_handler (cce_location_tag_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
   {
     task_t *	tsk = (task_t *) src;
     tsk->expiration_flag = true;
   }
-  void step1 (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+  void step1 (cce_location_tag_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
   {
     task_t *	tsk = (task_t *) src;
     fprintf(stderr, "%s: step1\n", tsk->name);
@@ -158,7 +158,7 @@ test_multi_tasks (void)
     ccevents_task_source_set(there, tsk, event_inquirer, step2);
     ccevents_group_enqueue_source(grp, tsk);
   }
-  void step2 (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+  void step2 (cce_location_tag_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
   {
     task_t *	tsk = (task_t *) src;
     fprintf(stderr, "%s: step2\n", tsk->name);
@@ -166,7 +166,7 @@ test_multi_tasks (void)
     ccevents_task_source_set(there, tsk, event_inquirer, step3);
     ccevents_group_enqueue_source(grp, tsk);
   }
-  void step3 (cce_location_tag_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+  void step3 (cce_location_tag_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
   {
     task_t *	tsk = (task_t *) src;
     fprintf(stderr, "%s: step3\n", tsk->name);
