@@ -129,7 +129,8 @@ entitled ``@gnu{} Free Documentation License''.
 * sources::                     Events sources basics.
 * groups::                      Groups of event sources.
 * tasks::                       Performing tasks in steps.
-* fd::                          Event source for file descriptors.
+* timer::                       Timer events sources.
+* fd::                          Events source for file descriptors.
 
 Appendices
 
@@ -993,9 +994,10 @@ jumping to @var{there}.
 @end itemize
 
 The group referenced by @var{grp} must be the one to which @var{src} is associated.  When this
-function is called @var{src} must have been dequeued from @var{grp}: it is up to the handler, or an
-exceptional condition handler, to re--enqueue @var{src} into @var{grp} or not.  Usually, is no event
-is pending: the inquirer function re--enqueues @var{src} into @var{grp}.
+function is called @var{src} must have been dequeued from @var{grp}: it is up to the inquirer, the
+event handler, or an exceptional condition handler, to re--enqueue @var{src} into @var{grp} or not.
+Usually, if no event is pending: the inquirer function re--enqueues @var{src} into @var{grp},
+because no other function will be applied to @var{src}.
 @end deftypefn
 
 
@@ -1087,14 +1089,14 @@ Serving an event is done with the following steps:
 
 @enumerate
 @item
-Query the events source for the availability of an event.  If no event is pending: return @false{}.
-If the event inquiry function raises an exceptional condition: a non--local exit is performed by
-jumping to @var{there}.
-
-@item
 Check the expiration timeout: if the timeout has expired, call the expiration handler and return
 @true{}.  If the expiration handler function raises an exceptional condition: a non--local exit is
 performed by jumping to @var{there}.
+
+@item
+Query the events source for the availability of an event.  If no event is pending: return @false{}.
+If the event inquiry function raises an exceptional condition: a non--local exit is performed by
+jumping to @var{there}.
 
 @item
 If an event is pending: call the event handler function and return @true{}.  If the event handler
@@ -1375,6 +1377,34 @@ doit (void)
   @}
 @}
 @end smallexample
+
+@c page
+@node timer
+@chapter Timer events sources
+
+
+The timer events sources defined by this @api{} trigger an event whenever the event loop examines
+the timer events source structure; there is no special mechanism to interrupt the process execution
+and signal a timer (this @api{} does not use @posix{}'s @cfunc{timer_create}).
+
+
+@deftp {Struct Typedef} ccevents_timer_source_t
+This is a very simple source that exploits the timeout mechanism to implement a timer.  The timer
+calendar time and the expiration handler are selected with @cfunc{ccevents_source_set_timeout}.
+@end deftp
+
+
+@deftypefun void ccevents_timer_source_init (ccevents_timer_source_t * @var{timsrc})
+Initialise an already allocated source structure.  This function applies
+@cfunc{ccevents_source_init} to @var{timsrc}.
+@end deftypefun
+
+
+@deftypefun void ccevents_timer_source_set (cce_location_t * @var{there}, ccevents_timer_source_t * @var{timsrc})
+Start the timer for the source referenced by @var{timsrc}.  This function applies
+@cfunc{ccevents_source_set} to @var{there} and @var{timsrc}.  If an exceptional condition is raised:
+perform a non--local exit by jumping to @var{there}.
+@end deftypefun
 
 @c page
 @node fd

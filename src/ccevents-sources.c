@@ -134,12 +134,10 @@ ccevents_source_do_one_event (cce_location_t * there, ccevents_group_t * grp, cc
    SRC into GRP or not.
 */
 {
-  bool	pending = ccevents_source_query(there, grp, src);
   if (ccevents_timeout_expired(&(src->expiration_time))) {
     ccevents_source_handle_expiration(there, grp, src);
     return true;
-  } else if (pending) {
-    //fprintf(stderr, "%s: serving event\n", __func__);
+  } else if (ccevents_source_query(there, grp, src)) {
     ccevents_source_handle_event(there, grp, src);
     return true;
   } else {

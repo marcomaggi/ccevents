@@ -98,6 +98,7 @@ typedef struct ccevents_group_t			ccevents_group_t;
 typedef struct ccevents_source_t		ccevents_source_t;
 typedef struct ccevents_fd_source_t		ccevents_fd_source_t;
 typedef struct ccevents_task_source_t		ccevents_task_source_t;
+typedef struct ccevents_signal_source_t		ccevents_signal_source_t;
 typedef struct ccevents_timer_source_t		ccevents_timer_source_t;
 
 /** --------------------------------------------------------------------
@@ -415,7 +416,7 @@ struct ccevents_task_source_t {
   ccevents_source_event_handler_fun_t *		event_handler;
 };
 
-ccevents_decl void ccevents_task_source_init (ccevents_task_source_t * src)
+ccevents_decl void ccevents_task_source_init (ccevents_task_source_t * tksrc)
   __attribute__((nonnull(1)));
 
 ccevents_decl void ccevents_task_source_set (cce_location_t * there, ccevents_task_source_t * tksrc,
@@ -424,10 +425,34 @@ ccevents_decl void ccevents_task_source_set (cce_location_t * there, ccevents_ta
   __attribute__((nonnull(1,2,3,4)));
 
 /** --------------------------------------------------------------------
- ** Interprocess signal event sources.
+ ** Interprocess signal events sources.
  ** ----------------------------------------------------------------- */
 
-typedef void ccevents_signal_handler_t (void);
+struct ccevents_signal_source_t {
+  ccevents_source_t;
+};
+
+ccevents_decl void ccevents_signal_source_init (ccevents_signal_source_t * sigsrc)
+  __attribute__((nonnull(1)));
+
+ccevents_decl void ccevents_signal_source_set (cce_location_t * there, ccevents_signal_source_t * sigsrc,
+					       ccevents_source_event_inquirer_fun_t * event_inquirer,
+					       ccevents_source_event_handler_fun_t  * event_handler)
+  __attribute__((nonnull(1,2,3,4)));
+
+/** --------------------------------------------------------------------
+ ** Timer events sources.
+ ** ----------------------------------------------------------------- */
+
+struct ccevents_timer_source_t {
+  ccevents_source_t;
+};
+
+ccevents_decl void ccevents_timer_source_init (ccevents_timer_source_t * timsrc)
+  __attribute__((nonnull(1)));
+
+ccevents_decl void ccevents_timer_source_set (cce_location_t * there, ccevents_timer_source_t * timsrc)
+  __attribute__((nonnull(1,2)));
 
 /** --------------------------------------------------------------------
  ** Sources groups.
