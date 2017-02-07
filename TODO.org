@@ -1,0 +1,6 @@
+-*- utf-8-with-signature-unix -*-
+
+* Modules to add
+** POSIX message queues
+** Linux inotify events
+
