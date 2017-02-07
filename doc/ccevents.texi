@@ -49,7 +49,8 @@
 
 @copying
 This document describes version @value{VERSION} of @value{PACKAGE}, a C language library
-implementing an event loop.  It is written in C11 with @gcc{} extensions.
+implementing an event loop.  It is written in C11 with @gcc{} extensions and it is meant to support
+@gnu{}+Linux platforms.
 
 The package is distributed under the terms of the @gnu{} Lesser General Public License (@lgpl{}).
 

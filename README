@@ -19,7 +19,8 @@ Topics
 ---------------
 
 This package installs  a C language library implementing  an event loop.
-It is written in C11 with GCC extensions.
+It is  written in  C11 with GCC  extensions and it  is meant  to support
+GNU+Linux platforms.
 
   This package  depends on  the package  CCExceptions, at  least version
 0.3.
