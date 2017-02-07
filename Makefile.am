@@ -48,6 +48,7 @@ libccevents_la_SOURCES= \
 	src/ccevents-sources.c		\
 	src/ccevents-task-sources.c	\
 	src/ccevents-timer-sources.c	\
+	src/ccevents-signal-sources.c	\
 	src/ccevents-fd-sources.c
 
 #page
@@ -57,9 +58,11 @@ check_PROGRAMS	= \
 	tests/version			\
 	tests/timevals			\
 	tests/timeouts			\
+	tests/groups			\
 	tests/task-sources		\
 	tests/timer-sources		\
-	tests/standalone-fd-sources
+	tests/standalone-fd-sources	\
+	tests/signal-sources
 
 TESTS				= $(check_PROGRAMS)
 
@@ -68,6 +71,9 @@ ccevents_tests_ldadd		= libccevents.la
 
 tests_version_CPPFLAGS			= $(ccevents_tests_cppflags)
 tests_version_LDADD			= $(ccevents_tests_ldadd)
+
+tests_groups_CPPFLAGS			= $(ccevents_tests_cppflags)
+tests_groups_LDADD			= $(ccevents_tests_ldadd)
 
 tests_timeouts_CPPFLAGS			= $(ccevents_tests_cppflags)
 tests_timeouts_LDADD			= $(ccevents_tests_ldadd)
@@ -83,6 +89,9 @@ tests_timer_sources_LDADD		= $(ccevents_tests_ldadd)
 
 tests_standalone_fd_sources_CPPFLAGS	= $(ccevents_tests_cppflags)
 tests_standalone_fd_sources_LDADD	= $(ccevents_tests_ldadd)
+
+tests_signal_sources_CPPFLAGS		= $(ccevents_tests_cppflags)
+tests_signal_sources_LDADD		= $(ccevents_tests_ldadd)
 
 installcheck-local: $(TESTS)
 	@for f in $(TESTS); do $(builddir)/$$f; done

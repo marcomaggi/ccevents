@@ -1104,6 +1104,11 @@ function raises an exceptional condition: a non--local exit is performed by jump
 @end enumerate
 @end deftypefun
 
+
+@deftypefun bool ccevents_source_is_enqueued (const ccevents_source_t * @var{src})
+Return @true{} if the source is enqueued in a group, otherwise return @false{}.
+@end deftypefun
+
 @c page
 @node sources example
 @section Example of events source definition
@@ -1254,6 +1259,17 @@ Return @true{} if the group has at least one event source in the queue; otherwis
 @end deftypefun
 
 
+@deftypefun size_t ccevents_group_number_of_sources (const ccevents_group_t * @var{grp})
+Return the number of events sources enqueued in @var{grp}.
+@end deftypefun
+
+
+@deftypefun bool ccevents_group_contains_source (const ccevents_group_t * @var{grp}, const ccevents_source_t * @var{src})
+Return @true{} if the source @var{src} is enqueued in the group @var{grp}; otherwise return
+@false{}.
+@end deftypefun
+
+
 @deftypefun void ccevents_group_enqueue_source (ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
 Enqueue the events source @var{src} in the group @var{grp}.
 @end deftypefun
@@ -1262,6 +1278,12 @@ Enqueue the events source @var{src} in the group @var{grp}.
 @deftypefun {ccevents_source_t *} ccevents_group_dequeue_source (ccevents_group_t * @var{grp})
 Dequeue an events source from the group @var{grp} and return it.  Return @cnull{} if the group is
 empty.
+@end deftypefun
+
+
+@deftypefun void ccevents_group_remove_source (ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
+Remove the source referenced by @var{src} from the group referenced by @var{grp}.  If @var{src} is
+not associated to @var{grp}: the result is unspecified.
 @end deftypefun
 
 

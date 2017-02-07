@@ -44,6 +44,31 @@ ccevents_group_queue_is_not_empty (const ccevents_group_t * grp)
   return (grp->sources_queue_head)? true : false;
 }
 
+size_t
+ccevents_group_number_of_sources (const ccevents_group_t * grp)
+{
+  ccevents_source_t *	src;
+  size_t		len = 0;
+
+  for (src = grp->sources_queue_head; src; src = src->next) {
+    ++len;
+  }
+  return len;
+}
+
+bool
+ccevents_group_contains_source (const ccevents_group_t * grp, const ccevents_source_t * src)
+{
+  ccevents_source_t *	iter;
+
+  for (iter = grp->sources_queue_head; iter; iter = iter->next) {
+    if (iter == src) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void
 ccevents_group_enqueue_source (ccevents_group_t * grp, ccevents_source_t * new_tail)
 /* Enqueue NEW_TAIL in the group SRC. */
@@ -83,6 +108,37 @@ ccevents_group_dequeue_source (ccevents_group_t * grp)
     next_source->next			= NULL;
   }
   return next_source;
+}
+
+void
+ccevents_group_remove_source (ccevents_group_t * grp, ccevents_source_t * src)
+{
+  if (grp->sources_queue_head == src) {
+    /* Detach the source from the head. */
+    grp->sources_queue_head = src->next;
+    if (grp->sources_queue_head) {
+      grp->sources_queue_tail->prev = NULL;
+    }
+    /* If the removed source was the only one: reset the tail too. */
+    if (src == grp->sources_queue_tail) {
+      grp->sources_queue_tail = NULL;
+    }
+  } else if (grp->sources_queue_tail == src) {
+    /* Detach the source from the tail. */
+    grp->sources_queue_tail = src->prev;
+    if (grp->sources_queue_tail) {
+      grp->sources_queue_tail->next = NULL;
+    }
+    /* If the removed source was the only one: reset the head too. */
+    if (src == grp->sources_queue_head) {
+      grp->sources_queue_head = NULL;
+    }
+  } else {
+    src->prev->next = src->next;
+    src->next->prev = src->prev;
+  }
+  src->prev = NULL;
+  src->next = NULL;
 }
 
 bool

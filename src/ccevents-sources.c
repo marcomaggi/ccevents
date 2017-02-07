@@ -145,4 +145,10 @@ ccevents_source_do_one_event (cce_location_t * there, ccevents_group_t * grp, cc
   }
 }
 
+bool
+ccevents_source_is_enqueued (const ccevents_source_t * src)
+{
+  return (src->next || src->prev)? true : false;
+}
+
 /* end of file */

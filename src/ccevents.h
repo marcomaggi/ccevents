@@ -370,6 +370,9 @@ ccevents_decl bool ccevents_source_do_one_event (cce_location_t * L,
 						 ccevents_source_t  * src)
   __attribute__((nonnull(1,2,3)));
 
+ccevents_decl bool ccevents_source_is_enqueued (const ccevents_source_t * src)
+  __attribute__((pure,nonnull(1)));
+
 /** --------------------------------------------------------------------
  ** File descriptor events sources.
  ** ----------------------------------------------------------------- */
@@ -430,6 +433,13 @@ ccevents_decl void ccevents_task_source_set (cce_location_t * there, ccevents_ta
 
 struct ccevents_signal_source_t {
   ccevents_source_t;
+
+  /* Pointer to function  to be called to query the  file descriptor for
+     the expected event. */
+  ccevents_source_event_inquirer_fun_t *	event_inquirer;
+  /* Pointer  to  function to  be  called  whenever the  expected  event
+     happens. */
+  ccevents_source_event_handler_fun_t *		event_handler;
 };
 
 ccevents_decl void ccevents_signal_source_init (ccevents_signal_source_t * sigsrc)
@@ -489,13 +499,22 @@ ccevents_decl void ccevents_group_init (ccevents_group_t * grp)
   __attribute__((nonnull(1)));
 
 ccevents_decl bool ccevents_group_queue_is_not_empty (const ccevents_group_t * grp)
-  __attribute__((nonnull(1)));
+  __attribute__((pure,nonnull(1)));
+
+ccevents_decl size_t ccevents_group_number_of_sources (const ccevents_group_t * grp)
+  __attribute__((pure,nonnull(1)));
+
+ccevents_decl bool ccevents_group_contains_source (const ccevents_group_t * grp, const ccevents_source_t * src)
+  __attribute__((pure,nonnull(1,2)));
 
 ccevents_decl void ccevents_group_enqueue_source (ccevents_group_t * grp, ccevents_source_t * src)
   __attribute__((nonnull(1,2)));
 
 ccevents_decl ccevents_source_t * ccevents_group_dequeue_source (ccevents_group_t * grp)
   __attribute__((nonnull(1)));
+
+ccevents_decl void ccevents_group_remove_source (ccevents_group_t * grp, ccevents_source_t * src)
+  __attribute__((nonnull(1,2)));
 
 ccevents_decl bool ccevents_group_run_do_one_event (ccevents_group_t * grp)
   __attribute__((nonnull(1)));
