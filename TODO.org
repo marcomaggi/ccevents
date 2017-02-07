@@ -3,4 +3,5 @@
 * Modules to add
 ** POSIX message queues
 ** Linux inotify events
+** epoll
 
