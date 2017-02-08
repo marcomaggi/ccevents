@@ -130,8 +130,9 @@ entitled ``@gnu{} Free Documentation License''.
 * sources::                     Events sources basics.
 * groups::                      Groups of event sources.
 * tasks::                       Performing tasks in steps.
-* timer::                       Timer events sources.
+* timers::                      Timer events sources.
 * fd::                          Events source for file descriptors.
+* signals::                     Interprocess signals.
 
 Appendices
 
@@ -1402,7 +1403,7 @@ doit (void)
 @end smallexample
 
 @c page
-@node timer
+@node timers
 @chapter Timer events sources
 
 
@@ -1576,6 +1577,96 @@ non--local exit to @var{there}.
 If the file descriptor has not received an exception: the events source referenced by @var{fdsrc} is
 re--enqueued in the group referenced by @var{grp}.
 @end deftypefun
+
+@c page
+@node signals
+@chapter Interprocess signals
+
+
+The block/unblock (@bub{}) @api{} is a simplified interface to detect the arrival of interprocess
+signals; if it does not suit the application's model, we should just ignore it.
+
+@menu
+* signals bub::                 Setting up the block/unblock @api{}.
+* signals sources::             Signals events sources.
+@end menu
+
+@c page
+@node signals bub
+@section Setting up the block/unblock @api{}
+
+
+The following functions operate on global variables that are private to @value{PACKAGE}.  This makes
+the @api{} multithread unsafe.
+
+
+@deftypefun void ccevents_signal_bub_init (void)
+Initialise the @bub{} @api{}, enabling signal handling.  Block all the signals and register a
+handler for each.
+
+For all the signals, the function @cfunc{sigaction} is called with a reference to @objtype{struct
+sigaction} in which the field @code{.sa_flags} has the following flags set: @code{SA_RESTART},
+@code{SA_NOCLDSTOP}.
+@end deftypefun
+
+
+@deftypefun void ccevents_signal_bub_final (void)
+Finalise the @bub{} @api{}, disabling signal handling.  Set all the handlers to @code{SIG_IGN}, then
+unblock the signals.
+@end deftypefun
+
+
+@deftypefun void ccevents_signal_bub_acquire (void)
+Unblock then block all the signals.  This causes blocked signals to be delivered.
+@end deftypefun
+
+
+@deftypefun bool ccevents_signal_bub_delivered (int @var{signum})
+Return @true{} if the signal @var{signum} was delivered to this process since the last call to
+@cfunc{ccevents_signal_bub_init}, @cfunc{ccevents_signal_bub_final} or
+@cfunc{ccevents_signal_bub_delivered} with this value of @var{signum}.  Calling this function clears
+the internal flag for signal @var{signum}.  If the return value is @false{}: the signal was not
+delivered.
+
+@strong{NOTE} We need to remember that it is not possible to reliably determine the number of
+signals of a kind sent to a process, because in some cases multiple signals are merged together.
+@end deftypefun
+
+
+As usage example, the following program will print @samp{true} and exit successfully:
+
+@example
+#include <ccevents.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <signal.h>
+
+int
+main (int argc, const char *const argv[])
+@{
+  ccevents_signal_bub_init();
+  @{
+    bool        flag;
+    raise(SIGUSR1);
+    ccevents_signal_bub_acquire();
+    flag = ccevents_signal_bub_delivered(SIGUSR1);
+    fprintf(stderr, "delivered? %s\n", ((flag)? "true" : "false"));
+  @}
+  ccevents_signal_bub_final();
+  exit(EXIT_SUCCESS);
+@}
+@end example
+
+@c page
+@node signals sources
+@section Signals events sources
+
+
+@deftp {Struct Typedef} ccevents_signal_source_t
+Type of data structures using signals as events source.  Every instance of this type uses a single
+signal as source.
+@end deftp
+
 
 @c page
 @c ------------------------------------------------------------

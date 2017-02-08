@@ -81,6 +81,10 @@
 @acronym{XML}
 @end macro
 
+@macro bub{}
+@acronym{BUB}
+@end macro
+
 @c ------------------------------------------------------------
 
 @macro cdrom{}

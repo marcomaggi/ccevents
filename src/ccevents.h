@@ -433,22 +433,24 @@ ccevents_decl void ccevents_task_source_set (cce_location_t * there, ccevents_ta
 
 struct ccevents_signal_source_t {
   ccevents_source_t;
-
-  /* Pointer to function  to be called to query the  file descriptor for
-     the expected event. */
-  ccevents_source_event_inquirer_fun_t *	event_inquirer;
+  /* The signal number to which this event source must react. */
+  int	signum;
   /* Pointer  to  function to  be  called  whenever the  expected  event
      happens. */
   ccevents_source_event_handler_fun_t *		event_handler;
 };
 
-ccevents_decl void ccevents_signal_source_init (ccevents_signal_source_t * sigsrc)
+ccevents_decl void ccevents_signal_bub_init (void);
+ccevents_decl void ccevents_signal_bub_final (void);
+ccevents_decl void ccevents_signal_bub_acquire (void);
+ccevents_decl bool ccevents_signal_bub_delivered (int signum);
+
+ccevents_decl void ccevents_signal_source_init (ccevents_signal_source_t * sigsrc, int signum)
   __attribute__((nonnull(1)));
 
 ccevents_decl void ccevents_signal_source_set (cce_location_t * there, ccevents_signal_source_t * sigsrc,
-					       ccevents_source_event_inquirer_fun_t * event_inquirer,
 					       ccevents_source_event_handler_fun_t  * event_handler)
-  __attribute__((nonnull(1,2,3,4)));
+  __attribute__((nonnull(1,2,3)));
 
 /** --------------------------------------------------------------------
  ** Timer events sources.

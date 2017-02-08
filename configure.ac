@@ -52,7 +52,7 @@ dnl page
 #### basic system inspection
 
 AC_LANG([C])
-dnl AC_DEFINE([_GNU_SOURCE],[1],[enable everything GNU])
+AC_DEFINE([_GNU_SOURCE],[1],[enable everything GNU and other extensions])
 AC_PROG_CC_C99
 AX_CHECK_COMPILE_FLAG([-std=c11],[],[AC_MSG_ERROR([*** Compiler does not support -std=c11])],[-pedantic])
 AX_CFLAGS="-std=c11"
