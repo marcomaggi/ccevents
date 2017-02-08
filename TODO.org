@@ -1,7 +1,8 @@
--*- utf-8-with-signature-unix -*-
+﻿-*- coding: utf-8-with-signature-unix -*-
 
 * Modules to add
 ** POSIX message queues
 ** Linux inotify events
 ** epoll
+** Message termination with waitpid()
 
