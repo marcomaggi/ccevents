@@ -32,9 +32,25 @@
 #include "ccevents-internals.h"
 
 static void
-default_expiration_handler (cce_location_t * L   CCEVENTS_UNUSED,
+default_expiration_handler (cce_location_t     * L   CCEVENTS_UNUSED,
 			    ccevents_group_t   * grp CCEVENTS_UNUSED,
 			    ccevents_source_t  * src CCEVENTS_UNUSED)
+{
+  return;
+}
+
+bool
+ccevents_source_dummy_event_inquirer (cce_location_t * L CCEVENTS_UNUSED,
+				      ccevents_group_t * grp, ccevents_source_t * src)
+{
+  ccevents_group_enqueue_source(grp, src);
+  return false;
+}
+
+void
+ccevents_source_dummy_event_handler (cce_location_t     * L   CCEVENTS_UNUSED,
+				     ccevents_group_t   * grp CCEVENTS_UNUSED,
+				     ccevents_source_t  * src CCEVENTS_UNUSED)
 {
   return;
 }

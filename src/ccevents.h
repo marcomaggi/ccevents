@@ -98,7 +98,7 @@ typedef struct ccevents_group_t			ccevents_group_t;
 typedef struct ccevents_source_t		ccevents_source_t;
 typedef struct ccevents_fd_source_t		ccevents_fd_source_t;
 typedef struct ccevents_task_source_t		ccevents_task_source_t;
-typedef struct ccevents_signal_source_t		ccevents_signal_source_t;
+typedef struct ccevents_signal_bub_source_t	ccevents_signal_bub_source_t;
 typedef struct ccevents_timer_source_t		ccevents_timer_source_t;
 
 /** --------------------------------------------------------------------
@@ -373,6 +373,9 @@ ccevents_decl bool ccevents_source_do_one_event (cce_location_t * L,
 ccevents_decl bool ccevents_source_is_enqueued (const ccevents_source_t * src)
   __attribute__((pure,nonnull(1)));
 
+ccevents_decl ccevents_source_event_inquirer_fun_t	ccevents_source_dummy_event_inquirer;
+ccevents_decl ccevents_source_event_handler_fun_t	ccevents_source_dummy_event_handler;
+
 /** --------------------------------------------------------------------
  ** File descriptor events sources.
  ** ----------------------------------------------------------------- */
@@ -431,7 +434,7 @@ ccevents_decl void ccevents_task_source_set (cce_location_t * there, ccevents_ta
  ** Interprocess signal events sources.
  ** ----------------------------------------------------------------- */
 
-struct ccevents_signal_source_t {
+struct ccevents_signal_bub_source_t {
   ccevents_source_t;
   /* The signal number to which this event source must react. */
   int	signum;
@@ -445,11 +448,11 @@ ccevents_decl void ccevents_signal_bub_final (void);
 ccevents_decl void ccevents_signal_bub_acquire (void);
 ccevents_decl bool ccevents_signal_bub_delivered (int signum);
 
-ccevents_decl void ccevents_signal_source_init (ccevents_signal_source_t * sigsrc, int signum)
+ccevents_decl void ccevents_signal_bub_source_init (ccevents_signal_bub_source_t * sigsrc, int signum)
   __attribute__((nonnull(1)));
 
-ccevents_decl void ccevents_signal_source_set (cce_location_t * there, ccevents_signal_source_t * sigsrc,
-					       ccevents_source_event_handler_fun_t  * event_handler)
+ccevents_decl void ccevents_signal_bub_source_set (cce_location_t * there, ccevents_signal_bub_source_t * sigsrc,
+						   ccevents_source_event_handler_fun_t  * event_handler)
   __attribute__((nonnull(1,2,3)));
 
 /** --------------------------------------------------------------------

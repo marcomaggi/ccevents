@@ -1111,6 +1111,16 @@ function raises an exceptional condition: a non--local exit is performed by jump
 Return @true{} if the source is enqueued in a group, otherwise return @false{}.
 @end deftypefun
 
+
+@deftypefun bool ccevents_source_dummy_event_inquirer (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
+A dummy event inquirer function: re--enqueue @var{src} into @var{grp} and return @false{}.
+@end deftypefun
+
+
+@deftypefun void ccevents_source_dummy_event_handler (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
+A dummy event handler function: does nothing.
+@end deftypefun
+
 @c page
 @node sources example
 @section Example of events source definition
@@ -1662,11 +1672,98 @@ main (int argc, const char *const argv[])
 @section Signals events sources
 
 
-@deftp {Struct Typedef} ccevents_signal_source_t
-Type of data structures using signals as events source.  Every instance of this type uses a single
-signal as source.
+To use the @api{} described here we have to initialise the signals @bub{} @api{} by calling
+@cfunc{ccevents_signal_bub_init}.
+
+
+@deftp {Struct Typedef} ccevents_signal_bub_source_t
+Type of data structures using signals as events source through the @bub{} @api{}.  Every instance of
+this type uses a single signal as source.
 @end deftp
 
+
+@deftypefun void ccevents_signal_bub_source_init (ccevents_task_source_t * @var{src}, int @var{signum})
+Initialise an already allocated source structure to react to the delivery of signals of type
+@var{signum}.  Apply @cfunc{ccevents_source_init} to @var{src}.  Do not start the event waiting:
+this is done by @cfunc{ccevents_signal_bub_source_set}.
+
+The event inquirer function associated to @var{src} calls @cfunc{ccevents_signal_bub_delivered} and,
+if no signal was delivered, re--enqueues the source in the group; otherwise it leaves @var{src}
+dequeued.
+@end deftypefun
+
+
+@deftypefun void ccevents_signal_bub_source_set (cce_location_t * @var{there}, ccevents_signal_source_t * @var{src}, ccevents_source_event_handler_fun_t * @var{event_handler})
+Start the waiting for the selected signal.  Apply @cfunc{ccevents_source_set} to @var{src}.  If an
+exceptional condition is raised: perform a non--local exit by jumping to @var{there}.
+@end deftypefun
+
+
+As example, here is how to setup an events source to wait for the delivery of @samp{SIGUSR1}:
+
+@example
+#include <ccevents.h>
+#include <stdlib.h>
+#include <signal.h>
+
+static bool
+acquire_signals_inquirer (cce_location_t    * there,
+                          ccevents_group_t  * grp,
+                          ccevents_source_t * src)
+@{
+  ccevents_signal_bub_acquire();
+  ccevents_group_enqueue_source(grp, src);
+  return false;
+@}
+
+static volatile sig_atomic_t signal_flag = 0;
+
+static void
+signal_handler (cce_location_t    * there,
+                ccevents_group_t  * grp,
+                ccevents_source_t * src)
+@{
+  signal_flag = 1;
+@}
+
+int
+main (int argc, const char *const argv[])
+@{
+  ccevents_group_t grp[1];
+
+  /* This events source runs its inquirer function again
+     and again to acquire signals with the BUB API. */
+  ccevents_task_source_t acquire_signals_src[1];
+
+  /* This events source reacts to the delivery of SIGUSR1. */
+  ccevents_signal_bub_source_t sigsrc[1];
+
+  cce_location_t L[1];
+
+  ccevents_signal_bub_init();
+  @{
+    ccevents_group_init(grp);
+    ccevents_task_source_init(acquire_signals_src);
+    ccevents_signal_bub_source_init(sigsrc, SIGUSR1);
+
+    if (cce_location(L)) @{
+      cce_run_error_handlers(L);
+      cce_condition_free(cce_location_condition(L));
+    @} else @{
+      ccevents_task_source_set(L, acquire_signals_src,
+         acquire_signals_inquirer,
+         ccevents_source_dummy_event_handler);
+      ccevents_signal_bub_source_set(L, sigsrc, signal_handler);
+      ccevents_group_enqueue_source(grp, sigsrc);
+      ccevents_group_enqueue_source(grp, acquire_signals_src);
+      ccevents_group_enter(grp, 1000);
+      cce_run_cleanup_handlers(L);
+    @}
+  @}
+  ccevents_signal_bub_final();
+  exit(EXIT_SUCCESS);
+@}
+@end example
 
 @c page
 @c ------------------------------------------------------------

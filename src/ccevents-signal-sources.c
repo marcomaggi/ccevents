@@ -112,20 +112,23 @@ ccevents_signal_bub_delivered (int signum)
  ** ----------------------------------------------------------------- */
 
 static bool
-method_event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
-		       ccevents_source_t * src)
+method_event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp, ccevents_source_t * src)
 /* Return true if the signal  SIGSRC->SIGNUM has been delivered at least
    once since  the last call to  "ccevents_signal_bub_acquire()".  Clear
    the signal flag.
 */
 {
-  ccevents_signal_source_t *	sigsrc = (ccevents_signal_source_t *) src;
-  return ccevents_signal_bub_delivered(sigsrc->signum);
+  ccevents_signal_bub_source_t *	sigsrc = (ccevents_signal_bub_source_t *) src;
+  bool	flag = ccevents_signal_bub_delivered(sigsrc->signum);
+  if (! flag) {
+    ccevents_group_enqueue_source(grp, src);
+  }
+  return flag;
 }
 static void
 method_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 {
-  ccevents_signal_source_t *	sigsrc = (ccevents_signal_source_t *) src;
+  ccevents_signal_bub_source_t *	sigsrc = (ccevents_signal_bub_source_t *) src;
   return sigsrc->event_handler(there, grp, sigsrc);
 }
 static const ccevents_source_vtable_t methods_table = {
@@ -138,24 +141,24 @@ static const ccevents_source_vtable_t methods_table = {
  ** ----------------------------------------------------------------- */
 
 void
-ccevents_signal_source_init (ccevents_signal_source_t * sigsrc, int signum)
+ccevents_signal_bub_source_init (ccevents_signal_bub_source_t * sigsrc, int signum)
 /* Initialise an already  allocated source structure.  Do  not start the
-   event waiting: this is done by "ccevents_signal_source_set()". */
+   event waiting: this is done by "ccevents_signal_bub_source_set()". */
 {
   ccevents_source_init(sigsrc, &methods_table);
-  sigsrc->signum	= signum;
+  sigsrc->signum = signum;
   arrived_signals[signum] = 0;
 }
 
 void
-ccevents_signal_source_set (cce_location_t * there, ccevents_signal_source_t * sigsrc,
-			    ccevents_source_event_handler_fun_t      * event_handler)
+ccevents_signal_bub_source_set (cce_location_t * there, ccevents_signal_bub_source_t * sigsrc,
+				ccevents_source_event_handler_fun_t      * event_handler)
 /* Set up an already initialised source to wait for an event.  Start the
    expiration timer.
 */
 {
   ccevents_source_set(there, sigsrc);
-  sigsrc->event_handler		= event_handler;
+  sigsrc->event_handler = event_handler;
 }
 
 /* end of file */
