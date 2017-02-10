@@ -1413,6 +1413,11 @@ not associated to @var{loop}: the result is unspecified.
 @deftypefun void ccevents_loop_enter (ccevents_loop_t * @var{loop})
 Enter the loop and serve events until: no more groups are enqueued; a request to exit is posted with
 @cfunc{ccevents_loop_post_request_to_leave_asap}.
+
+Notice that empty groups are @strong{not} removed from a main loop; it is responsibility of the user
+code to do it.  The right way to exit from a call to this function is to invoke
+@cfunc{ccevents_loop_post_request_to_leave_asap}; for a prompt exit we must also invoke
+@cfunc{ccevents_group_post_request_to_leave_asap} for the currently running group.
 @end deftypefun
 
 
