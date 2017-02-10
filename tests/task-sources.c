@@ -220,6 +220,7 @@ test_multi_tasks (void)
 int
 main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
+  ccevents_init();
   if (0) test_single_task();
   if (1) test_multi_tasks();
   exit(EXIT_SUCCESS);

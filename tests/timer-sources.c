@@ -83,6 +83,7 @@ test_single_timer_expiration (void)
 int
 main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
+  ccevents_init();
   if (1) test_single_timer_expiration();
   exit(EXIT_SUCCESS);
 }

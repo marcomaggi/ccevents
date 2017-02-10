@@ -223,6 +223,7 @@ test_sources_removal_from_middle (void)
 int
 main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
+  ccevents_init();
   if (1) test_sources_removal_from_head();
   if (1) test_sources_removal_from_tail();
   if (1) test_sources_removal_from_middle();

@@ -209,6 +209,7 @@ test_source_for_documentation (void)
 int
 main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
+  ccevents_init();
   if (1) test_bub_api();
   if (1) test_source();
   if (1) test_source_for_documentation();
