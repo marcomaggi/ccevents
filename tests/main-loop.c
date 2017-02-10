@@ -105,7 +105,7 @@ test_loop_post_exit (void)
       ccevents_group_post_request_to_leave_asap(grp);
       ccevents_loop_post_request_to_leave_asap(loop);
     }
-    fprintf(stderr, "%s: leaving count=%d\n", __func__, count);
+    if (0) fprintf(stderr, "%s: leaving count=%d\n", __func__, count);
   }
 
   if (cce_location(L)) {
@@ -132,13 +132,90 @@ test_loop_post_exit (void)
   }
 }
 
+static void
+test_loop_multi_groups (void)
+{
+  ccevents_loop_t		loop[1];
+  ccevents_group_t		grpA[1], grpB[1], grpC[1];
+  ccevents_task_source_t	srcA[1], srcB[1], srcC[1];
+  cce_location_t		L[1];
+  volatile bool			error_flag = false;
+  volatile int			countA = 0, countB = 0, countC = 0;
+
+  bool event_inquirer (cce_location_t * there CCEVENTS_UNUSED,
+		       ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
+  {
+    return true;
+  }
+  void event_handler_A (cce_location_t * there CCEVENTS_UNUSED,
+			ccevents_group_t * grp, ccevents_source_t * src)
+  {
+    ++countA;
+    ccevents_group_enqueue_source(grp, src);
+  }
+  void event_handler_B (cce_location_t * there CCEVENTS_UNUSED,
+			ccevents_group_t * grp, ccevents_source_t * src)
+  {
+    ++countB;
+    ccevents_group_enqueue_source(grp, src);
+  }
+  void event_handler_C (cce_location_t * there CCEVENTS_UNUSED,
+			ccevents_group_t * grp, ccevents_source_t * src)
+  {
+    ++countC;
+    ccevents_group_enqueue_source(grp, src);
+    if (4 == countC) {
+      ccevents_loop_post_request_to_leave_asap(loop);
+    }
+  }
+
+  if (cce_location(L)) {
+    error_flag = true;
+    cce_run_error_handlers(L);
+    cce_condition_free(cce_location_condition(L));
+  } else {
+    ccevents_loop_init(loop);
+
+    ccevents_group_init(grpA, 3);
+    ccevents_group_init(grpB, 2);
+    ccevents_group_init(grpC, 1);
+
+    ccevents_task_source_init(srcA);
+    ccevents_task_source_init(srcB);
+    ccevents_task_source_init(srcC);
+
+    ccevents_task_source_set(L, srcA, event_inquirer, event_handler_A);
+    ccevents_task_source_set(L, srcB, event_inquirer, event_handler_B);
+    ccevents_task_source_set(L, srcC, event_inquirer, event_handler_C);
+
+    ccevents_group_enqueue_source(grpA, srcA);
+    ccevents_group_enqueue_source(grpB, srcB);
+    ccevents_group_enqueue_source(grpC, srcC);
+
+    ccevents_loop_enqueue_group(loop, grpA);
+    ccevents_loop_enqueue_group(loop, grpB);
+    ccevents_loop_enqueue_group(loop, grpC);
+
+    ccevents_loop_enter(loop);
+    cce_run_cleanup_handlers(L);
+  }
+
+  fprintf(stderr, "countA=%d, countB=%d, countC=%d\n", countA, countB, countC);
+
+  assert(false == error_flag);
+  assert(12 == countA);
+  assert(8 == countB);
+  assert(4 == countC);
+}
+
 int
 main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
   ccevents_init();
   //
   if (1) test_loop_single_group();
-  if (0) test_loop_post_exit();
+  if (1) test_loop_post_exit();
+  if (1) test_loop_multi_groups();
   //
   exit(EXIT_SUCCESS);
 }
