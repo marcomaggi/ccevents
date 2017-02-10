@@ -44,6 +44,8 @@ libccevents_la_SOURCES= \
 	src/ccevents-conditions.c	\
 	src/ccevents-timevals.c		\
 	src/ccevents-timeouts.c		\
+	src/ccevents-queues.c		\
+	src/ccevents-loops.c		\
 	src/ccevents-groups.c		\
 	src/ccevents-sources.c		\
 	src/ccevents-task-sources.c	\

@@ -89,7 +89,7 @@ test_standalone_readability (void)
     ccevents_source_set_timeout(fdsrc, expiration_time, expiration_handler);
     ccevents_fd_event_source_set(L, fdsrc, ccevents_query_fd_readability, event_handler);
 
-    ccevents_group_init(grp);
+    ccevents_group_init(grp, INT_MAX);
 
     /* No event is pending: try to serve one. */
     {
@@ -160,7 +160,7 @@ test_standalone_writability (void)
     ccevents_source_set_timeout(fds, expiration_time, expiration_handler);
     ccevents_fd_event_source_set(L, fds, ccevents_query_fd_writability, event_handler);
 
-    ccevents_group_init(grp);
+    ccevents_group_init(grp, INT_MAX);
 
     /* The pipe is always writable. */
     {
@@ -278,7 +278,7 @@ test_standalone_exception (void)
       ccevents_source_set_timeout(&exception_fd_source, expiration_time, expiration_handler);
       ccevents_fd_event_source_set(L, &exception_fd_source, ccevents_query_fd_exception, exception_event_handler);
 
-      ccevents_group_init(grp);
+      ccevents_group_init(grp, INT_MAX);
 
       /* Send data. */
       {
@@ -475,13 +475,13 @@ test_talking_processes_with_groups (void)
       ccevents_fd_event_source_init(write_source, write_fd);
       ccevents_source_set_timeout(read_source, expiration_time, master_expiration_handler);
       ccevents_source_set_timeout(write_source, expiration_time, master_expiration_handler);
-      ccevents_group_init(grp);
+      ccevents_group_init(grp, INT_MAX);
       {
 	ccevents_fd_event_source_set(L, write_source,
 				     ccevents_query_fd_writability, master_write_event_handler);
 	ccevents_group_enqueue_source(grp, write_source);
       }
-      ccevents_group_enter(grp, INT_MAX);
+      ccevents_group_enter(grp);
       cce_run_cleanup_handlers(L);
     }
   }
@@ -617,12 +617,12 @@ test_talking_processes_with_groups (void)
       ccevents_source_set_timeout( read_source, expiration_time, slave_expiration_handler);
       ccevents_source_set_timeout(write_source, expiration_time, slave_expiration_handler);
 
-      ccevents_group_init(grp);
+      ccevents_group_init(grp, INT_MAX);
       {
 	ccevents_fd_event_source_set(L, read_source, ccevents_query_fd_readability, slave_read_event_handler);
 	ccevents_group_enqueue_source(grp, read_source);
       }
-      ccevents_group_enter(grp, INT_MAX);
+      ccevents_group_enter(grp);
       cce_run_cleanup_handlers(L);
     }
 

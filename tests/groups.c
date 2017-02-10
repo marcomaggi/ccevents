@@ -42,7 +42,7 @@ test_sources_removal_from_head (void)
   ccevents_task_source_init(C);
   ccevents_task_source_init(D);
 
-  ccevents_group_init(G);
+  ccevents_group_init(G, 10);
 
   assert(false == ccevents_source_is_enqueued(A));
   assert(false == ccevents_source_is_enqueued(B));
@@ -105,7 +105,7 @@ test_sources_removal_from_tail (void)
   ccevents_task_source_init(C);
   ccevents_task_source_init(D);
 
-  ccevents_group_init(G);
+  ccevents_group_init(G, 10);
 
   assert(false == ccevents_source_is_enqueued(A));
   assert(false == ccevents_source_is_enqueued(B));
@@ -168,7 +168,7 @@ test_sources_removal_from_middle (void)
   ccevents_task_source_init(C);
   ccevents_task_source_init(D);
 
-  ccevents_group_init(G);
+  ccevents_group_init(G, 10);
 
   assert(false == ccevents_source_is_enqueued(A));
   assert(false == ccevents_source_is_enqueued(B));

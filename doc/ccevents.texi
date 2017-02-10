@@ -129,6 +129,7 @@ entitled ``@gnu{} Free Documentation License''.
 * timeouts::                    Handling event expiration times.
 * sources::                     Events sources basics.
 * groups::                      Groups of event sources.
+* loop::                        The main events loop.
 * tasks::                       Performing tasks in steps.
 * timers::                      Timer events sources.
 * fd::                          Events source for file descriptors.
@@ -1257,12 +1258,20 @@ served from a lower group.
 
 @deftp {Struct Typedef} ccevents_group_t
 Type of groups of event sources.
+
+Instances of this type must be initialised with a call to @cfunc{ccevents_group_init} applied to an
+already allocated data structure.
+
+Instances of this type must be finalised by first dequeuing all the sources with
+@cfunc{ccevents_group_dequeue_source}, and then, if needed, by releasing the memory allocated for
+the data structure.
 @end deftp
 
 
-@deftypefun void ccevents_group_init (ccevents_group_t * @var{grp})
+@deftypefun void ccevents_group_init (ccevents_group_t * @var{grp}, size_t @var{served_events_watermark})
 Initialise an already allocated group structure.  The internal queue of event sources is initialised
-to empty.
+to empty.  The number of served events for each call to @cfunc{ccevents_group_enter} is set to
+@var{served_events_watermark}.
 @end deftypefun
 
 
@@ -1306,15 +1315,110 @@ events sources are waiting.
 @end deftypefun
 
 
-@deftypefun void ccevents_group_enter (ccevents_group_t * @var{grp}, size_t @var{served_events_watermark})
-Enter the loop for this group and serve events until: a request to exit is posted; no more events
-sources are enqueued; the number of served events becomes equal to @var{served_events_watermark}.
+@deftypefun void ccevents_group_enter (ccevents_group_t * @var{grp})
+Enter the loop for this group and serve events until: the number of served events reaches the
+configured watermark level; no more events sources are enqueued; a request to exit is posted with
+@cfunc{ccevents_group_post_request_to_leave_asap}.
 @end deftypefun
 
 
 @deftypefun void ccevents_group_post_request_to_leave_asap (ccevents_group_t * @var{grp})
 Post a request to exit as soon as possible the loop for this group.  This function is meant to be
 called by an event handler to cause a premature return from a call to @cfunc{ccevents_group_enter}.
+@end deftypefun
+
+@c page
+@node loop
+@chapter The main events loop
+
+
+The main events loop contains references to groups of events sources that must be served.  Usage
+example:
+
+@example
+#include <ccevents.h>
+
+ccevents_loop_t         loop[1];
+ccevents_group_t        grpA[1], grpB[1];
+
+ccevents_loop_init(loop);
+ccevents_group_init(grpA, 10);
+ccevents_group_init(grpB, 5);
+
+/* Here we should add events sources to the groups. */
+
+ccevents_loop_enqueue_group(loop, grpA);
+ccevents_loop_enqueue_group(loop, grpB);
+
+ccevents_group_enter(loop);
+
+while (ccevents_loop_queue_is_not_empty(loop))
+@{
+  ccevents_group_t *    grp;
+  grp = ccevents_loop_dequeue_group(loop);
+  /* Here we should finalise the group. */
+@}
+@end example
+
+
+@deftp {Struct Typedef} ccevents_loop_t
+Type of data structures representing a main events loop.
+
+Instances of this type must be initialised with a call to @cfunc{ccevents_group_init} applied to an
+already allocated data structure.
+
+Instances of this type must be finalised by first dequeuing all the groups with
+@cfunc{ccevents_group_dequeue_group}, and then, if needed, by releasing the memory allocated for the
+data structure.
+@end deftp
+
+
+@deftypefun void ccevents_loop_init (ccevents_loop_t * @var{loop})
+Initialise an already allocated loop structure.  The internal queue of groups is initialised to
+empty.
+@end deftypefun
+
+
+@deftypefun bool ccevents_loop_queue_is_not_empty (const ccevents_loop_t * @var{loop})
+Return @true{} if this loop has at least one group in the queue; otherwise return @false{}.
+@end deftypefun
+
+
+@deftypefun size_t ccevents_loop_number_of_groups (const ccevents_loop_t * @var{loop})
+Return the number of groups enqueued in @var{loop}.
+@end deftypefun
+
+
+@deftypefun bool ccevents_loop_contains_group (const ccevents_loop_t * @var{loop}, const ccevents_group_t * @var{grp})
+Return @true{} if the group @var{grp} is enqueued in the loop @var{loop}; otherwise return @false{}.
+@end deftypefun
+
+
+@deftypefun void ccevents_loop_enqueue_group (ccevents_loop_t * @var{loop}, ccevents_group_t * @var{grp})
+Enqueue the group @var{grp} in the loop @var{loop}.
+@end deftypefun
+
+
+@deftypefun {ccevents_group_t *} ccevents_loop_dequeue_group (ccevents_loop_t * @var{loop})
+Dequeue a group from @var{loop} and return it.  Return @cnull{} if the loop is empty.
+@end deftypefun
+
+
+@deftypefun void ccevents_loop_remove_group (ccevents_loop_t * @var{loop}, ccevents_group_t * @var{grp})
+Remove the group referenced by @var{grp} from the loop referenced by @var{loop}.  If @var{grp} is
+not associated to @var{loop}: the result is unspecified.
+@end deftypefun
+
+
+@deftypefun void ccevents_loop_enter (ccevents_loop_t * @var{loop})
+Enter the loop and serve events until: no more groups are enqueued; a request to exit is posted with
+@cfunc{ccevents_loop_post_request_to_leave_asap}.
+@end deftypefun
+
+
+@deftypefun void ccevents_loop_post_request_to_leave_asap (ccevents_loop_t * @var{loop})
+Post a request to exit as soon as possible the loop.  This function is meant to be called by an
+event handler to cause a premature return from a call to @cfunc{ccevents_loop_enter}.
 @end deftypefun
 
 @c page

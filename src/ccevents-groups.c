@@ -29,116 +29,49 @@
 #include "ccevents-internals.h"
 
 void
-ccevents_group_init (ccevents_group_t * grp)
+ccevents_group_init (ccevents_group_t * grp, size_t served_events_watermark)
 {
-  grp->sources_queue_head	= NULL;
-  grp->sources_queue_tail	= NULL;
+  ccevents_queue_init(&(grp->sources));
+  grp->prev			= NULL;
+  grp->next			= NULL;
   grp->request_to_leave_asap	= false;
-  grp->served_events_count	= 0;
-  grp->served_events_watermark	= 0;
+  grp->served_events_watermark	= served_events_watermark;
 }
 
 bool
 ccevents_group_queue_is_not_empty (const ccevents_group_t * grp)
 {
-  return (grp->sources_queue_head)? true : false;
+  return ccevents_queue_is_not_empty(&(grp->sources));
 }
 
 size_t
 ccevents_group_number_of_sources (const ccevents_group_t * grp)
 {
-  ccevents_source_t *	src;
-  size_t		len = 0;
-
-  for (src = grp->sources_queue_head; src; src = src->next) {
-    ++len;
-  }
-  return len;
+  return ccevents_queue_number_of_items(&(grp->sources));
 }
 
 bool
 ccevents_group_contains_source (const ccevents_group_t * grp, const ccevents_source_t * src)
 {
-  ccevents_source_t *	iter;
-
-  for (iter = grp->sources_queue_head; iter; iter = iter->next) {
-    if (iter == src) {
-      return true;
-    }
-  }
-  return false;
+  return ccevents_queue_contains_item (&(grp->sources), src);
 }
 
 void
 ccevents_group_enqueue_source (ccevents_group_t * grp, ccevents_source_t * new_tail)
-/* Enqueue NEW_TAIL in the group SRC. */
 {
-  if (grp->sources_queue_tail) {
-    /* There is at least one item in the list.  Append "new_tail" as the
-       new tail. */
-    ccevents_source_t *	previous_tail = grp->sources_queue_tail;
-    previous_tail->next		= new_tail;
-    new_tail->prev		= previous_tail;
-    grp->sources_queue_tail	= new_tail;
-  } else {
-    /* The list is empty.  Fill it with "new_tail" as only item. */
-    grp->sources_queue_head	= new_tail;
-    grp->sources_queue_tail	= new_tail;
-  }
+  ccevents_queue_enqueue (&(grp->sources), new_tail);
 }
 
 ccevents_source_t *
 ccevents_group_dequeue_source (ccevents_group_t * grp)
-/* Pop an  events source  from the  head of the  list of  events sources
-   enqueued for the next run.  Return NULL if the list is empty. */
 {
-  ccevents_source_t *	next_source = grp->sources_queue_head;
-  if (next_source) {
-    /* Detach the dequeued source from the group. */
-    grp->sources_queue_head		= next_source->next;
-    if (grp->sources_queue_head) {
-      grp->sources_queue_head->prev	= NULL;
-    }
-    /* If the dequeued source was the only one: reset the tail too. */
-    if (next_source == grp->sources_queue_tail) {
-      grp->sources_queue_tail = NULL;
-    }
-    /* Detach the dequeued source from the list. */
-    next_source->prev			= NULL;
-    next_source->next			= NULL;
-  }
-  return next_source;
+  return (ccevents_source_t *)ccevents_queue_dequeue(&(grp->sources));
 }
 
 void
 ccevents_group_remove_source (ccevents_group_t * grp, ccevents_source_t * src)
 {
-  if (grp->sources_queue_head == src) {
-    /* Detach the source from the head. */
-    grp->sources_queue_head = src->next;
-    if (grp->sources_queue_head) {
-      grp->sources_queue_tail->prev = NULL;
-    }
-    /* If the removed source was the only one: reset the tail too. */
-    if (src == grp->sources_queue_tail) {
-      grp->sources_queue_tail = NULL;
-    }
-  } else if (grp->sources_queue_tail == src) {
-    /* Detach the source from the tail. */
-    grp->sources_queue_tail = src->prev;
-    if (grp->sources_queue_tail) {
-      grp->sources_queue_tail->next = NULL;
-    }
-    /* If the removed source was the only one: reset the head too. */
-    if (src == grp->sources_queue_head) {
-      grp->sources_queue_head = NULL;
-    }
-  } else {
-    src->prev->next = src->next;
-    src->next->prev = src->prev;
-  }
-  src->prev = NULL;
-  src->next = NULL;
+  ccevents_queue_remove(&(grp->sources), src);
 }
 
 bool
@@ -167,39 +100,39 @@ ccevents_group_run_do_one_event (ccevents_group_t * grp)
 }
 
 void
-ccevents_group_enter (ccevents_group_t * grp, size_t served_events_watermark)
+ccevents_group_enter (ccevents_group_t * grp)
 /* Enter the  loop for this group  and serve events until:  a request to
    exit is  posted; no more  events sources are enqueued;  the watermark
    level has been reached.
 */
 {
+  size_t	served_events_count = 0;
+
   /* Set up GRP to start the next run of events servicing.  The run will
      serve at most SERVED_EVENTS_WATERMARK events. */
   {
-    grp->request_to_leave_asap		= false;
-    grp->served_events_count		= 0;
-    grp->served_events_watermark	= served_events_watermark;
+    grp->request_to_leave_asap	= false;
+    served_events_count		= 0;
   }
   /* Enter the  loop and serve events  until: no more event  sources are
      enqueued;  a  request  to  leave  the  loop-out  is  detected;  the
      watermark level has been reached. */
   {
     for (bool one_more_source = true;
-	 ((!(grp->request_to_leave_asap)) && one_more_source && (grp->served_events_count < grp->served_events_watermark));
+	 ((!(grp->request_to_leave_asap)) && one_more_source && (served_events_count < grp->served_events_watermark));
 	 one_more_source = ccevents_group_run_do_one_event(grp)) {
-      ++(grp->served_events_count);
+      ++(served_events_count);
       if (0) {
 	fprintf(stderr, "%s: loop, one_more_source=%d, count=%ld, max=%ld\n",
-		__func__, (int)one_more_source, grp->served_events_count,
+		__func__, (int)one_more_source, served_events_count,
 		grp->served_events_watermark);
       }
     }
   }
   /* Reset GRP after ending a run of events servicing. */
   {
-    grp->request_to_leave_asap		= false;
-    grp->served_events_count		= 0;
-    grp->served_events_watermark	= 0;
+    grp->request_to_leave_asap	= false;
+    served_events_count		= 0;
   }
 }
 

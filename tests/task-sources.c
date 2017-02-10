@@ -87,10 +87,10 @@ test_single_task (void)
     } else {
       ccevents_task_source_init(tksrc);
       ccevents_source_set_timeout(tksrc, *CCEVENTS_TIMEOUT_NEVER, expiration_handler);
-      ccevents_group_init(grp);
+      ccevents_group_init(grp, 3);
       ccevents_group_enqueue_source(grp, tksrc);
       ccevents_task_source_set(L, tksrc, event_inquirer, step1);
-      ccevents_group_enter(grp, 3);
+      ccevents_group_enter(grp);
       cce_run_cleanup_handlers(L);
     }
   }
@@ -188,14 +188,14 @@ test_multi_tasks (void)
       ccevents_source_set_timeout(tsk1, *CCEVENTS_TIMEOUT_NEVER, expiration_handler);
       ccevents_source_set_timeout(tsk2, *CCEVENTS_TIMEOUT_NEVER, expiration_handler);
       ccevents_source_set_timeout(tsk3, *CCEVENTS_TIMEOUT_NEVER, expiration_handler);
-      ccevents_group_init(grp);
+      ccevents_group_init(grp, 9);
       ccevents_group_enqueue_source(grp, tsk1);
       ccevents_group_enqueue_source(grp, tsk2);
       ccevents_group_enqueue_source(grp, tsk3);
       ccevents_task_source_set(L, tsk1, event_inquirer, step1);
       ccevents_task_source_set(L, tsk2, event_inquirer, step1);
       ccevents_task_source_set(L, tsk3, event_inquirer, step1);
-      ccevents_group_enter(grp, 9);
+      ccevents_group_enter(grp);
       cce_run_cleanup_handlers(L);
     }
   }

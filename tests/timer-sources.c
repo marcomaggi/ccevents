@@ -63,13 +63,13 @@ test_single_timer_expiration (void)
       ccevents_source_set_timeout(timsrc, expiration_time, expiration_handler);
       ccevents_timer_source_set(L, timsrc);
 
-      ccevents_group_init(grp);
+      ccevents_group_init(grp, 100);
       ccevents_group_enqueue_source(grp, timsrc);
 
       ccevents_timeout_init(L, &loop_time, 0, 10, 0);
       ccevents_timeout_start(L, &loop_time);
       do {
-	ccevents_group_enter(grp, 100);
+	ccevents_group_enter(grp);
       } while (! ccevents_timeout_expired(&loop_time));
       //fprintf(stderr, "loop expired? %d\n", ccevents_timeout_expired(&loop_time));
 

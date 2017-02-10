@@ -122,7 +122,7 @@ test_source (void)
       signal_flag = true;
     }
 
-    ccevents_group_init(grp);
+    ccevents_group_init(grp, 1000);
     ccevents_task_source_init(acquire_signals_src);
     ccevents_task_source_init(raise_signal_src);
     ccevents_signal_bub_source_init(sigsrc, SIGUSR1);
@@ -140,7 +140,7 @@ test_source (void)
       ccevents_group_enqueue_source(grp, sigsrc);
       ccevents_group_enqueue_source(grp, acquire_signals_src);
       ccevents_group_enqueue_source(grp, raise_signal_src);
-      ccevents_group_enter(grp, 1000);
+      ccevents_group_enter(grp);
       cce_run_cleanup_handlers(L);
     }
   }
@@ -182,7 +182,7 @@ test_source_for_documentation (void)
 
   ccevents_signal_bub_init();
   {
-    ccevents_group_init(grp);
+    ccevents_group_init(grp, 1000);
     ccevents_task_source_init(acquire_signals_src);
     ccevents_signal_bub_source_init(sigsrc, SIGUSR1);
 
@@ -197,7 +197,7 @@ test_source_for_documentation (void)
       ccevents_signal_bub_source_set(L, sigsrc, signal_handler);
       ccevents_group_enqueue_source(grp, sigsrc);
       ccevents_group_enqueue_source(grp, acquire_signals_src);
-      ccevents_group_enter(grp, 1000);
+      ccevents_group_enter(grp);
       cce_run_cleanup_handlers(L);
     }
   }

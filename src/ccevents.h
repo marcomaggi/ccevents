@@ -94,12 +94,52 @@ ccevents_decl void ccevents_init (void);
  ** Forward declarations.
  ** ----------------------------------------------------------------- */
 
+typedef struct ccevents_loop_t			ccevents_loop_t;
 typedef struct ccevents_group_t			ccevents_group_t;
 typedef struct ccevents_source_t		ccevents_source_t;
 typedef struct ccevents_fd_source_t		ccevents_fd_source_t;
 typedef struct ccevents_task_source_t		ccevents_task_source_t;
 typedef struct ccevents_signal_bub_source_t	ccevents_signal_bub_source_t;
 typedef struct ccevents_timer_source_t		ccevents_timer_source_t;
+
+typedef struct ccevents_queue_node_t		ccevents_queue_node_t;
+typedef struct ccevents_queue_t			ccevents_queue_t;
+
+/** --------------------------------------------------------------------
+ ** Queues.
+ ** ----------------------------------------------------------------- */
+
+struct ccevents_queue_node_t {
+  /* Pointers to the  next and previous node in the  doubly linked list.
+     NULL if there is no prev/next. */
+  ccevents_queue_node_t *	next;
+  ccevents_queue_node_t *	prev;
+};
+
+struct ccevents_queue_t {
+  /* Pointers to  the head and tail  of the list of  sources to enqueued
+     for the next run. */
+  ccevents_queue_node_t *	head;
+  ccevents_queue_node_t *	tail;
+};
+
+ccevents_decl void ccevents_queue_init (ccevents_queue_t * Q)
+  __attribute__((nonnull(1)));
+
+ccevents_decl bool ccevents_queue_is_not_empty (const ccevents_queue_t * Q)
+  __attribute__((pure,nonnull(1)));
+
+ccevents_decl size_t ccevents_queue_number_of_items (const ccevents_queue_t * Q)
+  __attribute__((pure,nonnull(1)));
+
+ccevents_decl bool ccevents_queue_contains_item (const ccevents_queue_t * Q, const ccevents_queue_node_t * N)
+  __attribute__((pure,nonnull(1,2)));
+
+ccevents_decl void ccevents_queue_enqueue (ccevents_queue_t * Q, ccevents_queue_node_t * new_tail);
+
+ccevents_decl ccevents_queue_node_t * ccevents_queue_dequeue (ccevents_queue_t * Q);
+
+ccevents_decl void ccevents_queue_remove (ccevents_queue_t * Q, ccevents_queue_node_t * src);
 
 /** --------------------------------------------------------------------
  ** Constants.
@@ -331,15 +371,10 @@ typedef struct ccevents_source_vtable_t {
   ccevents_source_event_handler_fun_t *		event_handler;
 } ccevents_source_vtable_t;
 
-typedef struct ccevents_source_queue_node_t {
-  ccevents_source_t *		next;
-  ccevents_source_t *		prev;
-} ccevents_source_queue_node_t;
-
 struct ccevents_source_t {
   /* This struct is a node in the  list of event sources registered in a
      group. */
-  ccevents_source_queue_node_t;
+  ccevents_queue_node_t;
 
   const ccevents_source_vtable_t *	vtable;
 
@@ -473,26 +508,18 @@ ccevents_decl void ccevents_timer_source_set (cce_location_t * there, ccevents_t
  ** Sources groups.
  ** ----------------------------------------------------------------- */
 
-typedef struct ccevents_group_queue_t {
-  /* Pointers to  the head and tail  of the list of  sources to enqueued
-     for the next run. */
-  ccevents_source_t *	sources_queue_head;
-  ccevents_source_t *	sources_queue_tail;
-} ccevents_group_queue_t;
-
 /* Groups  are collection  of event  sources  that must  be queried  for
    pending events with the same priority.
 */
 struct ccevents_group_t {
+  ccevents_queue_node_t;
+
   /* Queue of event sources. */
-  ccevents_group_queue_t;
+  ccevents_queue_t	sources;
 
   /* True  if a  request  to leave  the  loop as  soon  as possible  was
      posted. */
   bool		request_to_leave_asap;
-
-  /* Number of consecutive events served in this group. */
-  size_t	served_events_count;
 
   /* Maximum number of consecutive events  to serve in this group.  When
      the  count reaches  the  watermark level:  the  loop abandons  this
@@ -500,7 +527,16 @@ struct ccevents_group_t {
   size_t	served_events_watermark;
 };
 
-ccevents_decl void ccevents_group_init (ccevents_group_t * grp)
+ccevents_decl void ccevents_group_init (ccevents_group_t * grp, size_t served_events_watermark)
+  __attribute__((nonnull(1)));
+
+ccevents_decl bool ccevents_group_run_do_one_event (ccevents_group_t * grp)
+  __attribute__((nonnull(1)));
+
+ccevents_decl void ccevents_group_enter (ccevents_group_t * grp)
+  __attribute__((nonnull(1)));
+
+ccevents_decl void ccevents_group_post_request_to_leave_asap (ccevents_group_t * grp)
   __attribute__((nonnull(1)));
 
 ccevents_decl bool ccevents_group_queue_is_not_empty (const ccevents_group_t * grp)
@@ -521,14 +557,45 @@ ccevents_decl ccevents_source_t * ccevents_group_dequeue_source (ccevents_group_
 ccevents_decl void ccevents_group_remove_source (ccevents_group_t * grp, ccevents_source_t * src)
   __attribute__((nonnull(1,2)));
 
-ccevents_decl bool ccevents_group_run_do_one_event (ccevents_group_t * grp)
+/** --------------------------------------------------------------------
+ ** Main loop.
+ ** ----------------------------------------------------------------- */
+
+struct ccevents_loop_t {
+  /* Queue of event groups. */
+  ccevents_queue_t	groups;
+
+  /* True  if a  request  to leave  the  loop as  soon  as possible  was
+     posted. */
+  bool		request_to_leave_asap;
+};
+
+ccevents_decl void ccevents_loop_init (ccevents_loop_t * loop)
   __attribute__((nonnull(1)));
 
-ccevents_decl void ccevents_group_enter (ccevents_group_t * grp, size_t served_events_watermark)
+ccevents_decl void ccevents_loop_enter (ccevents_loop_t * loop)
   __attribute__((nonnull(1)));
 
-ccevents_decl void ccevents_group_post_request_to_leave_asap (ccevents_group_t * grp)
+ccevents_decl void ccevents_loop_post_request_to_leave_asap (ccevents_loop_t * loop)
   __attribute__((nonnull(1)));
+
+ccevents_decl bool ccevents_loop_queue_is_not_empty (const ccevents_loop_t * loop)
+  __attribute__((pure,nonnull(1)));
+
+ccevents_decl size_t ccevents_loop_number_of_sources (const ccevents_loop_t * loop)
+  __attribute__((pure,nonnull(1)));
+
+ccevents_decl bool ccevents_loop_contains_source (const ccevents_loop_t * loop, const ccevents_group_t * grp)
+  __attribute__((pure,nonnull(1,2)));
+
+ccevents_decl void ccevents_loop_enqueue_source (ccevents_loop_t * loop, ccevents_group_t * grp)
+  __attribute__((nonnull(1,2)));
+
+ccevents_decl ccevents_group_t * ccevents_loop_dequeue_source (ccevents_loop_t * loop)
+  __attribute__((nonnull(1)));
+
+ccevents_decl void ccevents_loop_remove_source (ccevents_loop_t * loop, ccevents_group_t * grp)
+  __attribute__((nonnull(1,2)));
 
 /** --------------------------------------------------------------------
  ** Done.
