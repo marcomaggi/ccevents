@@ -4,5 +4,5 @@
 ** POSIX message queues
 ** Linux inotify events
 ** epoll
-** Message termination with waitpid()
+** Process termination with waitpid()
 
