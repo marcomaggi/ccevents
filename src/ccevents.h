@@ -582,19 +582,19 @@ ccevents_decl void ccevents_loop_post_request_to_leave_asap (ccevents_loop_t * l
 ccevents_decl bool ccevents_loop_queue_is_not_empty (const ccevents_loop_t * loop)
   __attribute__((pure,nonnull(1)));
 
-ccevents_decl size_t ccevents_loop_number_of_sources (const ccevents_loop_t * loop)
+ccevents_decl size_t ccevents_loop_number_of_groups (const ccevents_loop_t * loop)
   __attribute__((pure,nonnull(1)));
 
-ccevents_decl bool ccevents_loop_contains_source (const ccevents_loop_t * loop, const ccevents_group_t * grp)
+ccevents_decl bool ccevents_loop_contains_group (const ccevents_loop_t * loop, const ccevents_group_t * grp)
   __attribute__((pure,nonnull(1,2)));
 
-ccevents_decl void ccevents_loop_enqueue_source (ccevents_loop_t * loop, ccevents_group_t * grp)
+ccevents_decl void ccevents_loop_enqueue_group (ccevents_loop_t * loop, ccevents_group_t * grp)
   __attribute__((nonnull(1,2)));
 
-ccevents_decl ccevents_group_t * ccevents_loop_dequeue_source (ccevents_loop_t * loop)
+ccevents_decl ccevents_group_t * ccevents_loop_dequeue_group (ccevents_loop_t * loop)
   __attribute__((nonnull(1)));
 
-ccevents_decl void ccevents_loop_remove_source (ccevents_loop_t * loop, ccevents_group_t * grp)
+ccevents_decl void ccevents_loop_remove_group (ccevents_loop_t * loop, ccevents_group_t * grp)
   __attribute__((nonnull(1,2)));
 
 /** --------------------------------------------------------------------

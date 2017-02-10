@@ -64,7 +64,8 @@ check_PROGRAMS	= \
 	tests/task-sources		\
 	tests/timer-sources		\
 	tests/standalone-fd-sources	\
-	tests/signal-sources
+	tests/signal-sources		\
+	tests/main-loop
 
 TESTS				= $(check_PROGRAMS)
 
@@ -94,6 +95,9 @@ tests_standalone_fd_sources_LDADD	= $(ccevents_tests_ldadd)
 
 tests_signal_sources_CPPFLAGS		= $(ccevents_tests_cppflags)
 tests_signal_sources_LDADD		= $(ccevents_tests_ldadd)
+
+tests_main_loop_CPPFLAGS		= $(ccevents_tests_cppflags)
+tests_main_loop_LDADD			= $(ccevents_tests_ldadd)
 
 installcheck-local: $(TESTS)
 	@for f in $(TESTS); do $(builddir)/$$f; done

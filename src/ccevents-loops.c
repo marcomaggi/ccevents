@@ -54,9 +54,9 @@ ccevents_loop_contains_group (const ccevents_loop_t * loop, const ccevents_group
 }
 
 void
-ccevents_loop_enqueue_group (ccevents_loop_t * loop, ccevents_group_t * new_tail)
+ccevents_loop_enqueue_group (ccevents_loop_t * loop, ccevents_group_t * grp)
 {
-  ccevents_queue_enqueue (&(loop->groups), new_tail);
+  ccevents_queue_enqueue (&(loop->groups), grp);
 }
 
 ccevents_group_t *
@@ -74,13 +74,17 @@ ccevents_loop_remove_group (ccevents_loop_t * loop, ccevents_group_t * grp)
 void
 ccevents_loop_enter (ccevents_loop_t * loop)
 {
+  if (0) fprintf(stderr, "%s: enter\n", __func__);
   loop->request_to_leave_asap = false;
   {
-    ccevents_group_t *	grp;
-    for (grp = (ccevents_group_t *)loop->groups.head;
-	 grp && (!(loop->request_to_leave_asap));
-	 grp = (ccevents_group_t *)grp->next) {
+    ccevents_group_t *	grp = (ccevents_group_t *)loop->groups.head;
+    while (grp && (!(loop->request_to_leave_asap))) {
+      if (0) fprintf(stderr, "%s: here\n", __func__);
       ccevents_group_enter(grp);
+      grp = (ccevents_group_t *)grp->next;
+      if (! grp) {
+	grp =  (ccevents_group_t *)loop->groups.head;
+      }
     }
   }
   loop->request_to_leave_asap = false;
