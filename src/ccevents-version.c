@@ -32,22 +32,22 @@
 
 
 const char *
-cct_version_string (void)
+ccevents_version_string (void)
 {
   return ccevents_VERSION_INTERFACE_STRING;
 }
 int
-cct_version_interface_current (void)
+ccevents_version_interface_current (void)
 {
   return ccevents_VERSION_INTERFACE_CURRENT;
 }
 int
-cct_version_interface_revision (void)
+ccevents_version_interface_revision (void)
 {
   return ccevents_VERSION_INTERFACE_REVISION;
 }
 int
-cct_version_interface_age (void)
+ccevents_version_interface_age (void)
 {
   return ccevents_VERSION_INTERFACE_AGE;
 }

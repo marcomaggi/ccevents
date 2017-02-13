@@ -152,10 +152,10 @@ ccevents_decl void ccevents_queue_remove (ccevents_queue_t * Q, ccevents_queue_n
  ** Version functions.
  ** ----------------------------------------------------------------- */
 
-ccevents_decl const char *	cct_version_string		(void);
-ccevents_decl int		cct_version_interface_current	(void);
-ccevents_decl int		cct_version_interface_revision	(void);
-ccevents_decl int		cct_version_interface_age	(void);
+ccevents_decl const char *	ccevents_version_string			(void);
+ccevents_decl int		ccevents_version_interface_current	(void);
+ccevents_decl int		ccevents_version_interface_revision	(void);
+ccevents_decl int		ccevents_version_interface_age		(void);
 
 /** --------------------------------------------------------------------
  ** Exceptional conditions.
