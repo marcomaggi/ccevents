@@ -159,28 +159,19 @@ This document describes version @value{VERSION} of @value{PACKAGE}, a C language
 implementing an event loop.  It is written in C11 with @gcc{} extensions.  The library is meant to
 work on @gnu{}+Linux platforms.
 
-There are plenty of event loop libraries already, for example Libuv:
-
-@center @url{http://libuv.org/}
-
-@noindent
-and Libev:
-
-@center @url{http://software.schmorp.de/pkg/libev.html}
-
-@noindent
-while @value{PACKAGE} will, maybe, never reach their level of features and reliability: it is an
-interesting exercise in programming.
+There are plenty of mature event loop libraries already, for example @url{http://libuv.org/, Libuv}
+and @url{http://software.schmorp.de/pkg/libev.html, Libev}.  While @value{PACKAGE} will, maybe,
+never reach their level of features and reliability: it is an interesting exercise in programming.
 
 This package depends on the package CCExceptions, at least version 0.4, to handle exceptional
 conditions; @ref{references} for details on downloading it.
 
 @value{PACKAGE} installs the single header file @file{ccevents.h}.  All the function names in the
-@api{} are prefixed with @code{cct_}; all the constant names are prefixed with @code{CCT_}; all the
-type names are prefixed with @code{cct_} and suffixed with @code{_t}.
+@api{} are prefixed with @code{ccevents_}; all the constant names are prefixed with
+@code{CCEVENTS_}; all the type names are prefixed with @code{ccevents_} and suffixed with @code{_t}.
 
-The events loop implementation is inspired by the architecture of the event loop of
-@url{http://www.tcl.tk/, Tcl}; though no code comes from Tcl itself.
+The events loop implementation was initially inspired by the architecture of the event loop of
+@url{http://www.tcl.tk/, Tcl}; however no code comes from Tcl itself.
 
 Notice that, before using the library, we need to call the global initialisation function
 @cfunc{ccevents_init}.
@@ -208,7 +199,7 @@ which will set the variables @code{CCEVENTS_LIBS} and @code{CCEVENTS_CFLAGS}.  T
 Alternatively we can use the raw @gnu{} Autoconf macros:
 
 @example
-AC_CHECK_LIB([ccevents],[cct_version_string],,
+AC_CHECK_LIB([ccevents],[ccevents_version_string],,
   [AC_MSG_FAILURE([test for CCEvents library failed])])
 AC_CHECK_HEADERS([ccevents.h],,
   [AC_MSG_FAILURE([test for CCEvents header failed])])
@@ -225,6 +216,11 @@ language and the @gcc{} extensions enabled by @option{-fplan9-extensions}.
 @deftypefun void ccevents_init (void)
 Initialises the internal structures of the library.  It is fine to call this function multiple
 times.
+
+@quotation
+@strong{NOTE} This function is defined with the @gcc{} attribute @code{constructor}, so it will be
+called automatically by the library initialisation code.
+@end quotation
 @end deftypefun
 
 @c page
@@ -238,24 +234,24 @@ The installed libraries follow version numbering as established by the
 system, libtool, Shared library support for @gnu{}}.
 
 
-@deftypefun {const char *} cct_version_string (void)
+@deftypefun {const char *} ccevents_version_string (void)
 Return a pointer to a statically allocated @asciiz{} string representing
 the interface version number.
 @end deftypefun
 
 
-@deftypefun int cct_version_interface_current (void)
+@deftypefun int ccevents_version_interface_current (void)
 Return an integer representing the library interface current number.
 @end deftypefun
 
 
-@deftypefun int cct_version_interface_revision (void)
+@deftypefun int ccevents_version_interface_revision (void)
 Return an integer representing the library interface current revision
 number.
 @end deftypefun
 
 
-@deftypefun int cct_version_interface_age (void)
+@deftypefun int ccevents_version_interface_age (void)
 Return an integer representing the library interface current age.
 @end deftypefun
 
@@ -266,13 +262,29 @@ Return an integer representing the library interface current age.
 
 @value{PACKAGE} makes use of the external library CCExceptions to signal exceptional conditions and
 errors through non--local exits; @xref{Top, CCExceptions, CCExceptions, ccexceptions, CCExceptions}.
+
 The functions will raise exceptional conditions with @cfunc{cce_raise} and expect the caller to
-intercept them using the @code{cce_location_t} mechanics.
+intercept them using the @code{cce_location_t} mechanics.  The basic code template is.
+
+@example
+#include <ccevents.h>
+
+cce_location_t  L[1];
+
+if (cce_location(L)) @{
+  /* Handle errors here. */
+  cce_run_error_handlers(L);
+  cce_condition_free(cce_location_condition(L));
+@} else @{
+  /* Do something useful here. */
+  cce_run_cleanup_handlers(L);
+@}
+@end example
 
 @menu
 * conditions base::             Base exceptional conditions.
-* conditions timeval::          Timeval exceptional conditions.
-* conditions timeout::          Timeout exceptional conditions.
+* conditions timevals::         Timeval exceptional conditions.
+* conditions timeouts::         Timeout exceptional conditions.
 @end menu
 
 @c page
@@ -299,29 +311,29 @@ CCExceptions}.
 @end deftp
 
 
-@deftypevr {Dynamic Constant} {const ccevents_condition_base_descriptor_t *} ccevents_base_condition_descriptor
+@deftypevr {Dynamic Constant} {const ccevents_condition_base_descriptor_t *} ccevents_condition_base_descriptor
 Pointer to a statically allocated exceptional condition descriptor.
 @end deftypevr
 
 
 @deftypefun bool ccevents_condition_is_a_base (const cce_condition_t * @var{C})
-Return @true{} if @var{C} is an exceptional condition object of with type descriptor
-@objtype{ccevents_condition_base_descriptor_t}; otherwise return @false{}.
+Return @true{} if @var{C} is an exceptional condition object with type descriptor
+@objtype{ccevents_condition_base_descriptor}; otherwise return @false{}.
 @end deftypefun
 
 @c page
-@node conditions timeval
+@node conditions timevals
 @section Timeval exceptional conditions
 
 
 @menu
-* timevals conditions timeval::         Timeval exceptional conditions.
-* timevals conditions invalid::         Invalid timeval values.
-* timevals conditions overflow::        Overflow in timeval representation.
+* conditions timevals timeval::         Timeval exceptional conditions.
+* conditions timevals invalid::         Invalid timeval values.
+* conditions timevals overflow::        Overflow in timeval representation.
 @end menu
 
 @c page
-@node timevals conditions timeval
+@node conditions timevals timeval
 @subsection Timeval exceptional conditions
 
 
@@ -345,7 +357,7 @@ The parent of this type descriptor is the descriptor referenced by
 
 
 @deftp {Struct Typedef} ccevents_condition_timeval_t
-Type of data structure representing an exceptional condition objects for a generic timeval--related
+Type of data structure representing an exceptional condition object for a generic timeval--related
 error.  It has the following public fields:
 
 @table @code
@@ -355,7 +367,7 @@ Anonymous field representing the condition object's base values.
 @end deftp
 
 
-@deftypevr {Constant} {const ccevents_condition_timeval_descriptor_t *} ccevents_condition_timeval_descriptor
+@deftypevr {Dynamic Constant} {const ccevents_condition_timeval_descriptor_t *} ccevents_condition_timeval_descriptor
 Pointer to a statically allocated exceptional condition descriptor.
 @end deftypevr
 
@@ -367,8 +379,8 @@ proper call to @cfunc{cce_condition_free}.
 
 
 @deftypefun bool ccevents_condition_is_a_timeval (const cce_condition_t * @var{C})
-Return @true{} if @var{C} is an exceptional condition object of with type descriptor
-@objtype{ccevents_condition_timeval_descriptor_t}; otherwise return @false{}.
+Return @true{} if @var{C} is an exceptional condition object with type descriptor
+@objtype{ccevents_condition_timeval_descriptor}; otherwise return @false{}.
 @end deftypefun
 
 
@@ -376,7 +388,7 @@ To catch this exceptional condition we can to:
 
 @smallexample
 cce_location_t        L[1];
-ccevents_timeval_t    to;
+ccevents_timeval_t    tv;
 
 if (cce_location(L)) @{
   cce_condition_t * C = cce_location_condition(L);
@@ -386,8 +398,8 @@ if (cce_location(L)) @{
       (ccevents_condition_timeval_t *)C;
     do_something_with(K);
   @}
-  cce_condition_free(C);
   cce_run_error_handlers(L);
+  cce_condition_free(C);
 @} else @{
   do_something(L);
   cce_run_cleanup_handlers(L);
@@ -395,7 +407,7 @@ if (cce_location(L)) @{
 @end smallexample
 
 @c page
-@node timevals conditions invalid
+@node conditions timevals invalid
 @subsection Invalid timeval values
 
 
@@ -460,8 +472,8 @@ if (cce_location(L)) @{
       (ccevents_condition_timeval_invalid_t *)C;
     do_something_with(K);
   @}
-  cce_condition_free(C);
   cce_run_error_handlers(L);
+  cce_condition_free(C);
 @} else @{
   do_something(L);
   cce_run_cleanup_handlers(L);
@@ -469,7 +481,7 @@ if (cce_location(L)) @{
 @end smallexample
 
 @c page
-@node timevals conditions overflow
+@node conditions timevals overflow
 @subsection Overflow in timeval representation
 
 
@@ -534,8 +546,8 @@ if (cce_location(L)) @{
       (ccevents_condition_timeval_overflow_t *)C;
     do_something_with(K);
   @}
-  cce_condition_free(C);
   cce_run_error_handlers(L);
+  cce_condition_free(C);
 @} else @{
   do_something(L);
   cce_run_cleanup_handlers(L);
@@ -543,17 +555,17 @@ if (cce_location(L)) @{
 @end smallexample
 
 @c page
-@node conditions timeout
+@node conditions timeouts
 @section Timeout exceptional conditions
 
 
 @menu
-* timeouts conditions invalid::         Invalid timeout values.
-* timeouts conditions overflow::        Overflow in timeout representation.
+* conditions timeouts invalid::         Invalid timeout values.
+* conditions timeouts overflow::        Overflow in timeout representation.
 @end menu
 
 @c page
-@node timeouts conditions invalid
+@node conditions timeouts invalid
 @subsection Invalid timeout values
 
 
@@ -612,8 +624,8 @@ if (cce_location(L)) @{
       (ccevents_condition_timeout_invalid_t *)C;
     do_something_with(K);
   @}
-  cce_condition_free(C);
   cce_run_error_handlers(L);
+  cce_condition_free(C);
 @} else @{
   do_something(L);
   cce_run_cleanup_handlers(L);
@@ -621,7 +633,7 @@ if (cce_location(L)) @{
 @end smallexample
 
 @c page
-@node timeouts conditions overflow
+@node conditions timeouts overflow
 @subsection Overflow in timeout representation
 
 
@@ -681,8 +693,8 @@ if (cce_location(L)) @{
       (ccevents_condition_timeout_overflow_t *)C;
     do_something_with(K);
   @}
-  cce_condition_free(C);
   cce_run_error_handlers(L);
+  cce_condition_free(C);
 @} else @{
   do_something(L);
   cce_run_cleanup_handlers(L);
@@ -768,7 +780,6 @@ If @var{A} is greater than @var{B}.
 If @var{A} is less than @var{B}.
 @end table
 @end deftypefun
-
 
 @c page
 @node timeouts
