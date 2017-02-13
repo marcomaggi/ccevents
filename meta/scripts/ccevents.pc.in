@@ -21,6 +21,7 @@ sysconfdir=@sysconfdir@
 Name: @PACKAGE_NAME@
 Description: an events loop C language library
 Version: @CCEVENTS_PKG_CONFIG_VERSION@
+Requires: ccexceptions >= 0.4
 Libs: -L${libdir} -lccevents
 Cflags: -I${includedir}
 
