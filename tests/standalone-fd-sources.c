@@ -357,11 +357,11 @@ test_talking_processes_with_groups (void)
     volatile int		state = 0;
 
     /* Location handler to close the file descriptors. */
-    void close_read_fd_handler (cce_location_t * there CCEVENTS_UNUSED, cce_handler_t * H CCEVENTS_UNUSED)
+    void close_read_fd_handler (const cce_condition_t * C CCEVENTS_UNUSED, cce_handler_t * H CCEVENTS_UNUSED)
     {
       close(read_fd);
     }
-    void close_write_fd_handler (cce_location_t * there CCEVENTS_UNUSED, cce_handler_t * H CCEVENTS_UNUSED)
+    void close_write_fd_handler (const cce_condition_t * C CCEVENTS_UNUSED, cce_handler_t * H CCEVENTS_UNUSED)
     {
       close(write_fd);
     }
@@ -499,11 +499,11 @@ test_talking_processes_with_groups (void)
     bool			error_flag = false;
 
     /* Location handler to close the file descriptors. */
-    void close_read_fd_handler (cce_location_t * there CCEVENTS_UNUSED, cce_handler_t * H CCEVENTS_UNUSED)
+    void close_read_fd_handler (const cce_condition_t * C CCEVENTS_UNUSED, cce_handler_t * H CCEVENTS_UNUSED)
     {
       close(read_fd);
     }
-    void close_write_fd_handler (cce_location_t * there CCEVENTS_UNUSED, cce_handler_t * H CCEVENTS_UNUSED)
+    void close_write_fd_handler (const cce_condition_t * C CCEVENTS_UNUSED, cce_handler_t * H CCEVENTS_UNUSED)
     {
       close(write_fd);
     }

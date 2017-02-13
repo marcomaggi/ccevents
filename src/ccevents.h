@@ -88,7 +88,8 @@ extern "C" {
  ** Initialisation.
  ** ----------------------------------------------------------------- */
 
-ccevents_decl void ccevents_init (void);
+ccevents_decl void ccevents_init (void)
+  __attribute__((constructor));
 
 /** --------------------------------------------------------------------
  ** Forward declarations.

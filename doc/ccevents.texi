@@ -172,7 +172,7 @@ and Libev:
 while @value{PACKAGE} will, maybe, never reach their level of features and reliability: it is an
 interesting exercise in programming.
 
-This package depends on the package CCExceptions, at least version 0.3, to handle exceptional
+This package depends on the package CCExceptions, at least version 0.4, to handle exceptional
 conditions; @ref{references} for details on downloading it.
 
 @value{PACKAGE} installs the single header file @file{ccevents.h}.  All the function names in the

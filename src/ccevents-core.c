@@ -28,7 +28,7 @@
 
 #include "ccevents-internals.h"
 
-void
+__attribute__((constructor)) void
 ccevents_init (void)
 {
   static bool	initialised = false;

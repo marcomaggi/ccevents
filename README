@@ -23,7 +23,7 @@ It is  written in  C11 with GCC  extensions and it  is meant  to support
 GNU+Linux platforms.
 
   This package  depends on  the package  CCExceptions, at  least version
-0.3.
+0.4.
 
   The package  makes use  of the  GNU Autotools  and it  is tested  on a
 GNU+Linux system.
