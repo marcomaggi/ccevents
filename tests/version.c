@@ -20,11 +20,11 @@ int
 main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
   ccevents_init();
-  printf("version number string: %s\n", cct_version_string());
+  printf("version number string: %s\n", ccevents_version_string());
   printf("libtool version number: %d:%d:%d\n",
-	 cct_version_interface_current(),
-	 cct_version_interface_revision(),
-	 cct_version_interface_age());
+	 ccevents_version_interface_current(),
+	 ccevents_version_interface_revision(),
+	 ccevents_version_interface_age());
   exit(EXIT_SUCCESS);
 }
 
