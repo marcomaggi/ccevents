@@ -163,7 +163,7 @@ There are plenty of mature event loop libraries already, for example @url{http:/
 and @url{http://software.schmorp.de/pkg/libev.html, Libev}.  While @value{PACKAGE} will, maybe,
 never reach their level of features and reliability: it is an interesting exercise in programming.
 
-This package depends on the package CCExceptions, at least version 0.4, to handle exceptional
+This package depends on the package CCExceptions, at least version @samp{0.5}, to handle exceptional
 conditions; @ref{references} for details on downloading it.
 
 @value{PACKAGE} installs the single header file @file{ccevents.h}.  All the function names in the
@@ -384,11 +384,10 @@ Return @true{} if @var{C} is an exceptional condition object with type descripto
 @end deftypefun
 
 
-To catch this exceptional condition we can to:
+To catch this exceptional condition we can do:
 
 @smallexample
 cce_location_t        L[1];
-ccevents_timeval_t    tv;
 
 if (cce_location(L)) @{
   cce_condition_t * C = cce_location_condition(L);
@@ -453,27 +452,25 @@ proper call to @cfunc{cce_condition_free}.
 
 
 @deftypefun bool ccevents_condition_is_a_timeval_invalid (const cce_condition_t * @var{C})
-Return @true{} if @var{C} is an exceptional condition object of with type descriptor
+Return @true{} if @var{C} is an exceptional condition object with type descriptor
 @objtype{ccevents_condition_timeval_invalid_descriptor_t}; otherwise return @false{}.
 @end deftypefun
 
 
-To catch this exceptional condition we can to:
+To catch this exceptional condition we can do:
 
 @smallexample
+#define PC(TYPE,X,Y)    const TYPE * X = (const TYPE *) (Y)
+
 cce_location_t        L[1];
-ccevents_timeval_t    to;
 
 if (cce_location(L)) @{
-  cce_condition_t * C = cce_location_condition(L);
-
-  if (ccevents_condition_is_a_timeval_invalid(C)) @{
-    ccevents_condition_timeval_invalid_t * K = \
-      (ccevents_condition_timeval_invalid_t *)C;
+  if (ccevents_condition_is_a_timeval_invalid(cce_location_condition(L))) @{
+    PC(ccevents_condition_timeval_invalid_t, K, cce_location_condition(L));
     do_something_with(K);
   @}
   cce_run_error_handlers(L);
-  cce_condition_free(C);
+  cce_condition_free(cce_location_condition(L));
 @} else @{
   do_something(L);
   cce_run_cleanup_handlers(L);
@@ -527,16 +524,15 @@ proper call to @cfunc{cce_condition_free}.
 
 
 @deftypefun bool ccevents_condition_is_a_timeval_overflow (const cce_condition_t * @var{C})
-Return @true{} if @var{C} is an exceptional condition object of with type descriptor
+Return @true{} if @var{C} is an exceptional condition object with type descriptor
 @objtype{ccevents_condition_timeval_overflow_descriptor_t}; otherwise return @false{}.
 @end deftypefun
 
 
-To catch this exceptional condition we can to:
+To catch this exceptional condition we can do:
 
 @smallexample
 cce_location_t        L[1];
-ccevents_timeval_t    to;
 
 if (cce_location(L)) @{
   cce_condition_t * C = cce_location_condition(L);
@@ -605,16 +601,15 @@ proper call to @cfunc{cce_condition_free}.
 
 
 @deftypefun bool ccevents_condition_is_a_timeout_invalid (const cce_condition_t * @var{C})
-Return @true{} if @var{C} is an exceptional condition object of with type descriptor
+Return @true{} if @var{C} is an exceptional condition object with type descriptor
 @objtype{ccevents_condition_descriptor_timeout_invalid_t}; otherwise return @false{}.
 @end deftypefun
 
 
-To catch this exceptional condition we can to:
+To catch this exceptional condition we can do:
 
 @smallexample
 cce_location_t        L[1];
-ccevents_timeout_t    to;
 
 if (cce_location(L)) @{
   cce_condition_t * C = cce_location_condition(L);
@@ -674,16 +669,15 @@ proper call to @cfunc{cce_condition_free}.
 
 
 @deftypefun bool ccevents_condition_is_a_timeout_overflow (const cce_condition_t * @var{C})
-Return @true{} if @var{C} is an exceptional condition object of with type descriptor
+Return @true{} if @var{C} is an exceptional condition object with type descriptor
 @objtype{ccevents_condition_descriptor_timeout_overflow_t}; otherwise return @false{}.
 @end deftypefun
 
 
-To catch this exceptional condition we can to:
+To catch this exceptional condition we can do:
 
 @smallexample
 cce_location_t        L[1];
-ccevents_timeout_t    to;
 
 if (cce_location(L)) @{
   cce_condition_t * C = cce_location_condition(L);

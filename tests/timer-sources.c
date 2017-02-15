@@ -55,7 +55,7 @@ test_single_timer_expiration (void)
     if (cce_location(L)) {
       error_flag = true;
       cce_run_error_handlers(L);
-      cce_condition_free(cce_location_condition(L));
+      cce_condition_free(cce_condition(L));
     } else {
       ccevents_timer_source_init(timsrc);
 

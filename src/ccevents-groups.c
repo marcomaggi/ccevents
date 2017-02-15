@@ -90,7 +90,7 @@ ccevents_group_run_do_one_event (ccevents_group_t * grp)
 
     if (cce_location(L)) {
       cce_run_error_handlers(L);
-      cce_condition_free(cce_location_condition(L));
+      cce_condition_free(cce_condition(L));
     } else {
       ccevents_source_do_one_event(L, grp, next_source);
       cce_run_cleanup_handlers(L);

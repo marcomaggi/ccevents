@@ -66,7 +66,7 @@ test_standalone_readability (void)
 
   if (cce_location(L)) {
     cce_run_error_handlers(L);
-    cce_condition_free(cce_location_condition(L));
+    cce_condition_free(cce_condition(L));
     error_flag = true;
   } else {
     ccevents_group_t		grp[1];
@@ -137,7 +137,7 @@ test_standalone_writability (void)
 
   if (cce_location(L)) {
     cce_run_error_handlers(L);
-    cce_condition_free(cce_location_condition(L));
+    cce_condition_free(cce_condition(L));
     error_flag = true;
   } else {
     ccevents_group_t		grp[1];
@@ -206,7 +206,7 @@ test_standalone_exception (void)
 
   if (cce_location(L)) {
     cce_run_error_handlers(L);
-    cce_condition_free(cce_location_condition(L));
+    cce_condition_free(cce_condition(L));
     error_flag = true;
   } else {
     master_sock = socket(PF_INET, SOCK_STREAM, 0);
@@ -469,7 +469,7 @@ test_talking_processes_with_groups (void)
     /* Do the talking. */
     if (cce_location(L)) {
       cce_run_error_handlers(L);
-      cce_condition_free(cce_location_condition(L));
+      cce_condition_free(cce_condition(L));
     } else {
       ccevents_fd_event_source_init(read_source, read_fd);
       ccevents_fd_event_source_init(write_source, write_fd);
@@ -609,7 +609,7 @@ test_talking_processes_with_groups (void)
     /* Do the talking. */
     if (cce_location(L)) {
       cce_run_error_handlers(L);
-      cce_condition_free(cce_location_condition(L));
+      cce_condition_free(cce_condition(L));
       error_flag = true;
     } else {
       ccevents_fd_event_source_init(read_source, read_fd);
@@ -637,7 +637,7 @@ test_talking_processes_with_groups (void)
 
     if (cce_location(L)) {
       cce_run_error_handlers(L);
-      cce_condition_free(cce_location_condition(L));
+      cce_condition_free(cce_condition(L));
     } else {
       errno = 0;
       pid   = fork();

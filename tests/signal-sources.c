@@ -130,7 +130,7 @@ test_source (void)
     if (cce_location(L)) {
       error_flag = true;
       cce_run_error_handlers(L);
-      cce_condition_free(cce_location_condition(L));
+      cce_condition_free(cce_condition(L));
     } else {
       ccevents_task_source_set(L, acquire_signals_src, acquire_signals_inquirer,
 			       ccevents_source_dummy_event_handler);
@@ -189,7 +189,7 @@ test_source_for_documentation (void)
     if (cce_location(L)) {
       error_flag = true;
       cce_run_error_handlers(L);
-      cce_condition_free(cce_location_condition(L));
+      cce_condition_free(cce_condition(L));
     } else {
       ccevents_task_source_set(L, acquire_signals_src,
 			       acquire_signals_inquirer,
