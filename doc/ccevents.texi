@@ -134,6 +134,7 @@ entitled ``@gnu{} Free Documentation License''.
 * timers::                      Timer events sources.
 * fd::                          Events source for file descriptors.
 * signals::                     Interprocess signals.
+* helpers::                     Helper functions and macros.
 
 Appendices
 
@@ -281,6 +282,11 @@ if (cce_location(L)) @{
 @}
 @end example
 
+@value{PACKAGE} makes use of a naming convention for condition descriptors and condition objects:
+names ending with @samp{_D_t} are condition descriptor types; names ending with @samp{_C_t} are
+condition object types; names ending with @samp{_D} are instances of condition descriptors; names
+ending with @samp{_C} are instances of condition objects.
+
 @menu
 * conditions base::             Base exceptional conditions.
 * conditions timevals::         Timeval exceptional conditions.
@@ -305,9 +311,8 @@ defined by this library.  It has the following public fields:
 Anonymous field representing the condition descriptor's base values.
 @end table
 
-The parent of this type descriptor is @code{cce_root_condition_descriptor} as defined by the
-CCExceptions library.  @xref{conditions root, CCExceptions, CCExceptions, ccexceptions,
-CCExceptions}.
+The parent of this type descriptor is @code{cce_root_D} as defined by the CCExceptions library.
+@xref{conditions root, CCExceptions, CCExceptions, ccexceptions, CCExceptions}.
 @end deftp
 
 
@@ -316,10 +321,9 @@ Pointer to a statically allocated exceptional condition descriptor.
 @end deftypevr
 
 
-@deftypefun bool ccevents_condition_is_a_base (const cce_condition_t * @var{C})
-Return @true{} if @var{C} is an exceptional condition object with type descriptor
-@objtype{ccevents_base_D}; otherwise return @false{}.
-@end deftypefun
+@deftypefn {Inline Function} bool ccevents_is_a_base_C (const cce_condition_t * @var{C})
+Return @true{} if @var{C} is of type @code{ccevents_base_D}; otherwise return @false{}.
+@end deftypefn
 
 @c page
 @node conditions timevals
@@ -372,15 +376,13 @@ Pointer to a statically allocated exceptional condition descriptor.
 
 
 @deftypefun {const ccevents_timeval_C_t *} ccevents_timeval_C (void)
-Return a pointer to exceptional condition object.  The returned object must be released with a
-proper call to @cfunc{cce_condition_free}.
+Return a pointer to exceptional condition object.
 @end deftypefun
 
 
-@deftypefun bool ccevents_is_a_timeval_C (const cce_condition_t * @var{C})
-Return @true{} if @var{C} is an exceptional condition object with type descriptor
-@objtype{ccevents_timeval_D}; otherwise return @false{}.
-@end deftypefun
+@deftypefn {Inline Function} bool ccevents_is_a_timeval_C (const cce_condition_t * @var{C})
+Return @true{} if @var{C} if of type @code{ccevents_timeval_D}; otherwise return @false{}.
+@end deftypefn
 
 
 To catch this exceptional condition we can do:
@@ -389,14 +391,12 @@ To catch this exceptional condition we can do:
 cce_location_t        L[1];
 
 if (cce_location(L)) @{
-  cce_condition_t * C = cce_condition(L);
-
-  if (ccevents_is_a_timeval_C(C)) @{
-    ccevents_timeval_C_t * K = (ccevents_timeval_C_t *)C;
-    do_something_with(K);
+  if (ccevents_is_a_timeval_C(cce_condition(L))) @{
+    CCEVENTS_PC(ccevents_timeval_C_t, C, cce_condition(L));
+    do_something_with(C);
   @}
   cce_run_error_handlers(L);
-  cce_condition_free(C);
+  cce_condition_free(cce_condition(L));
 @} else @{
   do_something(L);
   cce_run_cleanup_handlers(L);
@@ -444,28 +444,25 @@ Pointer to a statically allocated exceptional condition descriptor.
 
 
 @deftypefun {const ccevents_timeval_invalid_C_t *} ccevents_timeval_invalid_C (void)
-Return a pointer to exceptional condition object.  The returned object must be released with a
-proper call to @cfunc{cce_condition_free}.
+Return a pointer to exceptional condition object.
 @end deftypefun
 
 
 @deftypefun bool ccevents_is_a_timeval_invalid_C (const cce_condition_t * @var{C})
 Return @true{} if @var{C} is an exceptional condition object with type descriptor
-@objtype{ccevents_timeval_invalid_D_t}; otherwise return @false{}.
+@code{ccevents_timeval_invalid_D}; otherwise return @false{}.
 @end deftypefun
 
 
 To catch this exceptional condition we can do:
 
 @smallexample
-#define PC(TYPE,X,Y)    const TYPE * X = (const TYPE *) (Y)
-
 cce_location_t        L[1];
 
 if (cce_location(L)) @{
   if (ccevents_is_a_timeval_invalid_C(cce_condition(L))) @{
-    PC(ccevents_timeval_invalid_C_t, K, cce_condition(L));
-    do_something_with(K);
+    CCEVENTS_PC(ccevents_timeval_invalid_C_t, C, cce_condition(L));
+    do_something_with(C);
   @}
   cce_run_error_handlers(L);
   cce_condition_free(cce_condition(L));
@@ -480,8 +477,8 @@ if (cce_location(L)) @{
 @subsection Overflow in timeval representation
 
 
-@cindex Timeval, overflow exceptional condition
 @cindex Overflow in timeval, exceptional condition
+@cindex Timeval, overflow exceptional condition
 @cindex Exceptional conditions, overflow in timeval
 
 
@@ -515,14 +512,13 @@ Pointer to a statically allocated exceptional condition descriptor.
 
 
 @deftypefun {const ccevents_timeval_overflow_C_t *} ccevents_timeval_overflow_C (void)
-Return a pointer to exceptional condition object.  The returned object must be released with a
-proper call to @cfunc{cce_condition_free}.
+Return a pointer to exceptional condition object.
 @end deftypefun
 
 
 @deftypefun bool ccevents_is_a_timeval_overflow_C (const cce_condition_t * @var{C})
 Return @true{} if @var{C} is an exceptional condition object with type descriptor
-@objtype{ccevents_timeval_overflow_D_t}; otherwise return @false{}.
+@code{ccevents_timeval_overflow_D}; otherwise return @false{}.
 @end deftypefun
 
 
@@ -532,15 +528,12 @@ To catch this exceptional condition we can do:
 cce_location_t        L[1];
 
 if (cce_location(L)) @{
-  cce_condition_t * C = cce_condition(L);
-
-  if (ccevents_is_a_timeval_overflow_C(C)) @{
-    ccevents_timeval_overflow_C_t * K = \
-      (ccevents_timeval_overflow_C_t *)C;
-    do_something_with(K);
+  if (ccevents_is_a_timeval_overflow_C(cce_condition(L))) @{
+    CCEVENTS_PC(ccevents_timeval_overflow_C_t, C, cce_condition(L));
+    do_something_with(C);
   @}
   cce_run_error_handlers(L);
-  cce_condition_free(C);
+  cce_condition_free(cce_condition(L));
 @} else @{
   do_something(L);
   cce_run_cleanup_handlers(L);
@@ -592,14 +585,13 @@ Pointer to a statically allocated exceptional condition descriptor.
 
 
 @deftypefun {const ccevents_timeout_invalid_C_t *} ccevents_timeout_invalid_C (void)
-Return a pointer to exceptional condition object.  The returned object must be released with a
-proper call to @cfunc{cce_condition_free}.
+Return a pointer to exceptional condition object.
 @end deftypefun
 
 
 @deftypefun bool ccevents_is_a_timeout_invalid_C (const cce_condition_t * @var{C})
 Return @true{} if @var{C} is an exceptional condition object with type descriptor
-@objtype{ccevents_timeout_invalid_D_t}; otherwise return @false{}.
+@code{ccevents_timeout_invalid_D}; otherwise return @false{}.
 @end deftypefun
 
 
@@ -609,15 +601,12 @@ To catch this exceptional condition we can do:
 cce_location_t        L[1];
 
 if (cce_location(L)) @{
-  cce_condition_t * C = cce_condition(L);
-
-  if (ccevents_is_a_timeval_invalid_C(C)) @{
-    ccevents_timeout_invalid_C_t * K = \
-      (ccevents_timeout_invalid_C_t *)C;
-    do_something_with(K);
+  if (ccevents_is_a_timeval_invalid_C(cce_condition(L))) @{
+    CCEVENTS_PC(ccevents_timeout_invalid_C_t, C, cce_condition(L));
+    do_something_with(C);
   @}
   cce_run_error_handlers(L);
-  cce_condition_free(C);
+  cce_condition_free(cce_condition(L));
 @} else @{
   do_something(L);
   cce_run_cleanup_handlers(L);
@@ -660,14 +649,13 @@ Pointer to a statically allocated exceptional condition descriptor.
 
 
 @deftypefun {const ccevents_timeout_overflow_C_t *} ccevents_timeout_overflow_C (void)
-Return a pointer to exceptional condition object.  The returned object must be released with a
-proper call to @cfunc{cce_condition_free}.
+Return a pointer to exceptional condition object.
 @end deftypefun
 
 
 @deftypefun bool ccevents_is_a_timeout_overflow_C (const cce_condition_t * @var{C})
 Return @true{} if @var{C} is an exceptional condition object with type descriptor
-@objtype{ccevents_timeout_overflow_D_t}; otherwise return @false{}.
+@code{ccevents_timeout_overflow_D}; otherwise return @false{}.
 @end deftypefun
 
 
@@ -677,15 +665,12 @@ To catch this exceptional condition we can do:
 cce_location_t        L[1];
 
 if (cce_location(L)) @{
-  cce_condition_t * C = cce_condition(L);
-
-  if (ccevents_is_a_timeout_overflow_C(C)) @{
-    ccevents_timeout_overflow_C_t * K = \
-      (ccevents_timeout_overflow_C_t *)C;
-    do_something_with(K);
+  if (ccevents_is_a_timeout_overflow_C(cce_condition(L))) @{
+    CCEVENTS_PC(ccevents_timeout_overflow_C_t, C, cce_condition(L));
+    do_something_with(C);
   @}
   cce_run_error_handlers(L);
-  cce_condition_free(C);
+  cce_condition_free(cce_condition(L));
 @} else @{
   do_something(L);
   cce_run_cleanup_handlers(L);
@@ -1875,6 +1860,36 @@ main (int argc, const char *const argv[])
   exit(EXIT_SUCCESS);
 @}
 @end example
+
+@c page
+@node helpers
+@chapter Helper functions and macros
+
+
+@deffn {Preprocessor Macro} CCEVENTS_PC (@var{TYPE}, @var{X}, @var{Y})
+Pointer--type cast helper.  It expands into:
+
+@example
+@var{TYPE} * @var{X} = (@var{TYPE} *) (@var{Y})
+@end example
+
+So, for example, instead of writing:
+
+@example
+cce_location_t    L[1];
+cce_condition_t * C = cce_condition(L);
+ccevents_timeval_invalid_t * K = (ccevents_timeval_invalid_t *) C;
+@end example
+
+@noindent
+we can write:
+
+@example
+cce_location_t    L[1];
+cce_condition_t * C = cce_condition(L);
+CCEVENTS_PC(ccevents_timeval_invalid_t, K, C);
+@end example
+@end deffn
 
 @c page
 @c ------------------------------------------------------------

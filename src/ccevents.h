@@ -84,6 +84,9 @@ extern "C" {
 #  endif
 #endif
 
+/* Pointer cast macro helper. */
+#define CCEVENTS_PC(TYPE,X,Y)		TYPE * X = (TYPE *) (Y)
+
 /** --------------------------------------------------------------------
  ** Initialisation.
  ** ----------------------------------------------------------------- */
