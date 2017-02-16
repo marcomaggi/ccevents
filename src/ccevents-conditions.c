@@ -26,268 +26,228 @@
 
 */
 
-
-
 #include "ccevents-internals.h"
 
-
 /** --------------------------------------------------------------------
  ** Base exceptional condition descriptor.
  ** ----------------------------------------------------------------- */
 
-static void             base_condition_destructor     (cce_condition_t * C);
-static const char *     base_condition_static_message (const cce_condition_t * C);
+static void             base_C_destructor     (cce_condition_t * C);
+static const char *     base_C_static_message (const cce_condition_t * C);
 
-static ccevents_condition_base_descriptor_t condition_base_descriptor = {
+static ccevents_base_D_t base_D = {
   /* This "parent" field is set by the initialisation function. */
   .parent		= NULL,
-  .free			= base_condition_destructor,
-  .static_message	= base_condition_static_message
+  .free			= base_C_destructor,
+  .static_message	= base_C_static_message
 };
 
-const ccevents_condition_base_descriptor_t * ccevents_condition_base_descriptor = &condition_base_descriptor;
+const ccevents_base_D_t * ccevents_base_D = &base_D;
 
 void
-base_condition_destructor (cce_condition_t * C CCEVENTS_UNUSED)
+base_C_destructor (cce_condition_t * C CCEVENTS_UNUSED)
 {
   return;
 }
 const char *
-base_condition_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
+base_C_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
 {
   return "CCEvents exceptional condition";
 }
-bool
-ccevents_condition_is_a_base (const cce_condition_t * C)
-{
-  return cce_condition_is_a(C, &condition_base_descriptor);
-}
 
-
 /** --------------------------------------------------------------------
  ** Exceptional condition descriptor: timeval base condition.
  ** ----------------------------------------------------------------- */
 
-static void		condition_timeval_destructor     (cce_condition_t * C);
-static const char *	condition_timeval_static_message (const cce_condition_t * C);
+static void		timeval_C_destructor     (cce_condition_t * C);
+static const char *	timeval_C_static_message (const cce_condition_t * C);
 
-static const ccevents_condition_timeval_descriptor_t condition_timeval_descriptor = {
-  .parent		= &condition_base_descriptor,
-  .free			= condition_timeval_destructor,
-  .static_message	= condition_timeval_static_message
+static const ccevents_timeval_D_t timeval_D = {
+  .parent		= &base_D,
+  .free			= timeval_C_destructor,
+  .static_message	= timeval_C_static_message
 };
 
-const ccevents_condition_timeval_descriptor_t * \
-  ccevents_condition_timeval_descriptor = &condition_timeval_descriptor;
+const ccevents_timeval_D_t * ccevents_timeval_D = &timeval_D;
 
 /* This struct type has no dynamic fields, so there is only one instance
    of this struct type.  We allocate it statically. */
-static const ccevents_condition_timeval_t condition_timeval = {
-  .descriptor = &condition_timeval_descriptor
+static const ccevents_timeval_C_t timeval_C = {
+  .descriptor = &timeval_D
 };
 
-const ccevents_condition_timeval_t *
-ccevents_condition_timeval (void)
+const ccevents_timeval_C_t *
+ccevents_timeval_C (void)
 {
-  return &condition_timeval;
+  return &timeval_C;
 }
 void
-condition_timeval_destructor (cce_condition_t * C CCEVENTS_UNUSED)
+timeval_C_destructor (cce_condition_t * C CCEVENTS_UNUSED)
 {
   return;
 }
 const char *
-condition_timeval_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
+timeval_C_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
 {
   return "timeval exception";
 }
-bool
-ccevents_condition_is_a_timeval (const cce_condition_t * C)
-{
-  return cce_condition_is_a(C, &condition_timeval_descriptor);
-}
 
-
 /** --------------------------------------------------------------------
  ** Exceptional condition descriptor: timeval invalid.
  ** ----------------------------------------------------------------- */
 
-static void		condition_timeval_invalid_destructor     (cce_condition_t * C);
-static const char *	condition_timeval_invalid_static_message (const cce_condition_t * C);
+static void		timeval_invalid_C_destructor     (cce_condition_t * C);
+static const char *	timeval_invalid_C_static_message (const cce_condition_t * C);
 
-static const ccevents_condition_timeval_invalid_descriptor_t condition_timeval_invalid_descriptor = {
-  .parent		= &condition_timeval_descriptor,
-  .free			= condition_timeval_invalid_destructor,
-  .static_message	= condition_timeval_invalid_static_message
+static const ccevents_timeval_invalid_D_t timeval_invalid_D = {
+  .parent		= &timeval_D,
+  .free			= timeval_invalid_C_destructor,
+  .static_message	= timeval_invalid_C_static_message
 };
 
-const ccevents_condition_timeval_invalid_descriptor_t * \
-  ccevents_condition_timeval_invalid_descriptor = &condition_timeval_invalid_descriptor;
+const ccevents_timeval_invalid_D_t * ccevents_timeval_invalid_D = &timeval_invalid_D;
 
 /* This struct type has no dynamic fields, so there is only one instance
    of this struct type.  We allocate it statically. */
-static const ccevents_condition_timeval_invalid_t condition_timeval_invalid = {
-  .descriptor = &condition_timeval_invalid_descriptor
+static const ccevents_timeval_invalid_C_t timeval_invalid_C = {
+  .descriptor = &timeval_invalid_D
 };
 
-const ccevents_condition_timeval_invalid_t *
-ccevents_condition_timeval_invalid (void)
+const ccevents_timeval_invalid_C_t *
+ccevents_timeval_invalid_C (void)
 {
-  return &condition_timeval_invalid;
+  return &timeval_invalid_C;
 }
 void
-condition_timeval_invalid_destructor (cce_condition_t * C CCEVENTS_UNUSED)
+timeval_invalid_C_destructor (cce_condition_t * C CCEVENTS_UNUSED)
 {
   return;
 }
 const char *
-condition_timeval_invalid_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
+timeval_invalid_C_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
 {
   return "timeval fields specification are invalid";
 }
-bool
-ccevents_condition_is_a_timeval_invalid (const cce_condition_t * C)
-{
-  return cce_condition_is_a(C, &condition_timeval_invalid_descriptor);
-}
 
-
 /** --------------------------------------------------------------------
  ** Exceptional condition descriptor: timeval overflow.
  ** ----------------------------------------------------------------- */
 
-static void		condition_timeval_overflow_destructor     (cce_condition_t * C);
-static const char *	condition_timeval_overflow_static_message (const cce_condition_t * C);
+static void		timeval_overflow_C_destructor     (cce_condition_t * C);
+static const char *	timeval_overflow_C_static_message (const cce_condition_t * C);
 
-static const ccevents_condition_timeval_overflow_descriptor_t condition_timeval_overflow_descriptor = {
-  .parent		= &condition_timeval_descriptor,
-  .free			= condition_timeval_overflow_destructor,
-  .static_message	= condition_timeval_overflow_static_message
+static const ccevents_timeval_overflow_D_t timeval_overflow_D = {
+  .parent		= &timeval_D,
+  .free			= timeval_overflow_C_destructor,
+  .static_message	= timeval_overflow_C_static_message
 };
 
-const ccevents_condition_timeval_overflow_descriptor_t * \
-  ccevents_condition_timeval_overflow_descriptor = &condition_timeval_overflow_descriptor;
+const ccevents_timeval_overflow_D_t * ccevents_timeval_overflow_D = &timeval_overflow_D;
 
 /* This struct type has no dynamic fields, so there is only one instance
    of this struct type.  We allocate it statically. */
-static const ccevents_condition_timeval_overflow_t condition_timeval_overflow = {
-  .descriptor = &condition_timeval_overflow_descriptor
+static const ccevents_timeval_overflow_C_t timeval_overflow_C = {
+  .descriptor = &timeval_overflow_D
 };
 
-const ccevents_condition_timeval_overflow_t *
-ccevents_condition_timeval_overflow (void)
+const ccevents_timeval_overflow_C_t *
+ccevents_timeval_overflow_C (void)
 {
-  return &condition_timeval_overflow;
+  return &timeval_overflow_C;
 }
 void
-condition_timeval_overflow_destructor (cce_condition_t * C CCEVENTS_UNUSED)
+timeval_overflow_C_destructor (cce_condition_t * C CCEVENTS_UNUSED)
 {
   return;
 }
 const char *
-condition_timeval_overflow_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
+timeval_overflow_C_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
 {
   return "timeval fields specification would cause overflow in time representation";
 }
-bool
-ccevents_condition_is_a_timeval_overflow (const cce_condition_t * C)
-{
-  return cce_condition_is_a(C, &condition_timeval_overflow_descriptor);
-}
 
-
 /** --------------------------------------------------------------------
  ** Exceptional condition descriptor: timeout invalid.
  ** ----------------------------------------------------------------- */
 
-static void		condition_timeout_invalid_destructor  (cce_condition_t * C);
-static const char *	condition_timeout_invalid_static_message (const cce_condition_t * C);
+static void		timeout_invalid_C_destructor  (cce_condition_t * C);
+static const char *	timeout_invalid_C_static_message (const cce_condition_t * C);
 
-static ccevents_condition_descriptor_timeout_invalid_t condition_timeout_invalid_descriptor = {
-  .parent		= &condition_timeval_descriptor,
-  .free			= condition_timeout_invalid_destructor,
-  .static_message	= condition_timeout_invalid_static_message
+static ccevents_timeout_invalid_D_t timeout_invalid_D = {
+  .parent		= &timeval_D,
+  .free			= timeout_invalid_C_destructor,
+  .static_message	= timeout_invalid_C_static_message
 };
 
-const ccevents_condition_descriptor_timeout_invalid_t * \
-  ccevents_condition_timeout_invalid_descriptor = &condition_timeout_invalid_descriptor;
+const ccevents_timeout_invalid_D_t * ccevents_timeout_invalid_D = &timeout_invalid_D;
 
 /* There  are  no  dynamic  fields  in  this  condition  object,  so  we
    statically allocate it. */
-static const ccevents_condition_timeout_invalid_t condition_timeout_invalid = {
-  .descriptor = &condition_timeout_invalid_descriptor
+static const ccevents_timeout_invalid_C_t timeout_invalid_C = {
+  .descriptor = &timeout_invalid_D
 };
 
-const ccevents_condition_timeout_invalid_t *
-ccevents_condition_timeout_invalid (void)
+const ccevents_timeout_invalid_C_t *
+ccevents_timeout_invalid_C (void)
 {
-  return &condition_timeout_invalid;
+  return &timeout_invalid_C;
 }
 void
-condition_timeout_invalid_destructor (cce_condition_t * C CCEVENTS_UNUSED)
+timeout_invalid_C_destructor (cce_condition_t * C CCEVENTS_UNUSED)
 {
   return;
 }
 const char *
-condition_timeout_invalid_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
+timeout_invalid_C_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
 {
   return "timeout fields specification would cause invalid time";
 }
-bool
-ccevents_condition_is_a_timeout_invalid (const cce_condition_t * C)
-{
-  return cce_condition_is_a(C, &condition_timeout_invalid_descriptor);
-}
 
-
 /** --------------------------------------------------------------------
  ** Exceptional condition descriptor: timeout overflow.
  ** ----------------------------------------------------------------- */
 
-static void             condition_timeout_overflow_destructor	(cce_condition_t * C);
-static const char *     condition_timeout_overflow_static_message (const cce_condition_t * C);
+static void             timeout_overflow_C_destructor	(cce_condition_t * C);
+static const char *     timeout_overflow_C_static_message (const cce_condition_t * C);
 
-static ccevents_condition_descriptor_timeout_overflow_t condition_timeout_overflow_descriptor = {
-  .parent		= &condition_timeval_descriptor,
-  .free			= condition_timeout_overflow_destructor,
-  .static_message	= condition_timeout_overflow_static_message
+static ccevents_timeout_overflow_D_t timeout_overflow_D = {
+  .parent		= &timeval_D,
+  .free			= timeout_overflow_C_destructor,
+  .static_message	= timeout_overflow_C_static_message
 };
 
-const ccevents_condition_descriptor_timeout_overflow_t * \
-  ccevents_condition_timeout_overflow_descriptor = &condition_timeout_overflow_descriptor;
+const ccevents_timeout_overflow_D_t * ccevents_timeout_overflow_D = &timeout_overflow_D;
 
 /* There  are  no  dynamic  fields  in  this  condition  object,  so  we
    statically allocate it. */
-static const ccevents_condition_timeout_overflow_t condition_timeout_overflow = {
-  .descriptor = &condition_timeout_overflow_descriptor
+static const ccevents_timeout_overflow_C_t condition_timeout_overflow = {
+  .descriptor = &timeout_overflow_D
 };
 
-const ccevents_condition_timeout_overflow_t *
-ccevents_condition_timeout_overflow (void)
+const ccevents_timeout_overflow_C_t *
+ccevents_timeout_overflow_C (void)
 {
   return &condition_timeout_overflow;
 }
 void
-condition_timeout_overflow_destructor (cce_condition_t * C CCEVENTS_UNUSED)
+timeout_overflow_C_destructor (cce_condition_t * C CCEVENTS_UNUSED)
 {
   return;
 }
 const char *
-condition_timeout_overflow_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
+timeout_overflow_C_static_message (const cce_condition_t * C CCEVENTS_UNUSED)
 {
   return "timeout fields specification would cause overflow in time representation";
 }
-bool
-ccevents_condition_is_a_timeout_overflow (const cce_condition_t * C)
-{
-  return cce_condition_is_a(C, &condition_timeout_overflow_descriptor);
-}
 
-
+/** --------------------------------------------------------------------
+ ** Module initialisation.
+ ** ----------------------------------------------------------------- */
+
 void
 ccevents_conditions_module_initialisation (void)
 {
-  condition_base_descriptor.parent = cce_root_condition_descriptor;
+  base_D.parent = cce_root_D;
 }
 
 /* end of file */

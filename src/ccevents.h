@@ -161,89 +161,123 @@ ccevents_decl int		ccevents_version_interface_age		(void);
  ** Exceptional conditions.
  ** ----------------------------------------------------------------- */
 
-typedef struct ccevents_condition_base_descriptor_t {
+typedef struct ccevents_base_D_t {
   cce_condition_descriptor_t;
-} ccevents_condition_base_descriptor_t;
+} ccevents_base_D_t;
 
-ccevents_decl const ccevents_condition_base_descriptor_t * ccevents_condition_base_descriptor;
+ccevents_decl const ccevents_base_D_t * ccevents_base_D;
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline bool
+ccevents_is_a_base_C (const cce_condition_t * C)
+{
+  return cce_condition_is_a(C, ccevents_base_D);
+}
 
 /* ------------------------------------------------------------------ */
 
-typedef struct ccevents_condition_timeval_descriptor_t {
+typedef struct ccevents_timeval_D_t {
   cce_condition_descriptor_t;
-} ccevents_condition_timeval_descriptor_t;
+} ccevents_timeval_D_t;
 
-typedef struct ccevents_condition_timeval_t {
+typedef struct ccevents_timeval_C_t {
   cce_condition_t;
-} ccevents_condition_timeval_t;
+} ccevents_timeval_C_t;
 
-ccevents_decl const ccevents_condition_timeval_t * ccevents_condition_timeval (void)
+ccevents_decl const ccevents_timeval_C_t * ccevents_timeval_C (void)
   __attribute__((pure));
-ccevents_decl const ccevents_condition_timeval_descriptor_t * ccevents_condition_timeval_descriptor;
-ccevents_decl bool ccevents_condition_is_a_timeval (const cce_condition_t * C)
-  __attribute__((pure,nonnull(1)));
+ccevents_decl const ccevents_timeval_D_t * ccevents_timeval_D;
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline bool
+ccevents_is_a_timeval_C (const cce_condition_t * C)
+{
+  return cce_condition_is_a(C, ccevents_timeval_D);
+}
 
 /* ------------------------------------------------------------------ */
 
-typedef struct ccevents_condition_timeval_invalid_descriptor_t {
+typedef struct ccevents_timeval_invalid_D_t {
   cce_condition_descriptor_t;
-} ccevents_condition_timeval_invalid_descriptor_t;
+} ccevents_timeval_invalid_D_t;
 
-typedef struct ccevents_condition_timeval_invalid_t {
+typedef struct ccevents_timeval_invalid_C_t {
   cce_condition_t;
-} ccevents_condition_timeval_invalid_t;
+} ccevents_timeval_invalid_C_t;
 
-ccevents_decl const ccevents_condition_timeval_invalid_t * ccevents_condition_timeval_invalid (void)
+ccevents_decl const ccevents_timeval_invalid_C_t * ccevents_timeval_invalid_C (void)
   __attribute__((pure));
-ccevents_decl const ccevents_condition_timeval_invalid_descriptor_t * ccevents_condition_timeval_invalid_descriptor;
-ccevents_decl bool ccevents_condition_is_a_timeval_invalid (const cce_condition_t * C)
-  __attribute__((pure,nonnull(1)));
+ccevents_decl const ccevents_timeval_invalid_D_t * ccevents_timeval_invalid_D;
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline bool
+ccevents_is_a_timeval_invalid_C (const cce_condition_t * C)
+{
+  return cce_condition_is_a(C, ccevents_timeval_invalid_D);
+}
 
 /* ------------------------------------------------------------------ */
 
-typedef struct ccevents_condition_timeval_overflow_descriptor_t {
+typedef struct ccevents_timeval_overflow_D_t {
   cce_condition_descriptor_t;
-} ccevents_condition_timeval_overflow_descriptor_t;
+} ccevents_timeval_overflow_D_t;
 
-typedef struct ccevents_condition_timeval_overflow_t {
+typedef struct ccevents_timeval_overflow_C_t {
   cce_condition_t;
-} ccevents_condition_timeval_overflow_t;
+} ccevents_timeval_overflow_C_t;
 
-ccevents_decl const ccevents_condition_timeval_overflow_t * ccevents_condition_timeval_overflow (void)
+ccevents_decl const ccevents_timeval_overflow_C_t * ccevents_timeval_overflow_C (void)
   __attribute__((pure));
-ccevents_decl const ccevents_condition_timeval_overflow_descriptor_t * ccevents_condition_timeval_overflow_descriptor;
-ccevents_decl bool ccevents_condition_is_a_timeval_overflow (const cce_condition_t * C)
-  __attribute__((pure,nonnull(1)));
+ccevents_decl const ccevents_timeval_overflow_D_t * ccevents_timeval_overflow_D;
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline bool
+ccevents_is_a_timeval_overflow_C (const cce_condition_t * C)
+{
+  return cce_condition_is_a(C, ccevents_timeval_overflow_D);
+}
 
 /* ------------------------------------------------------------------ */
 
-typedef struct ccevents_condition_descriptor_timeout_invalid_t {
+typedef struct ccevents_timeout_invalid_D_t {
   cce_condition_descriptor_t;
-} ccevents_condition_descriptor_timeout_invalid_t;
+} ccevents_timeout_invalid_D_t;
 
-typedef struct ccevents_condition_timeout_invalid_t {
+typedef struct ccevents_timeout_invalid_C_t {
   cce_condition_t;
-} ccevents_condition_timeout_invalid_t;
+} ccevents_timeout_invalid_C_t;
 
-ccevents_decl const ccevents_condition_timeout_invalid_t *	ccevents_condition_timeout_invalid (void)
+ccevents_decl const ccevents_timeout_invalid_C_t * ccevents_timeout_invalid_C (void)
   __attribute__((pure));
-ccevents_decl const ccevents_condition_descriptor_timeout_invalid_t * ccevents_condition_timeout_invalid_descriptor;
-ccevents_decl bool ccevents_condition_is_a_timeout_invalid (const cce_condition_t * C);
+ccevents_decl const ccevents_timeout_invalid_D_t * ccevents_timeout_invalid_D;
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline bool
+ccevents_is_a_timeout_invalid_C (const cce_condition_t * C)
+{
+  return cce_condition_is_a(C, ccevents_timeout_invalid_D);
+}
 
 /* ------------------------------------------------------------------ */
 
-typedef struct ccevents_condition_descriptor_timeout_overflow_t {
+typedef struct ccevents_timeout_overflow_D_t {
   cce_condition_descriptor_t;
-} ccevents_condition_descriptor_timeout_overflow_t;
+} ccevents_timeout_overflow_D_t;
 
-typedef struct ccevents_condition_timeout_overflow_t {
+typedef struct ccevents_timeout_overflow_C_t {
   cce_condition_t;
-} ccevents_condition_timeout_overflow_t;
+} ccevents_timeout_overflow_C_t;
 
-ccevents_decl const ccevents_condition_timeout_overflow_t * ccevents_condition_timeout_overflow (void)
+ccevents_decl const ccevents_timeout_overflow_C_t * ccevents_timeout_overflow_C (void)
   __attribute__((pure));
-ccevents_decl const ccevents_condition_descriptor_timeout_overflow_t * ccevents_condition_timeout_overflow_descriptor;
-ccevents_decl bool ccevents_condition_is_a_timeout_overflow (const cce_condition_t * C);
+ccevents_decl const ccevents_timeout_overflow_D_t * ccevents_timeout_overflow_D;
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline bool
+ccevents_is_a_timeout_overflow_C (const cce_condition_t * C)
+{
+  return cce_condition_is_a(C, ccevents_timeout_overflow_D);
+}
 
 /** --------------------------------------------------------------------
  ** Timeval handling.

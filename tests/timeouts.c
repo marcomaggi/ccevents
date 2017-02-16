@@ -263,7 +263,7 @@ test_condition_invalid_milliseconds_overflow (void)
     cce_condition_t *	C = cce_condition(L);
     {
       flag = true;
-      assert(cce_condition_is_a(C, ccevents_condition_timeout_overflow_descriptor));
+      assert(cce_condition_is_a(C, ccevents_timeout_overflow_D));
     }
     cce_run_error_handlers(L);
     cce_condition_free(C);
@@ -285,7 +285,7 @@ test_condition_invalid_microseconds_overflow (void)
   if (cce_location(L)) {
     cce_condition_t *	C = cce_condition(L);
     {
-      assert(cce_condition_is_a(C, ccevents_condition_timeout_overflow_descriptor));
+      assert(cce_condition_is_a(C, ccevents_timeout_overflow_D));
     }
     cce_run_error_handlers(L);
     cce_condition_free(C);
@@ -308,7 +308,7 @@ test_condition_invalid_seconds (void)
   if (cce_location(L)) {
     cce_condition_t *	C = cce_condition(L);
     {
-      assert(cce_condition_is_a(C, ccevents_condition_timeout_invalid_descriptor));
+      assert(cce_condition_is_a(C, ccevents_timeout_invalid_D));
     }
     cce_run_error_handlers(L);
     cce_condition_free(C);

@@ -55,7 +55,7 @@ ccevents_timeval_normalise (cce_location_t * there, struct timeval T)
 {
   if ((T.tv_sec < 0) || (LONG_MAX < T.tv_sec) ||
       (T.tv_usec < LONG_MIN) || (LONG_MAX < T.tv_usec)) {
-    cce_raise(there, ccevents_condition_timeval_invalid());
+    cce_raise(there, ccevents_timeval_invalid_C());
   }
   if (0 > T.tv_usec) {
     /* The  microseconds are  negative: normalise  them by  reducing the
@@ -76,7 +76,7 @@ ccevents_timeval_normalise (cce_location_t * there, struct timeval T)
     /* It  is possible  that: after  distributing negative  microseconds
        into seconds, the number of seconds is negative. */
     if (0 > T.tv_sec) {
-      cce_raise(there, ccevents_condition_timeval_overflow());
+      cce_raise(there, ccevents_timeval_overflow_C());
     }
   }
   if (T.tv_usec > 999999) {
@@ -85,7 +85,7 @@ ccevents_timeval_normalise (cce_location_t * there, struct timeval T)
     if ((LONG_MAX - T.tv_sec) > div) {
       T.tv_sec += div;
     } else {
-      cce_raise(there, ccevents_condition_timeval_overflow());
+      cce_raise(there, ccevents_timeval_overflow_C());
     }
     T.tv_usec = mod;
   }
@@ -99,7 +99,7 @@ ccevents_timeval_init (cce_location_t * there, long seconds, long microseconds)
 {
   struct timeval	T = { .tv_sec = seconds, .tv_usec = microseconds };
   if (0 > seconds) {
-    cce_raise(there, ccevents_condition_timeval_invalid());
+    cce_raise(there, ccevents_timeval_invalid_C());
   }
   return ccevents_timeval_normalise(there, T);
 }
@@ -121,7 +121,7 @@ ccevents_timeval_add (cce_location_t * there, ccevents_timeval_t A, ccevents_tim
   if ((LONG_MAX - A.tv_sec) > B.tv_sec) {
     R.tv_sec = A.tv_sec + B.tv_sec;
   } else {
-    cce_raise(there, ccevents_condition_timeval_overflow());
+    cce_raise(there, ccevents_timeval_overflow_C());
   }
 
   /* The sum between  two normalised "usec" fields is  guaranteed to fit
@@ -134,7 +134,7 @@ ccevents_timeval_add (cce_location_t * there, ccevents_timeval_t A, ccevents_tim
     if ((LONG_MAX - R.tv_sec) > secs) {
       R.tv_sec += secs;
     } else {
-      cce_raise(there, ccevents_condition_timeval_overflow());
+      cce_raise(there, ccevents_timeval_overflow_C());
     }
   }
   return R;

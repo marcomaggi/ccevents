@@ -132,7 +132,7 @@ test_timeval_initialisation_from_values (void)
 
     if (cce_location(L)) {
       cce_condition_t *	C = cce_condition(L);
-      assert(cce_condition_is_a(C, ccevents_condition_timeval_overflow_descriptor));
+      assert(cce_condition_is_a(C, ccevents_timeval_overflow_D));
       cce_run_error_handlers(L);
       cce_condition_free(C);
       flag = true;
@@ -175,7 +175,7 @@ test_timeval_initialisation_invalid_from_values (void)
 
   if (cce_location(L)) {
     cce_condition_t *	C = cce_condition(L);
-    assert(cce_condition_is_a(C, ccevents_condition_timeval_invalid_descriptor));
+    assert(cce_condition_is_a(C, ccevents_timeval_invalid_D));
     cce_run_error_handlers(L);
     cce_condition_free(C);
     flag = true;
@@ -195,7 +195,7 @@ test_timeval_initialisation_overflow_from_values (void)
 
   if (cce_location(L)) {
     cce_condition_t *	C = cce_condition(L);
-    assert(cce_condition_is_a(C, ccevents_condition_timeval_overflow_descriptor));
+    assert(cce_condition_is_a(C, ccevents_timeval_overflow_D));
     cce_run_error_handlers(L);
     cce_condition_free(C);
     flag = true;
@@ -217,7 +217,7 @@ test_timeval_initialisation_invalid_from_timeval (void)
 
   if (cce_location(L)) {
     cce_condition_t *	C = cce_condition(L);
-    assert(cce_condition_is_a(C, ccevents_condition_timeval_invalid_descriptor));
+    assert(cce_condition_is_a(C, ccevents_timeval_invalid_D));
     cce_run_error_handlers(L);
     cce_condition_free(C);
     flag = true;
@@ -236,7 +236,7 @@ test_timeval_initialisation_overflow_from_timeval (void)
 
   if (cce_location(L)) {
     cce_condition_t *	C = cce_condition(L);
-    assert(cce_condition_is_a(C, ccevents_condition_timeval_overflow_descriptor));
+    assert(cce_condition_is_a(C, ccevents_timeval_overflow_D));
     cce_run_error_handlers(L);
     cce_condition_free(C);
     flag = true;
@@ -284,7 +284,7 @@ test_timeval_addition (void)
 
     if (cce_location(L)) {
       cce_condition_t *	C = cce_condition(L);
-      assert(cce_condition_is_a(C, ccevents_condition_timeval_overflow_descriptor));
+      assert(cce_condition_is_a(C, ccevents_timeval_overflow_D));
       cce_run_error_handlers(L);
       cce_condition_free(C);
       flag = true;
@@ -305,7 +305,7 @@ test_timeval_addition (void)
 
     if (cce_location(L)) {
       cce_condition_t *	C = cce_condition(L);
-      assert(cce_condition_is_a(C, ccevents_condition_timeval_overflow_descriptor));
+      assert(cce_condition_is_a(C, ccevents_timeval_overflow_D));
       cce_run_error_handlers(L);
       cce_condition_free(C);
       flag = true;
@@ -355,7 +355,7 @@ test_timeval_subtraction (void)
 
     if (cce_location(L)) {
       cce_condition_t *	C = cce_condition(L);
-      assert(cce_condition_is_a(C, ccevents_condition_timeval_invalid_descriptor));
+      assert(cce_condition_is_a(C, ccevents_timeval_invalid_D));
       cce_run_error_handlers(L);
       cce_condition_free(C);
       flag = true;
@@ -376,7 +376,7 @@ test_timeval_subtraction (void)
 
     if (cce_location(L)) {
       cce_condition_t *	C = cce_condition(L);
-      assert(cce_condition_is_a(C, ccevents_condition_timeval_overflow_descriptor));
+      assert(cce_condition_is_a(C, ccevents_timeval_overflow_D));
       cce_run_error_handlers(L);
       cce_condition_free(C);
       flag = true;

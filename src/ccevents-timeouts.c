@@ -111,7 +111,7 @@ normalise_little_into_big (cce_location_t * there,
       if (NULL != hugep) {
 	normalise_little_into_big(there, NULL, hugep, &bigs);
       } else {
-	cce_raise(there, ccevents_condition_timeval_overflow());
+	cce_raise(there, ccevents_timeval_overflow_C());
       }
     }
   }
@@ -122,7 +122,7 @@ normalise_little_into_big (cce_location_t * there,
     if ((LONG_MAX - bigs) > div) {
       bigs += div;
     } else {
-      cce_raise(there, ccevents_condition_timeout_overflow());
+      cce_raise(there, ccevents_timeout_overflow_C());
     }
     littles = mod;
   }
@@ -141,7 +141,7 @@ ccevents_timeout_init (cce_location_t * there, ccevents_timeout_t * to,
   if ((seconds < 0) || (LONG_MAX < seconds) ||
       (milliseconds < LONG_MIN) || (LONG_MAX < milliseconds) ||
       (microseconds < LONG_MIN) || (LONG_MAX < microseconds)) {
-    cce_raise(there, ccevents_condition_timeout_invalid());
+    cce_raise(there, ccevents_timeout_invalid_C());
   }
   ccevents_debug("before normalisation: seconds=%ld, milliseconds=%ld, microseconds=%ld", seconds, milliseconds, microseconds);
 
