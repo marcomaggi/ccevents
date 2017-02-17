@@ -544,8 +544,8 @@ test_timeout_expiration_time_comparisons (void)
       ccevents_timeout_init(L, &B, 1, 0, 1);
       ccevents_timeout_start(L, &A);
       ccevents_timeout_start(L, &B);
-      //fprintf(stderr, "A.tv_sec = %ld, A.tv_usec = %ld\n", A.tv_sec, A.tv_usec);
-      //fprintf(stderr, "B.tv_sec = %ld, B.tv_usec = %ld\n", B.tv_sec, B.tv_usec);
+      /* fprintf(stderr, "A.tv_sec = %ld, A.tv_usec = %ld\n", A.tv_sec, A.tv_usec); */
+      /* fprintf(stderr, "B.tv_sec = %ld, B.tv_usec = %ld\n", B.tv_sec, B.tv_usec); */
       assert(-1 == ccevents_timeout_compare_expiration_time(&A, &B));
     }
     assert(false == flag);

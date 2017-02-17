@@ -32,9 +32,6 @@
 #include <limits.h>
 #include <sys/time.h>
 
-#define MAX_USEC		1000000
-
-
 /** ------------------------------------------------------------
  ** Dynamic constants.
  ** ----------------------------------------------------------*/
@@ -61,7 +58,6 @@ static const ccevents_timeout_t TIMEOUT_NOW = {
 };
 const ccevents_timeout_t * CCEVENTS_TIMEOUT_NOW = &TIMEOUT_NOW;
 
-
 /** ------------------------------------------------------------
  ** Initialisation.
  ** ----------------------------------------------------------*/
@@ -167,7 +163,6 @@ ccevents_timeout_init (cce_location_t * there, ccevents_timeout_t * to,
   to->tv_usec		= 0;
 }
 
-
 /** ------------------------------------------------------------
  ** Getters.
  ** ----------------------------------------------------------*/
@@ -193,7 +188,6 @@ ccevents_timeout_time (const ccevents_timeout_t * to)
   return absolute_time;
 }
 
-
 /** ------------------------------------------------------------
  ** Predicates.
  ** ----------------------------------------------------------*/
@@ -227,7 +221,12 @@ ccevents_timeout_expired (const ccevents_timeout_t * to)
   return rv;
 }
 
-
+bool
+ccevents_timeout_is_running (const ccevents_timeout_t * to)
+{
+  return ((0 != to->tv_sec) || (0 != to->tv_usec));
+}
+
 /** ------------------------------------------------------------
  ** Timeout comparisons.
  ** ----------------------------------------------------------*/
@@ -266,7 +265,6 @@ ccevents_timeout_compare_expiration_time (const ccevents_timeout_t * A, const cc
   return ccevents_timeval_compare(span_a, span_b);
 }
 
-
 /** ------------------------------------------------------------
  ** Operations: start and stop.
  ** ----------------------------------------------------------*/

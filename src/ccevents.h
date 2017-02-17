@@ -110,6 +110,15 @@ typedef struct ccevents_queue_node_t		ccevents_queue_node_t;
 typedef struct ccevents_queue_t			ccevents_queue_t;
 
 /** --------------------------------------------------------------------
+ ** Version functions.
+ ** ----------------------------------------------------------------- */
+
+ccevents_decl const char *	ccevents_version_string			(void);
+ccevents_decl int		ccevents_version_interface_current	(void);
+ccevents_decl int		ccevents_version_interface_revision	(void);
+ccevents_decl int		ccevents_version_interface_age		(void);
+
+/** --------------------------------------------------------------------
  ** Queues.
  ** ----------------------------------------------------------------- */
 
@@ -128,37 +137,25 @@ struct ccevents_queue_t {
 };
 
 ccevents_decl void ccevents_queue_init (ccevents_queue_t * Q)
-  __attribute__((nonnull(1)));
+  __attribute__((leaf,nonnull(1)));
 
 ccevents_decl bool ccevents_queue_is_not_empty (const ccevents_queue_t * Q)
-  __attribute__((pure,nonnull(1)));
+  __attribute__((leaf,pure,nonnull(1)));
 
 ccevents_decl size_t ccevents_queue_number_of_items (const ccevents_queue_t * Q)
-  __attribute__((pure,nonnull(1)));
+  __attribute__((leaf,pure,nonnull(1)));
 
 ccevents_decl bool ccevents_queue_contains_item (const ccevents_queue_t * Q, const ccevents_queue_node_t * N)
-  __attribute__((pure,nonnull(1,2)));
+  __attribute__((leaf,pure,nonnull(1,2)));
 
-ccevents_decl void ccevents_queue_enqueue (ccevents_queue_t * Q, ccevents_queue_node_t * new_tail);
+ccevents_decl void ccevents_queue_enqueue (ccevents_queue_t * Q, ccevents_queue_node_t * new_tail)
+  __attribute__((leaf,nonnull(1,2)));
 
-ccevents_decl ccevents_queue_node_t * ccevents_queue_dequeue (ccevents_queue_t * Q);
+ccevents_decl ccevents_queue_node_t * ccevents_queue_dequeue (ccevents_queue_t * Q)
+  __attribute__((nonnull(1)));
 
-ccevents_decl void ccevents_queue_remove (ccevents_queue_t * Q, ccevents_queue_node_t * src);
-
-/** --------------------------------------------------------------------
- ** Constants.
- ** ----------------------------------------------------------------- */
-
-#define MAX_CONSECUTIVE_FD_EVENTS	5
-
-/** --------------------------------------------------------------------
- ** Version functions.
- ** ----------------------------------------------------------------- */
-
-ccevents_decl const char *	ccevents_version_string			(void);
-ccevents_decl int		ccevents_version_interface_current	(void);
-ccevents_decl int		ccevents_version_interface_revision	(void);
-ccevents_decl int		ccevents_version_interface_age		(void);
+ccevents_decl void ccevents_queue_remove (ccevents_queue_t * Q, ccevents_queue_node_t * src)
+  __attribute__((nonnull(1,2)));
 
 /** --------------------------------------------------------------------
  ** Exceptional conditions.
@@ -188,7 +185,7 @@ typedef struct ccevents_timeval_C_t {
 } ccevents_timeval_C_t;
 
 ccevents_decl const ccevents_timeval_C_t * ccevents_timeval_C (void)
-  __attribute__((pure));
+  __attribute__((leaf,pure));
 ccevents_decl const ccevents_timeval_D_t * ccevents_timeval_D;
 
 __attribute__((pure,nonnull(1),always_inline))
@@ -209,7 +206,7 @@ typedef struct ccevents_timeval_invalid_C_t {
 } ccevents_timeval_invalid_C_t;
 
 ccevents_decl const ccevents_timeval_invalid_C_t * ccevents_timeval_invalid_C (void)
-  __attribute__((pure));
+  __attribute__((leaf,pure));
 ccevents_decl const ccevents_timeval_invalid_D_t * ccevents_timeval_invalid_D;
 
 __attribute__((pure,nonnull(1),always_inline))
@@ -230,7 +227,7 @@ typedef struct ccevents_timeval_overflow_C_t {
 } ccevents_timeval_overflow_C_t;
 
 ccevents_decl const ccevents_timeval_overflow_C_t * ccevents_timeval_overflow_C (void)
-  __attribute__((pure));
+  __attribute__((leaf,pure));
 ccevents_decl const ccevents_timeval_overflow_D_t * ccevents_timeval_overflow_D;
 
 __attribute__((pure,nonnull(1),always_inline))
@@ -251,7 +248,7 @@ typedef struct ccevents_timeout_invalid_C_t {
 } ccevents_timeout_invalid_C_t;
 
 ccevents_decl const ccevents_timeout_invalid_C_t * ccevents_timeout_invalid_C (void)
-  __attribute__((pure));
+  __attribute__((leaf,pure));
 ccevents_decl const ccevents_timeout_invalid_D_t * ccevents_timeout_invalid_D;
 
 __attribute__((pure,nonnull(1),always_inline))
@@ -272,7 +269,7 @@ typedef struct ccevents_timeout_overflow_C_t {
 } ccevents_timeout_overflow_C_t;
 
 ccevents_decl const ccevents_timeout_overflow_C_t * ccevents_timeout_overflow_C (void)
-  __attribute__((pure));
+  __attribute__((leaf,pure));
 ccevents_decl const ccevents_timeout_overflow_D_t * ccevents_timeout_overflow_D;
 
 __attribute__((pure,nonnull(1),always_inline))
@@ -315,13 +312,15 @@ ccevents_decl ccevents_timeval_t ccevents_timeval_sub (cce_location_t * there,
   __attribute__((nonnull(1)));
 
 ccevents_decl int ccevents_timeval_compare (ccevents_timeval_t A, ccevents_timeval_t B)
-  __attribute__((const));
+  __attribute__((leaf,const));
 
 /** --------------------------------------------------------------------
  ** Timeouts representation.
  ** ----------------------------------------------------------------- */
 
-typedef struct ccevents_timeout_tag_t {
+typedef struct ccevents_timeout_t		ccevents_timeout_t;
+
+struct ccevents_timeout_t {
   /* When this timeout is started the  expiration time is stored in this
      structure.   When  the "tv_sec"  field  is  set to  LONG_MAX:  this
      timeout never expires. */
@@ -335,7 +334,7 @@ typedef struct ccevents_timeout_tag_t {
   /* Microseconds  count.  After  normalisation:  this value  is in  the
      range [0, 999]. */
   long int		microseconds;
-} ccevents_timeout_t;
+};
 
 /* Pointer   to   a   constant,   statically   allocated   instance   of
    "ccevents_timeout_t" representing a timeout that never expires. */
@@ -352,40 +351,48 @@ ccevents_decl void ccevents_timeout_init (cce_location_t * there, ccevents_timeo
   __attribute__((nonnull(1,2)));
 
 ccevents_decl ccevents_timeval_t ccevents_timeout_time_span (const ccevents_timeout_t * to)
-  __attribute__((pure,nonnull(1)));
+  __attribute__((leaf,pure,nonnull(1)));
 
 ccevents_decl ccevents_timeval_t ccevents_timeout_time (const ccevents_timeout_t * to)
-  __attribute__((pure,nonnull(1)));
+  __attribute__((leaf,pure,nonnull(1)));
 
 ccevents_decl bool ccevents_timeout_infinite_time_span (const ccevents_timeout_t * to)
-  __attribute__((pure,nonnull(1)));
+  __attribute__((leaf,pure,nonnull(1)));
 
 ccevents_decl bool ccevents_timeout_expired (const ccevents_timeout_t * to)
-  __attribute__((nonnull(1)));
+  __attribute__((leaf,pure,nonnull(1)));
+
+ccevents_decl bool ccevents_timeout_is_running (const ccevents_timeout_t * to)
+  __attribute__((leaf,pure,nonnull(1)));
 
 ccevents_decl int ccevents_timeout_compare_time_span (const ccevents_timeout_t * toA, const ccevents_timeout_t * toB)
-  __attribute__((pure,nonnull(1,2)));
+  __attribute__((leaf,pure,nonnull(1,2)));
 
 ccevents_decl int ccevents_timeout_compare_expiration_time (const ccevents_timeout_t * A, const ccevents_timeout_t * B)
-  __attribute__((pure,nonnull(1,2)));
+  __attribute__((leaf,pure,nonnull(1,2)));
 
 ccevents_decl void ccevents_timeout_start (cce_location_t * there, ccevents_timeout_t * to)
   __attribute__((nonnull(1,2)));
 
 ccevents_decl void ccevents_timeout_reset (ccevents_timeout_t * to)
-  __attribute__((nonnull(1)));
+  __attribute__((leaf,nonnull(1)));
 
-static inline long int __attribute__((pure,nonnull(1)))
+__attribute__((pure,nonnull(1),always_inline))
+static inline long int
 ccevents_timeout_seconds (const ccevents_timeout_t * to)
 {
   return to->seconds;
 }
-static inline long int __attribute__((pure,nonnull(1)))
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline long int
 ccevents_timeout_milliseconds (const ccevents_timeout_t * to)
 {
   return to->milliseconds;
 }
-static inline int __attribute__((pure,nonnull(1)))
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline int
 ccevents_timeout_microseconds (const ccevents_timeout_t * to)
 {
   return to->microseconds;
@@ -428,23 +435,21 @@ ccevents_decl ccevents_source_event_handler_fun_t	ccevents_source_handle_event;
 ccevents_decl ccevents_source_expiration_handler_fun_t	ccevents_source_handle_expiration;
 
 ccevents_decl void ccevents_source_init (ccevents_source_t * src, const ccevents_source_vtable_t * vtable)
-  __attribute__((nonnull(1,2)));
+  __attribute__((leaf,nonnull(1,2)));
 
 ccevents_decl void ccevents_source_set_timeout (ccevents_source_t * src,
 						ccevents_timeout_t expiration_time,
 						ccevents_source_expiration_handler_fun_t * expiration_handler)
-  __attribute__((nonnull(1,3)));
+  __attribute__((leaf,nonnull(1,3)));
 
 ccevents_decl void ccevents_source_set (cce_location_t * there, ccevents_source_t * src)
   __attribute__((nonnull(1,2)));
 
-ccevents_decl bool ccevents_source_do_one_event (cce_location_t * L,
-						 ccevents_group_t   * grp,
-						 ccevents_source_t  * src)
+ccevents_decl bool ccevents_source_do_one_event (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
   __attribute__((nonnull(1,2,3)));
 
 ccevents_decl bool ccevents_source_is_enqueued (const ccevents_source_t * src)
-  __attribute__((pure,nonnull(1)));
+  __attribute__((leaf,pure,nonnull(1)));
 
 ccevents_decl ccevents_source_event_inquirer_fun_t	ccevents_source_dummy_event_inquirer;
 ccevents_decl ccevents_source_event_handler_fun_t	ccevents_source_dummy_event_handler;
@@ -469,7 +474,7 @@ struct ccevents_fd_source_t {
 };
 
 ccevents_decl void ccevents_fd_event_source_init (ccevents_fd_source_t * fdsrc, int fd)
-  __attribute__((nonnull(1)));
+  __attribute__((leaf,nonnull(1)));
 
 ccevents_decl void ccevents_fd_event_source_set (cce_location_t * there, ccevents_fd_source_t * fdsrc,
 						 ccevents_source_event_inquirer_fun_t * event_inquirer,
@@ -496,7 +501,7 @@ struct ccevents_task_source_t {
 };
 
 ccevents_decl void ccevents_task_source_init (ccevents_task_source_t * tksrc)
-  __attribute__((nonnull(1)));
+  __attribute__((leaf,nonnull(1)));
 
 ccevents_decl void ccevents_task_source_set (cce_location_t * there, ccevents_task_source_t * tksrc,
 					     ccevents_source_event_inquirer_fun_t     * event_inquirer,
@@ -516,13 +521,17 @@ struct ccevents_signal_bub_source_t {
   ccevents_source_event_handler_fun_t *		event_handler;
 };
 
-ccevents_decl void ccevents_signal_bub_init (void);
-ccevents_decl void ccevents_signal_bub_final (void);
-ccevents_decl void ccevents_signal_bub_acquire (void);
-ccevents_decl bool ccevents_signal_bub_delivered (int signum);
+ccevents_decl void ccevents_signal_bub_init (void)
+  __attribute__((leaf));
+ccevents_decl void ccevents_signal_bub_final (void)
+  __attribute__((leaf));
+ccevents_decl void ccevents_signal_bub_acquire (void)
+  __attribute__((leaf));
+ccevents_decl bool ccevents_signal_bub_delivered (int signum)
+  __attribute__((leaf));
 
 ccevents_decl void ccevents_signal_bub_source_init (ccevents_signal_bub_source_t * sigsrc, int signum)
-  __attribute__((nonnull(1)));
+  __attribute__((leaf,nonnull(1)));
 
 ccevents_decl void ccevents_signal_bub_source_set (cce_location_t * there, ccevents_signal_bub_source_t * sigsrc,
 						   ccevents_source_event_handler_fun_t  * event_handler)
@@ -537,7 +546,7 @@ struct ccevents_timer_source_t {
 };
 
 ccevents_decl void ccevents_timer_source_init (ccevents_timer_source_t * timsrc)
-  __attribute__((nonnull(1)));
+  __attribute__((leaf,nonnull(1)));
 
 ccevents_decl void ccevents_timer_source_set (cce_location_t * there, ccevents_timer_source_t * timsrc)
   __attribute__((nonnull(1,2)));
@@ -566,7 +575,7 @@ struct ccevents_group_t {
 };
 
 ccevents_decl void ccevents_group_init (ccevents_group_t * grp, size_t served_events_watermark)
-  __attribute__((nonnull(1)));
+  __attribute__((leaf,nonnull(1)));
 
 ccevents_decl bool ccevents_group_run_do_one_event (ccevents_group_t * grp)
   __attribute__((nonnull(1)));
@@ -575,19 +584,19 @@ ccevents_decl void ccevents_group_enter (ccevents_group_t * grp)
   __attribute__((nonnull(1)));
 
 ccevents_decl void ccevents_group_post_request_to_leave_asap (ccevents_group_t * grp)
-  __attribute__((nonnull(1)));
+  __attribute__((leaf,nonnull(1)));
 
 ccevents_decl bool ccevents_group_queue_is_not_empty (const ccevents_group_t * grp)
-  __attribute__((pure,nonnull(1)));
+  __attribute__((leaf,pure,nonnull(1)));
 
 ccevents_decl size_t ccevents_group_number_of_sources (const ccevents_group_t * grp)
-  __attribute__((pure,nonnull(1)));
+  __attribute__((leaf,pure,nonnull(1)));
 
 ccevents_decl bool ccevents_group_contains_source (const ccevents_group_t * grp, const ccevents_source_t * src)
-  __attribute__((pure,nonnull(1,2)));
+  __attribute__((leaf,pure,nonnull(1,2)));
 
 ccevents_decl void ccevents_group_enqueue_source (ccevents_group_t * grp, ccevents_source_t * src)
-  __attribute__((nonnull(1,2)));
+  __attribute__((leaf,nonnull(1,2)));
 
 ccevents_decl ccevents_source_t * ccevents_group_dequeue_source (ccevents_group_t * grp)
   __attribute__((nonnull(1)));
@@ -609,25 +618,25 @@ struct ccevents_loop_t {
 };
 
 ccevents_decl void ccevents_loop_init (ccevents_loop_t * loop)
-  __attribute__((nonnull(1)));
+  __attribute__((leaf,nonnull(1)));
 
 ccevents_decl void ccevents_loop_enter (ccevents_loop_t * loop)
   __attribute__((nonnull(1)));
 
 ccevents_decl void ccevents_loop_post_request_to_leave_asap (ccevents_loop_t * loop)
-  __attribute__((nonnull(1)));
+  __attribute__((leaf,nonnull(1)));
 
 ccevents_decl bool ccevents_loop_queue_is_not_empty (const ccevents_loop_t * loop)
-  __attribute__((pure,nonnull(1)));
+  __attribute__((leaf,pure,nonnull(1)));
 
 ccevents_decl size_t ccevents_loop_number_of_groups (const ccevents_loop_t * loop)
-  __attribute__((pure,nonnull(1)));
+  __attribute__((leaf,pure,nonnull(1)));
 
 ccevents_decl bool ccevents_loop_contains_group (const ccevents_loop_t * loop, const ccevents_group_t * grp)
-  __attribute__((pure,nonnull(1,2)));
+  __attribute__((leaf,pure,nonnull(1,2)));
 
 ccevents_decl void ccevents_loop_enqueue_group (ccevents_loop_t * loop, ccevents_group_t * grp)
-  __attribute__((nonnull(1,2)));
+  __attribute__((leaf,nonnull(1,2)));
 
 ccevents_decl ccevents_group_t * ccevents_loop_dequeue_group (ccevents_loop_t * loop)
   __attribute__((nonnull(1)));

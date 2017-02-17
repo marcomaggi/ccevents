@@ -213,20 +213,23 @@ static void
 test_timeval_initialisation_invalid_from_timeval (void)
 {
   cce_location_t	L[1];
-  bool			flag = false;
+  bool			error_flag = false;
 
   if (cce_location(L)) {
     cce_condition_t *	C = cce_condition(L);
     assert(cce_condition_is_a(C, ccevents_timeval_invalid_D));
     cce_run_error_handlers(L);
     cce_condition_free(C);
-    flag = true;
+    error_flag = true;
   } else {
     struct timeval	T = { .tv_sec = -123, .tv_usec = 2 };
-    ccevents_timeval_normalise(L, T);
+    ccevents_timeval_t	tv;
+    tv = ccevents_timeval_normalise(L, T);
+    /* Let's print to make "tv" used: GCC will not remove it. */
+    fprintf(stderr, "%ld\n", tv.tv_sec);
     cce_run_cleanup_handlers(L);
   }
-  assert(true == flag);
+  assert(true == error_flag);
 }
 static void
 test_timeval_initialisation_overflow_from_timeval (void)
@@ -242,7 +245,10 @@ test_timeval_initialisation_overflow_from_timeval (void)
     flag = true;
   } else {
     struct timeval	T = { .tv_sec = LONG_MAX, .tv_usec = LONG_MAX };
-    ccevents_timeval_normalise(L, T);
+    ccevents_timeval_t	R;
+    R = ccevents_timeval_normalise(L, T);
+    /* Let's print to make R used: GCC will not remove it. */
+    fprintf(stderr, "%ld\n", R.tv_sec);
     cce_run_cleanup_handlers(L);
   }
   assert(true == flag);
@@ -289,9 +295,12 @@ test_timeval_addition (void)
       cce_condition_free(C);
       flag = true;
     } else {
+      ccevents_timeval_t	C;
       A = ccevents_timeval_init(L, LONG_MAX, 300);
       B = ccevents_timeval_init(L, 100, 44);
-      ccevents_timeval_add(L, A, B);
+      C = ccevents_timeval_add(L, A, B);
+      /* Let's print to make C used: GCC will not remove it. */
+      fprintf(stderr, "%ld\n", C.tv_sec);
       cce_run_cleanup_handlers(L);
     }
     assert(true == flag);
@@ -310,9 +319,12 @@ test_timeval_addition (void)
       cce_condition_free(C);
       flag = true;
     } else {
+      ccevents_timeval_t	R;
       A = ccevents_timeval_init(L, LONG_MAX, 300);
       B = ccevents_timeval_init(L, 0, 2000000);
-      ccevents_timeval_add(L, A, B);
+      R = ccevents_timeval_add(L, A, B);
+      /* Let's print to make R used: GCC will not remove it. */
+      fprintf(stderr, "%ld\n", R.tv_sec);
       cce_run_cleanup_handlers(L);
     }
     assert(true == flag);
@@ -360,9 +372,12 @@ test_timeval_subtraction (void)
       cce_condition_free(C);
       flag = true;
     } else {
+      ccevents_timeval_t	R;
       A = ccevents_timeval_init(L, 10, 300);
       B = ccevents_timeval_init(L, 99, 44);
-      ccevents_timeval_sub(L, A, B);
+      R = ccevents_timeval_sub(L, A, B);
+      /* Let's print to make R used: GCC will not remove it. */
+      fprintf(stderr, "%ld\n", R.tv_sec);
       cce_run_cleanup_handlers(L);
     }
     assert(true == flag);
@@ -381,9 +396,12 @@ test_timeval_subtraction (void)
       cce_condition_free(C);
       flag = true;
     } else {
+      ccevents_timeval_t	R;
       A = ccevents_timeval_init(L, LONG_MAX, 0);
       B = ccevents_timeval_init(L, 0, -100);
-      ccevents_timeval_add(L, A, B);
+      R = ccevents_timeval_add(L, A, B);
+      /* Let's print to make R used: GCC will not remove it. */
+      fprintf(stderr, "%ld\n", R.tv_sec);
       cce_run_cleanup_handlers(L);
     }
     assert(true == flag);

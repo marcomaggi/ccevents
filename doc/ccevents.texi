@@ -708,7 +708,7 @@ An anonymous field.
 @end deftp
 
 
-@deftypefun ccevents_timeval_t ccevents_timeval_init (cce_location_t * there, long @var{seconds}, long @var{microseconds})
+@deftypefun ccevents_timeval_t ccevents_timeval_init (cce_location_t * @var{there}, long @var{seconds}, long @var{microseconds})
 Build and return a timeval structure initialised and normalised with the given arguments.  If an
 error occurs while normalising: an exception is raised by performing a non--local exit to
 @var{there}.
@@ -762,7 +762,27 @@ If @var{A} is less than @var{B}.
 @chapter Handling event expiration times
 
 
-This module implements ``polling timeouts''.
+This module implements ``polling timeouts'': we set a timeout using this @api{} and when it expires
+nothing happens, we have to call a function to verify if it has expired or not.
+
+Here is an example of code that initialises a timeout that will expire @math{1} second, @math{2}
+milliseconds and @math{3} microseconds after the time of the call to @cfunc{ccevents_timeout_start}:
+
+@example
+#include <ccevents.h>
+
+cce_location_t        L[1];
+ccevents_timeout_t    to[1];
+
+if (cce_location(L)) @{
+  cce_run_error_handlers(L);
+  cce_condition_free(cce_condition(L));
+@} else @{
+  ccevents_timeout_init(L, to, 1, 2, 3);
+  ccevents_timeout_start(L, to);
+  cce_run_cleanup_handlers(L);
+@}
+@end example
 
 @menu
 * timeouts typedefs::           Type definitions.
@@ -779,8 +799,10 @@ This module implements ``polling timeouts''.
 
 
 @deftp {Struct Typedef} ccevents_timeout_t
-Represents a time span from a point in time towards the future.  It is meant to be used to signal
-that an event has not happended in a fixed amount of time.
+Type of data structures representing a time span from a point in time towards the future; it is
+meant to be used to signal that an event has not happended in a fixed amount of time.  This type is
+``derived'' from @objtype{ccevents_timeval_t}, meaning that its first field is an anonymous field of
+type @objtype{ccevents_timeval_t}.
 
 Holds values for seconds, milliseconds and microseconds as @code{long int}.  The number of seconds
 can only be zero or positive; the numbers of milliseconds and microseconds are normalised by
@@ -790,8 +812,6 @@ overflow, which is signalled by raising an exception.
 The maximum representable time span is: @code{LONG_MAX-1} seconds, @code{999} milliseconds,
 @code{999} microseconds.  When the number of seconds is set to @code{LONG_MAX}: the time span is
 interpreted as ``infinite'', the timeout will never expire.
-
-An instance of this structure type is also an instance of @code{struct timeval}.
 
 To copy a timeout data structure we can use the C language @code{=} operator.
 @end deftp
@@ -856,17 +876,17 @@ Return the current number of microseconds.  The value is in the range @code{[0, 
 
 
 @deftypefun ccevents_timeval_t ccevents_timeout_time_span (const ccevents_timeout_t * @var{to})
-Return a timeval structure representing the current time span referenced by @var{to}.  The value in
-the field @code{tv_sec} is in the range @code{[0, LONG_MAX]}, while the value in the field
-@code{tv_usec} is in the range @code{[0, 999999]}.
+Return a timeval structure representing the current time span referenced by @var{to}.  In the
+returned structure: the value in the field @code{tv_sec} is in the range @code{[0, LONG_MAX]}, while
+the value in the field @code{tv_usec} is in the range @code{[0, 999999]}.
 @end deftypefun
 
 
 @deftypefun ccevents_timeval_t ccevents_timeout_time (const ccevents_timeout_t * @var{to})
 Return a timeval structure representing the current expiration absolute time; the returned value is
-meaningful only if the timeout has been started.  The value in the field @code{tv_sec} is in the
-range @code{[0, LONG_MAX]}, while the value in the field @code{tv_usec} is in the range @code{[0,
-999999]}.
+meaningful only if the timeout has been started.  In the returned structure: the value in the field
+@code{tv_sec} is in the range @code{[0, LONG_MAX]}, while the value in the field @code{tv_usec} is
+in the range @code{[0, 999999]}.
 @end deftypefun
 
 @c page
@@ -885,6 +905,11 @@ Acquire the current time and compare it with the expiration time.  Return true i
 expired; otherwise return false.
 @end deftypefun
 
+
+@deftypefun bool ccevents_timeout_is_running (const ccevents_timeout_t * @var{to})
+Return @true{} if the timeout has been started; otherwise return @false{}.
+@end deftypefun
+
 @c page
 @node timeouts comparison
 @section Comparison functions
@@ -897,8 +922,9 @@ Compare the time spans of two timeouts; return: @code{-1} if @code{@var{A} < @va
 
 
 @deftypefun int ccevents_timeout_compare_expiration_time (const ccevents_timeout_t * @var{A}, const ccevents_timeout_t * @var{B})
-Compare the expiration times of two timeouts; return: @code{-1} if @code{@var{A} < @var{B}}, @code{0}
-if @code{@var{A} == @var{B}}, @code{+1} if @code{@var{A} > @var{B}}.
+Compare the expiration times of two timeouts; return: @code{-1} if @code{@var{A} < @var{B}},
+@code{0} if @code{@var{A} == @var{B}}, @code{+1} if @code{@var{A} > @var{B}}; the returned value is
+meaningful only if the timeout has been started.
 @end deftypefun
 
 @c page
@@ -917,7 +943,8 @@ expire.  If an error occurs: raise an exception by performing a non--local exit 
 
 @deftypefun void ccevents_timeout_reset (ccevents_timeout_t * @var{to})
 Reset a timeout, ``stop'' the timer.  The expiration time is set to a value meaning infinite
-expiration time.
+expiration time.  The configured time span is left untouched: this allows us to recycle the data
+structure.
 @end deftypefun
 
 @c page
