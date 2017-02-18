@@ -56,13 +56,13 @@ default_event_handler (cce_location_t *	L	CCEVENTS_UNUSED,
 static bool
 method_event_inquirer (cce_location_t * L, ccevents_group_t * grp, ccevents_source_t * src)
 {
-  ccevents_fd_source_t *	fdsrc = (ccevents_fd_source_t *) src;
+  CCEVENTS_PC(ccevents_fd_source_t, fdsrc, src);
   return fdsrc->event_inquirer(L, grp, fdsrc);
 }
 static void
 method_event_handler (cce_location_t * L, ccevents_group_t * grp, ccevents_source_t * src)
 {
-  ccevents_fd_source_t *	fdsrc = (ccevents_fd_source_t *) src;
+  CCEVENTS_PC(ccevents_fd_source_t, fdsrc, src);
   return fdsrc->event_handler(L, grp, fdsrc);
 }
 static const ccevents_source_vtable_t methods_table = {
@@ -103,7 +103,6 @@ ccevents_fd_event_source_set (cce_location_t * there,
    descriptor event.
 */
 {
-  ccevents_source_set(there, fdsrc);
   fdsrc->event_inquirer		= event_inquirer;
   fdsrc->event_handler		= event_handler;
 }
@@ -118,7 +117,7 @@ ccevents_query_fd_readability (cce_location_t * there, ccevents_group_t * grp, c
 {
   /* Remember that "select()" might mutate this struct. */
   struct timeval	timeout = { 0, 0 };
-  ccevents_fd_source_t * fdsrc = (ccevents_fd_source_t *) src;
+  CCEVENTS_PC(ccevents_fd_source_t, fdsrc, src);
   fd_set		set;
   int			rv;
   FD_ZERO(&set);
@@ -147,7 +146,7 @@ ccevents_query_fd_writability (cce_location_t * there, ccevents_group_t * grp, c
 {
   /* Remember that "select()" might mutate this struct. */
   struct timeval	timeout = { 0, 0 };
-  ccevents_fd_source_t * fdsrc = (ccevents_fd_source_t *) src;
+  CCEVENTS_PC(ccevents_fd_source_t, fdsrc, src);
   fd_set	set;
   int		rv;
   FD_ZERO(&set);
@@ -177,7 +176,7 @@ ccevents_query_fd_exception (cce_location_t * there, ccevents_group_t * grp, cce
 {
   /* Remember that "select()" might mutate this struct. */
   struct timeval	timeout = { 0, 0 };
-  ccevents_fd_source_t * fdsrc = (ccevents_fd_source_t *) src;
+  CCEVENTS_PC(ccevents_fd_source_t, fdsrc, src);
   fd_set		set;
   int			rv;
   FD_ZERO(&set);

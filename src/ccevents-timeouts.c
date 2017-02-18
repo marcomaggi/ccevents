@@ -39,8 +39,6 @@
 /* A  constant, statically  allocated  instance of  "ccevents_timeout_t"
    representing a timeout that never expires. */
 static const ccevents_timeout_t TIMEOUT_NEVER	= {
-  .tv_sec	= LONG_MAX,
-  .tv_usec	= 0,
   .seconds	= LONG_MAX,
   .milliseconds	= 0,
   .microseconds	= 0
@@ -50,8 +48,6 @@ const ccevents_timeout_t * CCEVENTS_TIMEOUT_NEVER = &TIMEOUT_NEVER;
 /* A  constant, statically  allocated  instance of  "ccevents_timeout_t"
    representing a timeout that never expires. */
 static const ccevents_timeout_t TIMEOUT_NOW = {
-  .tv_sec	= 0,
-  .tv_usec	= 0,
   .seconds	= 0,
   .milliseconds	= 0,
   .microseconds	= 0
@@ -127,8 +123,8 @@ normalise_little_into_big (cce_location_t * there,
   *littlesp	= littles;
 }
 
-void
-ccevents_timeout_init (cce_location_t * there, ccevents_timeout_t * to,
+ccevents_timeout_t
+ccevents_timeout_init (cce_location_t * there,
 		       long seconds, long milliseconds, long microseconds)
 /* Initialise  an   already  allocated  timeout  structure.    Raise  an
    exception if  the time  span values  would cause  an overflow  in the
@@ -154,77 +150,14 @@ ccevents_timeout_init (cce_location_t * there, ccevents_timeout_t * to,
   ccevents_debug("after milliseconds normalisation: seconds=%ld, milliseconds=%ld, microseconds=%ld", seconds, milliseconds, microseconds);
 
   /* These fields represent the timeout's time span. */
-  to->seconds		= seconds;
-  to->milliseconds	= milliseconds;
-  to->microseconds	= microseconds;
-  /* The "tv"  fields represent the timeout's  absolute expiration time;
-     they are properly set by the start function. */
-  to->tv_sec		= LONG_MAX;
-  to->tv_usec		= 0;
-}
-
-/** ------------------------------------------------------------
- ** Getters.
- ** ----------------------------------------------------------*/
-
-ccevents_timeval_t
-ccevents_timeout_time_span (const ccevents_timeout_t * to)
-{
-  ccevents_timeval_t	span = {
-    .tv_sec  = to->seconds,
-    /* With  a  normalised  "to"  the  "timeval"  representation  cannot
-       overflow. */
-    .tv_usec = 1000L * to->milliseconds + to->microseconds
-  };
-  return span;
-}
-ccevents_timeval_t
-ccevents_timeout_time (const ccevents_timeout_t * to)
-{
-  ccevents_timeval_t	absolute_time = {
-    .tv_sec  = to->tv_sec,
-    .tv_usec = to->tv_usec
-  };
-  return absolute_time;
-}
-
-/** ------------------------------------------------------------
- ** Predicates.
- ** ----------------------------------------------------------*/
-
-bool
-ccevents_timeout_infinite_time_span (const ccevents_timeout_t * to)
-{
-  return (LONG_MAX == to->seconds);
-}
-bool
-ccevents_timeout_expired (const ccevents_timeout_t * to)
-{
-  bool	rv;
-  if (ccevents_timeout_infinite_time_span(to)) {
-    /* A timeout with infinite time span never expires. */
-    rv = false;
-  } else {
-    ccevents_timeval_t	now;
-    ccevents_timeval_t	expiration_time	= ccevents_timeout_time(to);
-    gettimeofday(&now, NULL);
-    //fprintf(stderr, "now.tv_sec = %ld, now.tv_usec = %ld\n", now.tv_sec, now.tv_usec);
-    //fprintf(stderr, "expiration_time.tv_sec = %ld, expiration_time.tv_usec = %ld\n", expiration_time.tv_sec, expiration_time.tv_usec);
-    if (now.tv_sec < expiration_time.tv_sec) {
-      rv = false;
-    } else if ((now.tv_sec == expiration_time.tv_sec) && (now.tv_usec <= expiration_time.tv_usec)) {
-      rv = false;
-    } else {
-      rv = true;
-    }
+  {
+    ccevents_timeout_t to = {
+      .seconds		= seconds,
+      .milliseconds	= milliseconds,
+      .microseconds	= microseconds
+    };
+    return to;
   }
-  return rv;
-}
-
-bool
-ccevents_timeout_is_running (const ccevents_timeout_t * to)
-{
-  return ((0 != to->tv_sec) || (0 != to->tv_usec));
 }
 
 /** ------------------------------------------------------------
@@ -232,64 +165,50 @@ ccevents_timeout_is_running (const ccevents_timeout_t * to)
  ** ----------------------------------------------------------*/
 
 int
-ccevents_timeout_compare_time_span (const ccevents_timeout_t * toA, const ccevents_timeout_t * toB)
+ccevents_timeout_compare (const ccevents_timeout_t toA, const ccevents_timeout_t toB)
 {
-  if (toA->seconds < toB->seconds) {
+  if (toA.seconds < toB.seconds) {
     return -1;
-  } else if (toA->seconds > toB->seconds) {
+  } else if (toA.seconds > toB.seconds) {
     return +1;
   } else {
-    /* (toA->seconds == toB->seconds) */
-    if (toA->milliseconds < toB->milliseconds) {
+    /* (toA.seconds == toB.seconds) */
+    if (toA.milliseconds < toB.milliseconds) {
       return -1;
-    } else if (toA->milliseconds > toB->milliseconds) {
+    } else if (toA.milliseconds > toB.milliseconds) {
       return +1;
     } else {
-      /* (toA->milliseconds == toB->milliseconds) */
-      if (toA->microseconds < toB->microseconds) {
+      /* (toA.milliseconds == toB.milliseconds) */
+      if (toA.microseconds < toB.microseconds) {
 	return -1;
-      } else if (toA->microseconds > toB->microseconds) {
+      } else if (toA.microseconds > toB.microseconds) {
 	return +1;
       } else {
-	/* (toA->microseconds == toB->microseconds) */
+	/* (toA.microseconds == toB.microseconds) */
 	return 0;
       }
     }
   }
-}
-int
-ccevents_timeout_compare_expiration_time (const ccevents_timeout_t * A, const ccevents_timeout_t * B)
-{
-  ccevents_timeval_t span_a = ccevents_timeout_time(A);
-  ccevents_timeval_t span_b = ccevents_timeout_time(B);
-  return ccevents_timeval_compare(span_a, span_b);
 }
 
 /** ------------------------------------------------------------
  ** Operations: start and stop.
  ** ----------------------------------------------------------*/
 
-void
-ccevents_timeout_start (cce_location_t * there, ccevents_timeout_t * to)
+ccevents_timeval_t
+ccevents_timeout_start (cce_location_t * there, const ccevents_timeout_t to)
 {
-  if (ccevents_timeout_infinite_time_span(to)) {
-    to->tv_sec  = LONG_MAX;
-    to->tv_usec	= 0;
+  if (ccevents_timeout_is_infinite(to)) {
+    ccevents_timeval_t	R = { .tv_sec = LONG_MAX, .tv_usec = 0 };
+    return R;
   } else {
-    ccevents_timeval_t	now, span, R;
-
+    ccevents_timeval_t	now, span = {
+      .tv_sec	= to.seconds,
+      .tv_usec	= 1000L * to.milliseconds + to.microseconds
+    };
     gettimeofday(&now, NULL);
-    span = ccevents_timeout_time_span(to);
-    R = ccevents_timeval_add(there, now, span);
-    to->tv_sec	= R.tv_sec;
-    to->tv_usec	= R.tv_usec;
+    return ccevents_timeval_add(there, now, span);
   }
-}
-void
-ccevents_timeout_reset (ccevents_timeout_t * to)
-{
-  to->tv_sec	= LONG_MAX; /* means infinite time span */
-  to->tv_usec	= 0;
 }
 
 /* end of file */

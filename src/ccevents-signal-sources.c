@@ -118,7 +118,7 @@ method_event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t 
    the signal flag.
 */
 {
-  ccevents_signal_bub_source_t *	sigsrc = (ccevents_signal_bub_source_t *) src;
+  CCEVENTS_PC(ccevents_signal_bub_source_t, sigsrc, src);
   bool	flag = ccevents_signal_bub_delivered(sigsrc->signum);
   if (! flag) {
     ccevents_group_enqueue_source(grp, src);
@@ -128,7 +128,7 @@ method_event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t 
 static void
 method_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 {
-  ccevents_signal_bub_source_t *	sigsrc = (ccevents_signal_bub_source_t *) src;
+  CCEVENTS_PC(ccevents_signal_bub_source_t, sigsrc, src);
   return sigsrc->event_handler(there, grp, sigsrc);
 }
 static const ccevents_source_vtable_t methods_table = {
@@ -157,7 +157,6 @@ ccevents_signal_bub_source_set (cce_location_t * there, ccevents_signal_bub_sour
    expiration timer.
 */
 {
-  ccevents_source_set(there, sigsrc);
   sigsrc->event_handler = event_handler;
 }
 

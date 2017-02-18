@@ -293,6 +293,11 @@ typedef struct ccevents_timeval_t {
   struct timeval;
 } ccevents_timeval_t;
 
+/* Pointer   to   a   constant,   statically   allocated   instance   of
+   "ccevents_timeval_t"  representing  a  conventionally  infinite  time
+   span. */
+ccevents_decl const ccevents_timeval_t * CCEVENTS_TIMEVAL_NEVER;
+
 ccevents_decl ccevents_timeval_t ccevents_timeval_init (cce_location_t * there, long seconds, long microseconds)
   /* Not "pure" or "const" because it might perform a non-local exit. */
   __attribute__((nonnull(1)));
@@ -302,17 +307,23 @@ ccevents_decl ccevents_timeval_t ccevents_timeval_normalise (cce_location_t * th
   __attribute__((nonnull(1)));
 
 ccevents_decl ccevents_timeval_t ccevents_timeval_add (cce_location_t * there,
-						       ccevents_timeval_t A, ccevents_timeval_t B)
+						       const ccevents_timeval_t A, const ccevents_timeval_t B)
   /* Not "pure" or "const" because it might perform a non-local exit. */
   __attribute__((nonnull(1)));
 
 ccevents_decl ccevents_timeval_t ccevents_timeval_sub (cce_location_t * there,
-						       ccevents_timeval_t A, ccevents_timeval_t B)
+						       const ccevents_timeval_t A, const ccevents_timeval_t B)
   /* Not "pure" or "const" because it might perform a non-local exit. */
   __attribute__((nonnull(1)));
 
-ccevents_decl int ccevents_timeval_compare (ccevents_timeval_t A, ccevents_timeval_t B)
+ccevents_decl int ccevents_timeval_compare (const ccevents_timeval_t A, const ccevents_timeval_t B)
   __attribute__((leaf,const));
+
+ccevents_decl bool ccevents_timeval_is_expired_timeout (const ccevents_timeval_t expiration_time)
+  __attribute__((leaf,pure));
+
+ccevents_decl bool ccevents_timeval_is_infinite_timeout  (const ccevents_timeval_t T)
+  __attribute__((leaf,pure));
 
 /** --------------------------------------------------------------------
  ** Timeouts representation.
@@ -321,11 +332,7 @@ ccevents_decl int ccevents_timeval_compare (ccevents_timeval_t A, ccevents_timev
 typedef struct ccevents_timeout_t		ccevents_timeout_t;
 
 struct ccevents_timeout_t {
-  /* When this timeout is started the  expiration time is stored in this
-     structure.   When  the "tv_sec"  field  is  set to  LONG_MAX:  this
-     timeout never expires. */
-  ccevents_timeval_t;
-  /* Seconds count, a  non-negative number.  When set  to LONG_MAX: this
+  /* Seconds count,  a non-negative number.   When set to  LONG_MAX: the
      timeout never expires. */
   long int		seconds;
   /* Milliseconds  count.  After  normalisation:  this value  is in  the
@@ -344,58 +351,44 @@ ccevents_decl const ccevents_timeout_t * CCEVENTS_TIMEOUT_NEVER;
    immediately. */
 ccevents_decl const ccevents_timeout_t * CCEVENTS_TIMEOUT_NOW;
 
-ccevents_decl void ccevents_timeout_init (cce_location_t * there, ccevents_timeout_t * to,
-					  long seconds, long milliseconds, long microseconds)
+ccevents_decl ccevents_timeout_t ccevents_timeout_init (cce_location_t * there,
+							long seconds, long milliseconds, long microseconds)
   /* Not "pure" or "const" because:  it mutates the structure referenced
      by "to"; it might perfor a non-local exit. */
-  __attribute__((nonnull(1,2)));
+  __attribute__((nonnull(1)));
 
-ccevents_decl ccevents_timeval_t ccevents_timeout_time_span (const ccevents_timeout_t * to)
-  __attribute__((leaf,pure,nonnull(1)));
+ccevents_decl ccevents_timeval_t ccevents_timeout_start (cce_location_t * there, const ccevents_timeout_t to)
+  __attribute__((nonnull(1)));
 
-ccevents_decl ccevents_timeval_t ccevents_timeout_time (const ccevents_timeout_t * to)
-  __attribute__((leaf,pure,nonnull(1)));
+ccevents_decl int ccevents_timeout_compare (const ccevents_timeout_t toA, const ccevents_timeout_t toB)
+  __attribute__((leaf,const));
 
-ccevents_decl bool ccevents_timeout_infinite_time_span (const ccevents_timeout_t * to)
-  __attribute__((leaf,pure,nonnull(1)));
-
-ccevents_decl bool ccevents_timeout_expired (const ccevents_timeout_t * to)
-  __attribute__((leaf,pure,nonnull(1)));
-
-ccevents_decl bool ccevents_timeout_is_running (const ccevents_timeout_t * to)
-  __attribute__((leaf,pure,nonnull(1)));
-
-ccevents_decl int ccevents_timeout_compare_time_span (const ccevents_timeout_t * toA, const ccevents_timeout_t * toB)
-  __attribute__((leaf,pure,nonnull(1,2)));
-
-ccevents_decl int ccevents_timeout_compare_expiration_time (const ccevents_timeout_t * A, const ccevents_timeout_t * B)
-  __attribute__((leaf,pure,nonnull(1,2)));
-
-ccevents_decl void ccevents_timeout_start (cce_location_t * there, ccevents_timeout_t * to)
-  __attribute__((nonnull(1,2)));
-
-ccevents_decl void ccevents_timeout_reset (ccevents_timeout_t * to)
-  __attribute__((leaf,nonnull(1)));
-
-__attribute__((pure,nonnull(1),always_inline))
+__attribute__((const,always_inline))
 static inline long int
-ccevents_timeout_seconds (const ccevents_timeout_t * to)
+ccevents_timeout_seconds (const ccevents_timeout_t to)
 {
-  return to->seconds;
+  return to.seconds;
 }
 
-__attribute__((pure,nonnull(1),always_inline))
+__attribute__((const,always_inline))
 static inline long int
-ccevents_timeout_milliseconds (const ccevents_timeout_t * to)
+ccevents_timeout_milliseconds (const ccevents_timeout_t to)
 {
-  return to->milliseconds;
+  return to.milliseconds;
 }
 
-__attribute__((pure,nonnull(1),always_inline))
-static inline int
-ccevents_timeout_microseconds (const ccevents_timeout_t * to)
+__attribute__((const,always_inline))
+static inline long int
+ccevents_timeout_microseconds (const ccevents_timeout_t to)
 {
-  return to->microseconds;
+  return to.microseconds;
+}
+
+__attribute__((const,always_inline))
+static inline bool
+ccevents_timeout_is_infinite (const ccevents_timeout_t to)
+{
+  return (LONG_MAX == to.seconds);
 }
 
 /** --------------------------------------------------------------------
@@ -424,7 +417,7 @@ struct ccevents_source_t {
   const ccevents_source_vtable_t *	vtable;
 
   /* The expiration time for the next event in this event source. */
-  ccevents_timeout_t		expiration_time;
+  ccevents_timeval_t		expiration_time;
   /* The expiration handler for this  event source.  Pointer to function
      to be called whenever this event expires. */
   ccevents_source_expiration_handler_fun_t * expiration_handler;
@@ -438,12 +431,9 @@ ccevents_decl void ccevents_source_init (ccevents_source_t * src, const ccevents
   __attribute__((leaf,nonnull(1,2)));
 
 ccevents_decl void ccevents_source_set_timeout (ccevents_source_t * src,
-						ccevents_timeout_t expiration_time,
+						ccevents_timeval_t expiration_time,
 						ccevents_source_expiration_handler_fun_t * expiration_handler)
   __attribute__((leaf,nonnull(1,3)));
-
-ccevents_decl void ccevents_source_set (cce_location_t * there, ccevents_source_t * src)
-  __attribute__((nonnull(1,2)));
 
 ccevents_decl bool ccevents_source_do_one_event (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
   __attribute__((nonnull(1,2,3)));

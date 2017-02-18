@@ -71,7 +71,6 @@ test_standalone_readability (void)
   } else {
     ccevents_group_t		grp[1];
     ccevents_fd_source_t	fdsrc[1];
-    ccevents_timeout_t		expiration_time = *CCEVENTS_TIMEOUT_NEVER;
 
     void event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
 			ccevents_source_t * fdsrc CCEVENTS_UNUSED)
@@ -86,7 +85,7 @@ test_standalone_readability (void)
 
     /* fprintf(stderr, "X[0] = %d, X[1] = %d\n", X[0], X[1]); */
     ccevents_fd_event_source_init(fdsrc, X[0]);
-    ccevents_source_set_timeout(fdsrc, expiration_time, expiration_handler);
+    ccevents_source_set_timeout(fdsrc, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
     ccevents_fd_event_source_set(L, fdsrc, ccevents_query_fd_readability, event_handler);
 
     ccevents_group_init(grp, INT_MAX);
@@ -142,7 +141,6 @@ test_standalone_writability (void)
   } else {
     ccevents_group_t		grp[1];
     ccevents_fd_source_t	fds[1];
-    ccevents_timeout_t		expiration_time = *CCEVENTS_TIMEOUT_NEVER;
 
     void event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
 			ccevents_source_t * fds CCEVENTS_UNUSED)
@@ -157,7 +155,7 @@ test_standalone_writability (void)
 
     /* fprintf(stderr, "X[0] = %d, X[1] = %d\n", X[0], X[1]); */
     ccevents_fd_event_source_init(fds, X[1]);
-    ccevents_source_set_timeout(fds, expiration_time, expiration_handler);
+    ccevents_source_set_timeout(fds, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
     ccevents_fd_event_source_set(L, fds, ccevents_query_fd_writability, event_handler);
 
     ccevents_group_init(grp, INT_MAX);
@@ -234,7 +232,6 @@ test_standalone_exception (void)
       ccevents_group_t		grp[1];
       ccevents_fd_source_t	readable_fd_source;
       ccevents_fd_source_t	exception_fd_source;
-      ccevents_timeout_t	expiration_time = *CCEVENTS_TIMEOUT_NEVER;
       volatile bool		readable_flag = false;
       volatile bool		exception_flag = false;
       volatile bool		timeout_flag = false;
@@ -271,11 +268,11 @@ test_standalone_exception (void)
 
       //fprintf(stderr, "socketpair: server_sock = %d, client_sock = %d\n", server_sock, client_sock);
       ccevents_fd_event_source_init(&readable_fd_source, server_sock);
-      ccevents_source_set_timeout(&readable_fd_source, expiration_time, expiration_handler);
+      ccevents_source_set_timeout(&readable_fd_source, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
       ccevents_fd_event_source_set(L, &readable_fd_source, ccevents_query_fd_readability, readable_event_handler);
 
       ccevents_fd_event_source_init(&exception_fd_source, server_sock);
-      ccevents_source_set_timeout(&exception_fd_source, expiration_time, expiration_handler);
+      ccevents_source_set_timeout(&exception_fd_source, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
       ccevents_fd_event_source_set(L, &exception_fd_source, ccevents_query_fd_exception, exception_event_handler);
 
       ccevents_group_init(grp, INT_MAX);
@@ -350,7 +347,6 @@ test_talking_processes_with_groups (void)
     int				read_fd		= backwards_pipe[0];
     int				write_fd	= forwards_pipe[1];
     cce_location_t		L[1];
-    ccevents_timeout_t		expiration_time = *CCEVENTS_TIMEOUT_NEVER;
     ccevents_group_t		grp[1];
     ccevents_fd_source_t	read_source[1];
     ccevents_fd_source_t	write_source[1];
@@ -473,8 +469,8 @@ test_talking_processes_with_groups (void)
     } else {
       ccevents_fd_event_source_init(read_source, read_fd);
       ccevents_fd_event_source_init(write_source, write_fd);
-      ccevents_source_set_timeout(read_source, expiration_time, master_expiration_handler);
-      ccevents_source_set_timeout(write_source, expiration_time, master_expiration_handler);
+      ccevents_source_set_timeout(read_source, *CCEVENTS_TIMEVAL_NEVER, master_expiration_handler);
+      ccevents_source_set_timeout(write_source, *CCEVENTS_TIMEVAL_NEVER, master_expiration_handler);
       ccevents_group_init(grp, INT_MAX);
       {
 	ccevents_fd_event_source_set(L, write_source,
@@ -491,7 +487,6 @@ test_talking_processes_with_groups (void)
     int				read_fd		= forwards_pipe[0];
     int				write_fd	= backwards_pipe[1];
     cce_location_t		L[1];
-    ccevents_timeout_t		expiration_time = *CCEVENTS_TIMEOUT_NEVER;
     ccevents_group_t		grp[1];
     ccevents_fd_source_t	read_source[1];
     ccevents_fd_source_t	write_source[1];
@@ -614,8 +609,8 @@ test_talking_processes_with_groups (void)
     } else {
       ccevents_fd_event_source_init(read_source, read_fd);
       ccevents_fd_event_source_init(write_source, write_fd);
-      ccevents_source_set_timeout( read_source, expiration_time, slave_expiration_handler);
-      ccevents_source_set_timeout(write_source, expiration_time, slave_expiration_handler);
+      ccevents_source_set_timeout( read_source, *CCEVENTS_TIMEVAL_NEVER, slave_expiration_handler);
+      ccevents_source_set_timeout(write_source, *CCEVENTS_TIMEVAL_NEVER, slave_expiration_handler);
 
       ccevents_group_init(grp, INT_MAX);
       {

@@ -35,13 +35,13 @@
 static bool
 method_event_inquirer (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 {
-  ccevents_task_source_t *	tksrc = (ccevents_task_source_t *) src;
+  CCEVENTS_PC(ccevents_task_source_t, tksrc, src);
   return tksrc->event_inquirer(there, grp, tksrc);
 }
 static void
 method_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
 {
-  ccevents_task_source_t *	tksrc = (ccevents_task_source_t *) src;
+  CCEVENTS_PC(ccevents_task_source_t, tksrc, src);
   return tksrc->event_handler(there, grp, tksrc);
 }
 static const ccevents_source_vtable_t methods_table = {
@@ -69,7 +69,6 @@ ccevents_task_source_set (cce_location_t * there, ccevents_task_source_t * tksrc
    expiration timer.
 */
 {
-  ccevents_source_set(there, tksrc);
   tksrc->event_inquirer	= event_inquirer;
   tksrc->event_handler	= event_handler;
 }

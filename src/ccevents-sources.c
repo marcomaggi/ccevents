@@ -64,29 +64,16 @@ ccevents_source_init (ccevents_source_t * src, const ccevents_source_vtable_t * 
   src->vtable			= vtable;
   src->prev			= NULL;
   src->next			= NULL;
-  src->expiration_time		= *CCEVENTS_TIMEOUT_NEVER;
+  src->expiration_time		= *CCEVENTS_TIMEVAL_NEVER;
   src->expiration_handler	= default_expiration_handler;
 }
 
 void
-ccevents_source_set_timeout (ccevents_source_t * src, ccevents_timeout_t expiration_time,
+ccevents_source_set_timeout (ccevents_source_t * src, ccevents_timeval_t expiration_time,
 			     ccevents_source_expiration_handler_fun_t * expiration_handler)
 {
   src->expiration_time		= expiration_time;
   src->expiration_handler	= expiration_handler;
-}
-
-void
-ccevents_source_set (cce_location_t * there, ccevents_source_t * src)
-/* Set up an already initialised source to wait for an event.  Start the
-   expiration timer.
-*/
-{
-  /* We  reset the  timeout just  in  case the  this set  call resets  a
-     previously event selection. */
-  ccevents_timeout_reset(&(src->expiration_time));
-  /* Start the waiting. */
-  ccevents_timeout_start(there, &(src->expiration_time));
 }
 
 bool
@@ -150,7 +137,7 @@ ccevents_source_do_one_event (cce_location_t * there, ccevents_group_t * grp, cc
    SRC into GRP or not.
 */
 {
-  if (ccevents_timeout_expired(&(src->expiration_time))) {
+  if (ccevents_timeval_is_expired_timeout(src->expiration_time)) {
     ccevents_source_handle_expiration(there, grp, src);
     return true;
   } else if (ccevents_source_query(there, grp, src)) {

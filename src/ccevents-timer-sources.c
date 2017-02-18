@@ -64,7 +64,6 @@ ccevents_timer_source_init (ccevents_timer_source_t * timsrc)
 void
 ccevents_timer_source_set (cce_location_t * there, ccevents_timer_source_t * timsrc)
 {
-  ccevents_source_set(there, timsrc);
 }
 
 /* end of file */

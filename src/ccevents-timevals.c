@@ -26,9 +26,6 @@
 
 */
 
-
-/*** headers ***/
-
 #include "ccevents-internals.h"
 
 #define ASSERT_NORMALISED_TIMEVAL(TV)		\
@@ -39,7 +36,22 @@
     assert(999999   >= (TV).tv_usec);		\
   } while (0);
 
-
+/** ------------------------------------------------------------
+ ** Dynamic constants.
+ ** ----------------------------------------------------------*/
+
+/* A  constant, statically  allocated  instance of  "ccevents_timeval_t"
+   representing a conventionally infinite time span. */
+static const ccevents_timeval_t TIMEVAL_NEVER	= {
+  .tv_sec	= LONG_MAX,
+  .tv_usec	= LONG_MAX
+};
+const ccevents_timeval_t * CCEVENTS_TIMEVAL_NEVER = &TIMEVAL_NEVER;
+
+/** --------------------------------------------------------------------
+ ** Functions.
+ ** ----------------------------------------------------------------- */
+
 ccevents_timeval_t
 ccevents_timeval_normalise (cce_location_t * there, struct timeval T)
 /* Normalise  the structure  "T" and  return the  result.  The  returned
@@ -104,9 +116,8 @@ ccevents_timeval_init (cce_location_t * there, long seconds, long microseconds)
   return ccevents_timeval_normalise(there, T);
 }
 
-
 ccevents_timeval_t
-ccevents_timeval_add (cce_location_t * there, ccevents_timeval_t A, ccevents_timeval_t B)
+ccevents_timeval_add (cce_location_t * there, const ccevents_timeval_t A, const ccevents_timeval_t B)
 /* Add two  normalised timeval  structures and  return the  result.  The
  * returned structure is guaranteed to have:
  *
@@ -140,9 +151,8 @@ ccevents_timeval_add (cce_location_t * there, ccevents_timeval_t A, ccevents_tim
   return R;
 }
 
-
 ccevents_timeval_t
-ccevents_timeval_sub (cce_location_t * there, ccevents_timeval_t A, ccevents_timeval_t B)
+ccevents_timeval_sub (cce_location_t * there, const ccevents_timeval_t A, const ccevents_timeval_t B)
 /* Subtract B from A  and return the result: R = A -  B.  Assume A and B
  * are normalised, that is:
  *
@@ -164,9 +174,8 @@ ccevents_timeval_sub (cce_location_t * there, ccevents_timeval_t A, ccevents_tim
   return ccevents_timeval_init(there, (A.tv_sec - B.tv_sec), (A.tv_usec - B.tv_usec));
 }
 
-
 int
-ccevents_timeval_compare (ccevents_timeval_t A, ccevents_timeval_t B)
+ccevents_timeval_compare (const ccevents_timeval_t A, const ccevents_timeval_t B)
 {
   if (A.tv_sec < B.tv_sec) {
     return -1;
@@ -182,6 +191,31 @@ ccevents_timeval_compare (ccevents_timeval_t A, ccevents_timeval_t B)
       return 0;
     }
   }
+}
+
+bool
+ccevents_timeval_is_expired_timeout (const ccevents_timeval_t expiration_time)
+{
+  if (ccevents_timeval_is_infinite_timeout(expiration_time)) {
+    /* A timeout with infinite time span never expires. */
+    return false;
+  } else {
+    ccevents_timeval_t	now;
+    gettimeofday(&now, NULL);
+    if (now.tv_sec < expiration_time.tv_sec) {
+      return false;
+    } else if ((now.tv_sec == expiration_time.tv_sec) && (now.tv_usec <= expiration_time.tv_usec)) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+}
+
+bool
+ccevents_timeval_is_infinite_timeout (const ccevents_timeval_t T)
+{
+  return (LONG_MAX == T.tv_sec);
 }
 
 /* end of file */

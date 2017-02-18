@@ -86,7 +86,7 @@ test_single_task (void)
       cce_condition_free(cce_condition(L));
     } else {
       ccevents_task_source_init(tksrc);
-      ccevents_source_set_timeout(tksrc, *CCEVENTS_TIMEOUT_NEVER, expiration_handler);
+      ccevents_source_set_timeout(tksrc, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
       ccevents_group_init(grp, 3);
       ccevents_group_enqueue_source(grp, tksrc);
       ccevents_task_source_set(L, tksrc, event_inquirer, step1);
@@ -185,9 +185,9 @@ test_multi_tasks (void)
       task_init(tsk1, "multi task 1");
       task_init(tsk2, "multi task 2");
       task_init(tsk3, "multi task 3");
-      ccevents_source_set_timeout(tsk1, *CCEVENTS_TIMEOUT_NEVER, expiration_handler);
-      ccevents_source_set_timeout(tsk2, *CCEVENTS_TIMEOUT_NEVER, expiration_handler);
-      ccevents_source_set_timeout(tsk3, *CCEVENTS_TIMEOUT_NEVER, expiration_handler);
+      ccevents_source_set_timeout(tsk1, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
+      ccevents_source_set_timeout(tsk2, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
+      ccevents_source_set_timeout(tsk3, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
       ccevents_group_init(grp, 9);
       ccevents_group_enqueue_source(grp, tsk1);
       ccevents_group_enqueue_source(grp, tsk2);

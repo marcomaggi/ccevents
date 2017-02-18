@@ -49,8 +49,10 @@ test_single_timer_expiration (void)
     cce_location_t		L[1];
     ccevents_group_t		grp[1];
     ccevents_timer_source_t	timsrc[1];
-    ccevents_timeout_t		expiration_time;
-    ccevents_timeout_t		loop_time;
+    ccevents_timeout_t		expiration_to;
+    ccevents_timeval_t		expiration_tv;
+    ccevents_timeout_t		loop_to;
+    ccevents_timeval_t		loop_tv;
 
     if (cce_location(L)) {
       error_flag = true;
@@ -59,18 +61,19 @@ test_single_timer_expiration (void)
     } else {
       ccevents_timer_source_init(timsrc);
 
-      ccevents_timeout_init(L, &expiration_time, 0, 1, 0);
-      ccevents_source_set_timeout(timsrc, expiration_time, expiration_handler);
+      expiration_to = ccevents_timeout_init(L, 0, 1, 0);
+      expiration_tv = ccevents_timeout_start(L, expiration_to);
+      ccevents_source_set_timeout(timsrc, expiration_tv, expiration_handler);
       ccevents_timer_source_set(L, timsrc);
 
       ccevents_group_init(grp, 100);
       ccevents_group_enqueue_source(grp, timsrc);
 
-      ccevents_timeout_init(L, &loop_time, 0, 10, 0);
-      ccevents_timeout_start(L, &loop_time);
+      loop_to = ccevents_timeout_init(L, 0, 10, 0);
+      loop_tv = ccevents_timeout_start(L, loop_to);
       do {
 	ccevents_group_enter(grp);
-      } while (! ccevents_timeout_expired(&loop_time));
+      } while (! ccevents_timeval_is_expired_timeout(loop_tv));
       //fprintf(stderr, "loop expired? %d\n", ccevents_timeout_expired(&loop_time));
 
       cce_run_cleanup_handlers(L);
