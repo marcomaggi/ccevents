@@ -130,10 +130,6 @@ entitled ``@gnu{} Free Documentation License''.
 * sources::                     event sources basics.
 * groups::                      Groups of event sources.
 * loop::                        The main event loop.
-* tasks::                       Performing tasks in steps.
-* timers::                      Timer event sources.
-* fd::                          Event source for file descriptors.
-* signals::                     Interprocess signals.
 * helpers::                     Helper functions and macros.
 
 Appendices
@@ -940,19 +936,31 @@ always come from a ``source'', be it an operating system timer, a single file de
 network sockets representing connections to a server, a file system change monitored with the
 @samp{inotify} @api{}, et cetera.
 
+@value{PACKAGE} defines some predefined event source types, and we can define new ones.  All of them
+are subtypes of @objtype{ccevents_source_t}.
+
 @menu
-* sources typedefs::            Type definitions.
-* sources api::                 Application programming interface.
-* sources example::             Example of event source definition.
+* sources base::                Base event sources @api{}.
+* sources tasks::               Performing tasks in steps.
+* sources timers::              Timer event sources.
+* sources fd::                  Event source for file descriptors.
+* sources signals::             Interprocess signals.
 @end menu
 
 @c page
-@node sources typedefs
-@section Type definitions
+@node sources base
+@section Base event sources @api{}
 
 
-@value{PACKAGE} defines some predefined event source types, and we can define new ones.  All of
-them are subtypes of @objtype{ccevents_source_t}.
+@menu
+* sources base typedefs::       Type definitions.
+* sources base api::            Application programming interface.
+* sources base example::        Example of event source definition.
+@end menu
+
+@c page
+@node sources base typedefs
+@subsection Type definitions
 
 
 @deftp {Struct Typedef} ccevents_source_t
@@ -1049,8 +1057,8 @@ See @cfunc{ccevents_source_do_one_event} for details on how these functions are 
 @end deftp
 
 @c page
-@node sources api
-@section Application programming interface
+@node sources base api
+@subsection Application programming interface
 
 
 @deftypefun void ccevents_source_init (ccevents_source_t * @var{src}, const ccevents_source_vtable_t * @var{vtable})
@@ -1113,8 +1121,8 @@ A dummy event handler function: does nothing.
 @end deftypefun
 
 @c page
-@node sources example
-@section Example of event source definition
+@node sources base example
+@subsection Example of event source definition
 
 
 To understand how event sources are subtyped and used, let's look at a possible implementation of
@@ -1233,6 +1241,452 @@ doit (void)
   @}
 @}
 @end smallexample
+
+@c page
+@node sources tasks
+@section Performing tasks in steps
+
+
+The task source is the most basic event source defined by @value{PACKAGE}.
+
+
+@deftp {Struct Typedef} ccevents_task_source_t
+Type of task event source.  It is ``derived'' from @objtype{ccevents_source_t}, meaning that the
+first field of @objtype{ccevents_task_source_t} is an anonymous field of type
+@objtype{ccevents_source_t}.
+@end deftp
+
+
+@deftypefun void ccevents_task_source_init (ccevents_task_source_t * @var{src})
+Initialise an already allocated task source structure referenced by @var{src}.  Apply
+@cfunc{ccevents_source_init} to @var{src}.
+@end deftypefun
+
+
+@deftypefun void ccevents_task_source_set (cce_location_t * @var{there}, ccevents_task_source_t * @var{tksrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
+Start the next waiting for events in @var{tksrc}.  If an exceptional condition is raised: perform a
+non--local exit by jumping to @var{there}.
+
+The @var{event_handler} is meant perform a task step and to call this function again to select the
+next step.
+@end deftypefun
+
+
+The task source is meant to be used as follows:
+
+@smallexample
+#include <ccevents.h>
+
+bool
+event_inquirer (cce_location_t * there,
+                ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  // The next step is always ready to be executed.
+  return true;
+@}
+void
+expiration_handler (cce_location_t * there,
+                    ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  // Handle the expiration here.
+@}
+
+void
+step1 (cce_location_t * there,
+       ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  ccevents_task_source_t *    tksrc = (ccevents_task_source_t *) src;
+  // Perform the first step here.
+  ccevents_task_source_set(there, tksrc, event_inquirer, step2);
+  ccevents_group_enqueue_source(grp, tksrc);
+@}
+void
+step2 (cce_location_t * there,
+       ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  ccevents_task_source_t *    tksrc = (ccevents_task_source_t *) src;
+  // Perform the second step here.
+  ccevents_task_source_set(there, tksrc, event_inquirer, step3);
+  ccevents_group_enqueue_source(grp, tksrc);
+@}
+void
+step3 (cce_location_t * there,
+       ccevents_group_t * grp, ccevents_source_t * src)
+@{
+  // Perform the third step here.
+@}
+
+void
+doit (void)
+@{
+  ccevents_group_t              grp[1];
+  ccevents_task_source_t        tksrc[1];
+  cce_location_t                L[1];
+
+  if (cce_location(L)) @{
+    cce_run_error_handlers(L);
+    cce_condition_free(cce_condition(L));
+  @} else @{
+    ccevents_task_source_init(tksrc);
+    ccevents_task_source_set(L, tksrc, event_inquirer, step1);
+    ccevents_group_init(grp);
+    ccevents_group_enqueue_source(grp, tksrc);
+    ccevents_group_enter(grp, 3);
+    cce_run_cleanup_handlers(L);
+  @}
+@}
+@end smallexample
+
+@c page
+@node sources timers
+@section Timer event sources
+
+
+The timer event sources defined by this @api{} trigger an event whenever the event loop examines
+the timer event source structure; there is no special mechanism to interrupt the process execution
+and signal a timer (this @api{} does not use @posix{}'s @cfunc{timer_create}).
+
+
+@deftp {Struct Typedef} ccevents_timer_source_t
+This is a very simple source that exploits the timeout mechanism to implement a timer.  The timer
+calendar time and the expiration handler are selected with @cfunc{ccevents_source_set_timeout}.
+@end deftp
+
+
+@deftypefun void ccevents_timer_source_init (ccevents_timer_source_t * @var{timsrc})
+Initialise an already allocated source structure.  This function applies
+@cfunc{ccevents_source_init} to @var{timsrc}.
+@end deftypefun
+
+
+@deftypefun void ccevents_timer_source_set (cce_location_t * @var{there}, ccevents_timer_source_t * @var{timsrc})
+Start the timer for the source referenced by @var{timsrc}.  If an exceptional condition is raised:
+perform a non--local exit by jumping to @var{there}.
+@end deftypefun
+
+@c page
+@node sources fd
+@section Event source for file descriptors
+
+
+The file descriptor event source @api{} implements an event source associated to a single file
+descriptor.  This @api{} is @strong{not} suitable for server programs that need to serve a ``high''
+number of connections per second, but it should be easy to use, for example, to organise
+communication between processes through pipes or socket pairs.
+
+@menu
+* sources fd typedefs::         Type definitions.
+* sources fd init::             Initialisation and setup.
+* sources fd query::            Predefined query functions.
+@end menu
+
+@c page
+@node sources fd typedefs
+@subsection Type definitions
+
+
+@deftp {Struct Typedef} ccevents_fd_source_t
+Type of structures representing events from file descriptors.
+
+This structure type is ``derived'' from @objtype{ccevents_source_t}, meaning that the first field is
+anonymous of type @objtype{ccevents_source_t}.
+@end deftp
+
+
+@c page
+@node sources fd init
+@subsection Initialisation and setup
+
+
+@deftypefun void ccevents_fd_source_init (ccevents_fd_source_t * @var{fdsrc}, int @var{fd})
+Initialise an already allocated file descriptor event source.  Usually, we call this function only
+once for each file descriptor event source.  @var{fdsrc} is a pointer to an already allocated
+structure.  @var{FD} is the file descriptor.
+@end deftypefun
+
+
+@deftypefun void ccevents_fd_source_set (cce_location_t * @var{there}, ccevents_fd_source_t * @var{fdsrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
+Set up an already initialised file descriptor event source to wait for an event.  If an error
+occurs: raise an exception by performing a non--local exit to @var{there}.
+
+After the event represented by the arguments has been served or has expired: this function can be
+called again for the same @var{fdsrc} to set up waiting for another event.
+
+@var{fdsrc} is a pointer to an already initialised file descriptor event source.
+
+@var{event_inquirer} is a pointer to the function used to query the file descriptor for events.
+This function decides which events are expected: readability, writability, exceptional condition.
+
+@var{event_handler} is a pointer to the function used to handle a file descriptor event.
+@end deftypefun
+
+
+To set up waiting for a readable event, in @math{5} seconds, on a pipe's file descriptor we can do
+(using nested functions as allowed by a @gcc{} extension):
+
+@smallexample
+ccevents_group_t        grp[1];
+ccevents_fd_source_t    fdsrc[1];
+ccevents_timeout_t      expiration_time;
+int                     X[2];
+cce_location_t          L[1];
+
+void event_handler (cce_location_t * there,
+                    ccevents_group_t   * grp,
+                    ccevents_source_t  * src)
+@{
+  // We should do something here.
+  return;
+@}
+void expiration_handler (cce_location_t * there,
+                         ccevents_group_t   * grp,
+                         ccevents_source_t  * src)
+@{
+  // We should do something here.
+  return;
+@}
+
+/* X[0] is the readable end.  X[1] is the writable end. */
+pipe(X);
+
+if (cce_location(L)) @{
+  cce_run_error_handlers(L);
+  cce_condition_free(cce_condition(L));
+@} else @{
+  ccevents_fd_source_init(fdsrc, X[0]);
+  ccevents_fd_source_set(L, fdsrc,
+    ccevents_query_fd_readability, event_handler);
+
+  ccevents_timeout_init(L, &expiration_time, 5, 0, 0);
+  ccevents_source_set_timeout(fdsrc,
+    expiration_time, expiration_handler);
+
+  ccevents_group_init(grp);
+  ccevents_group_enqueue_source(grp, fdsrc);
+  ccevents_group_enter(grp, 10);
+
+  cce_run_cleanup_handlers(L);
+@}
+@end smallexample
+
+@c page
+@node sources fd query
+@subsection Predefined query functions
+
+
+@deftypefun bool ccevents_query_fd_readability (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{fdsrc})
+Query a file descriptor for readability.  This function matches the type
+@objtype{ccevents_source_event_inquirer_fun_t}.  Return @true{} if the file descriptor is readable,
+otherwise return @false{}.  If an error occurs: the value of @code{errno} might be mutated; an
+exception is raised by performing a non--local exit to @var{there}.
+
+If the file descriptor is not readable: the event source referenced by @var{fdsrc} is re--enqueued
+in the group referenced by @var{grp}.
+
+Beware that some file descriptors are always readable.
+@end deftypefun
+
+
+@deftypefun bool ccevents_query_fd_writability (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{fdsrc})
+Query a file descriptor for writability.  This function matches the type
+@objtype{ccevents_source_event_inquirer_fun_t}.  Return @true{} if the file descriptor is writable,
+otherwise return @false{}.  If an error occurs: the value of @code{errno} might be mutated; an
+exception is raised by performing a non--local exit to @var{there}.
+
+If the file descriptor is not writable: the event source referenced by @var{fdsrc} is re--enqueued
+in the group referenced by @var{grp}.
+
+Beware that some file descriptors are always writable.
+@end deftypefun
+
+
+@deftypefun bool ccevents_query_fd_exception (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{fdsrc})
+Query a file descriptor for an exception; this is useful when the file descriptor is a network
+socket.  This function matches the type @objtype{ccevents_source_event_inquirer_fun_t}.  Return
+@true{} if the file descriptor has received an exception signal, otherwise return @false{}.  If an
+error occurs: the value of @code{errno} might be mutated; an exception is raised by performing a
+non--local exit to @var{there}.
+
+If the file descriptor has not received an exception: the event source referenced by @var{fdsrc} is
+re--enqueued in the group referenced by @var{grp}.
+@end deftypefun
+
+@c page
+@node sources signals
+@section Interprocess signals
+
+
+The block/unblock (@bub{}) @api{} is a simplified interface to detect the arrival of interprocess
+signals; if it does not suit the application's model, we should just ignore it.
+
+@menu
+* sources signals bub::         Setting up the block/unblock @api{}.
+* sources signals sources::     Signals event sources.
+@end menu
+
+@c page
+@node sources signals bub
+@subsection Setting up the block/unblock @api{}
+
+
+The following functions operate on global variables that are private to @value{PACKAGE}.  This makes
+the @api{} multithread unsafe.
+
+
+@deftypefun void ccevents_signal_bub_init (void)
+Initialise the @bub{} @api{}, enabling signal handling.  Block all the signals and register a
+handler for each.
+
+For all the signals, the function @cfunc{sigaction} is called with a reference to @objtype{struct
+sigaction} in which the field @code{.sa_flags} has the following flags set: @code{SA_RESTART},
+@code{SA_NOCLDSTOP}.
+@end deftypefun
+
+
+@deftypefun void ccevents_signal_bub_final (void)
+Finalise the @bub{} @api{}, disabling signal handling.  Set all the handlers to @code{SIG_IGN}, then
+unblock the signals.
+@end deftypefun
+
+
+@deftypefun void ccevents_signal_bub_acquire (void)
+Unblock then block all the signals.  This causes blocked signals to be delivered.
+@end deftypefun
+
+
+@deftypefun bool ccevents_signal_bub_delivered (int @var{signum})
+Return @true{} if the signal @var{signum} was delivered to this process since the last call to
+@cfunc{ccevents_signal_bub_init}, @cfunc{ccevents_signal_bub_final} or
+@cfunc{ccevents_signal_bub_delivered} with this value of @var{signum}.  Calling this function clears
+the internal flag for signal @var{signum}.  If the return value is @false{}: the signal was not
+delivered.
+
+@strong{NOTE} We need to remember that it is not possible to reliably determine the number of
+signals of a kind sent to a process, because in some cases multiple signals are merged together.
+@end deftypefun
+
+
+As usage example, the following program will print @samp{true} and exit successfully:
+
+@example
+#include <ccevents.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <signal.h>
+
+int
+main (int argc, const char *const argv[])
+@{
+  ccevents_signal_bub_init();
+  @{
+    bool        flag;
+    raise(SIGUSR1);
+    ccevents_signal_bub_acquire();
+    flag = ccevents_signal_bub_delivered(SIGUSR1);
+    fprintf(stderr, "delivered? %s\n", ((flag)? "true" : "false"));
+  @}
+  ccevents_signal_bub_final();
+  exit(EXIT_SUCCESS);
+@}
+@end example
+
+@c page
+@node sources signals sources
+@subsection Signals event sources
+
+
+To use the @api{} described here we have to initialise the signals @bub{} @api{} by calling
+@cfunc{ccevents_signal_bub_init}.
+
+
+@deftp {Struct Typedef} ccevents_signal_bub_source_t
+Type of data structures using signals as event source through the @bub{} @api{}.  Every instance of
+this type uses a single signal as source.
+@end deftp
+
+
+@deftypefun void ccevents_signal_bub_source_init (ccevents_task_source_t * @var{src}, int @var{signum})
+Initialise an already allocated source structure to react to the delivery of signals of type
+@var{signum}.  Apply @cfunc{ccevents_source_init} to @var{src}.  Do not start the event waiting:
+this is done by @cfunc{ccevents_signal_bub_source_set}.
+
+The event inquirer function associated to @var{src} calls @cfunc{ccevents_signal_bub_delivered} and,
+if no signal was delivered, re--enqueues the source in the group; otherwise it leaves @var{src}
+dequeued.
+@end deftypefun
+
+
+@deftypefun void ccevents_signal_bub_source_set (cce_location_t * @var{there}, ccevents_signal_source_t * @var{src}, ccevents_source_event_handler_fun_t * @var{event_handler})
+Start the waiting for the selected signal.  If an exceptional condition is raised: perform a
+non--local exit by jumping to @var{there}.
+@end deftypefun
+
+
+As example, here is how to setup an event source to wait for the delivery of @samp{SIGUSR1}:
+
+@example
+#include <ccevents.h>
+#include <stdlib.h>
+#include <signal.h>
+
+static bool
+acquire_signals_inquirer (cce_location_t    * there,
+                          ccevents_group_t  * grp,
+                          ccevents_source_t * src)
+@{
+  ccevents_signal_bub_acquire();
+  ccevents_group_enqueue_source(grp, src);
+  return false;
+@}
+
+static volatile sig_atomic_t signal_flag = 0;
+
+static void
+signal_handler (cce_location_t    * there,
+                ccevents_group_t  * grp,
+                ccevents_source_t * src)
+@{
+  signal_flag = 1;
+@}
+
+int
+main (int argc, const char *const argv[])
+@{
+  ccevents_group_t grp[1];
+
+  /* This event source runs its inquirer function again
+     and again to acquire signals with the BUB API. */
+  ccevents_task_source_t acquire_signals_src[1];
+
+  /* This event source reacts to the delivery of SIGUSR1. */
+  ccevents_signal_bub_source_t sigsrc[1];
+
+  cce_location_t L[1];
+
+  ccevents_signal_bub_init();
+  @{
+    ccevents_group_init(grp);
+    ccevents_task_source_init(acquire_signals_src);
+    ccevents_signal_bub_source_init(sigsrc, SIGUSR1);
+
+    if (cce_location(L)) @{
+      cce_run_error_handlers(L);
+      cce_condition_free(cce_condition(L));
+    @} else @{
+      ccevents_task_source_set(L, acquire_signals_src,
+         acquire_signals_inquirer,
+         ccevents_source_dummy_event_handler);
+      ccevents_signal_bub_source_set(L, sigsrc, signal_handler);
+      ccevents_group_enqueue_source(grp, sigsrc);
+      ccevents_group_enqueue_source(grp, acquire_signals_src);
+      ccevents_group_enter(grp, 1000);
+      cce_run_cleanup_handlers(L);
+    @}
+  @}
+  ccevents_signal_bub_final();
+  exit(EXIT_SUCCESS);
+@}
+@end example
 
 @c page
 @node groups
@@ -1415,452 +1869,6 @@ code to do it.  The right way to exit from a call to this function is to invoke
 Post a request to exit as soon as possible the loop.  This function is meant to be called by an
 event handler to cause a premature return from a call to @cfunc{ccevents_loop_enter}.
 @end deftypefun
-
-@c page
-@node tasks
-@chapter Performing tasks in steps
-
-
-The task source is the most basic event source defined by @value{PACKAGE}.
-
-
-@deftp {Struct Typedef} ccevents_task_source_t
-Type of task event source.  It is ``derived'' from @objtype{ccevents_source_t}, meaning that the
-first field of @objtype{ccevents_task_source_t} is an anonymous field of type
-@objtype{ccevents_source_t}.
-@end deftp
-
-
-@deftypefun void ccevents_task_source_init (ccevents_task_source_t * @var{src})
-Initialise an already allocated task source structure referenced by @var{src}.  Apply
-@cfunc{ccevents_source_init} to @var{src}.
-@end deftypefun
-
-
-@deftypefun void ccevents_task_source_set (cce_location_t * @var{there}, ccevents_task_source_t * @var{tksrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
-Start the next waiting for events in @var{tksrc}.  If an exceptional condition is raised: perform a
-non--local exit by jumping to @var{there}.
-
-The @var{event_handler} is meant perform a task step and to call this function again to select the
-next step.
-@end deftypefun
-
-
-The task source is meant to be used as follows:
-
-@smallexample
-#include <ccevents.h>
-
-bool
-event_inquirer (cce_location_t * there,
-                ccevents_group_t * grp, ccevents_source_t * src)
-@{
-  // The next step is always ready to be executed.
-  return true;
-@}
-void
-expiration_handler (cce_location_t * there,
-                    ccevents_group_t * grp, ccevents_source_t * src)
-@{
-  // Handle the expiration here.
-@}
-
-void
-step1 (cce_location_t * there,
-       ccevents_group_t * grp, ccevents_source_t * src)
-@{
-  ccevents_task_source_t *    tksrc = (ccevents_task_source_t *) src;
-  // Perform the first step here.
-  ccevents_task_source_set(there, tksrc, event_inquirer, step2);
-  ccevents_group_enqueue_source(grp, tksrc);
-@}
-void
-step2 (cce_location_t * there,
-       ccevents_group_t * grp, ccevents_source_t * src)
-@{
-  ccevents_task_source_t *    tksrc = (ccevents_task_source_t *) src;
-  // Perform the second step here.
-  ccevents_task_source_set(there, tksrc, event_inquirer, step3);
-  ccevents_group_enqueue_source(grp, tksrc);
-@}
-void
-step3 (cce_location_t * there,
-       ccevents_group_t * grp, ccevents_source_t * src)
-@{
-  // Perform the third step here.
-@}
-
-void
-doit (void)
-@{
-  ccevents_group_t              grp[1];
-  ccevents_task_source_t        tksrc[1];
-  cce_location_t                L[1];
-
-  if (cce_location(L)) @{
-    cce_run_error_handlers(L);
-    cce_condition_free(cce_condition(L));
-  @} else @{
-    ccevents_task_source_init(tksrc);
-    ccevents_task_source_set(L, tksrc, event_inquirer, step1);
-    ccevents_group_init(grp);
-    ccevents_group_enqueue_source(grp, tksrc);
-    ccevents_group_enter(grp, 3);
-    cce_run_cleanup_handlers(L);
-  @}
-@}
-@end smallexample
-
-@c page
-@node timers
-@chapter Timer event sources
-
-
-The timer event sources defined by this @api{} trigger an event whenever the event loop examines
-the timer event source structure; there is no special mechanism to interrupt the process execution
-and signal a timer (this @api{} does not use @posix{}'s @cfunc{timer_create}).
-
-
-@deftp {Struct Typedef} ccevents_timer_source_t
-This is a very simple source that exploits the timeout mechanism to implement a timer.  The timer
-calendar time and the expiration handler are selected with @cfunc{ccevents_source_set_timeout}.
-@end deftp
-
-
-@deftypefun void ccevents_timer_source_init (ccevents_timer_source_t * @var{timsrc})
-Initialise an already allocated source structure.  This function applies
-@cfunc{ccevents_source_init} to @var{timsrc}.
-@end deftypefun
-
-
-@deftypefun void ccevents_timer_source_set (cce_location_t * @var{there}, ccevents_timer_source_t * @var{timsrc})
-Start the timer for the source referenced by @var{timsrc}.  If an exceptional condition is raised:
-perform a non--local exit by jumping to @var{there}.
-@end deftypefun
-
-@c page
-@node fd
-@chapter Event source for file descriptors
-
-
-The file descriptor event source @api{} implements an event source associated to a single file
-descriptor.  This @api{} is @strong{not} suitable for server programs that need to serve a ``high''
-number of connections per second, but it should be easy to use, for example, to organise
-communication between processes through pipes or socket pairs.
-
-@menu
-* fd typedefs::                 Type definitions.
-* fd init::                     Initialisation and setup.
-* fd query::                    Predefined query functions.
-@end menu
-
-@c page
-@node fd typedefs
-@section Type definitions
-
-
-@deftp {Struct Typedef} ccevents_fd_source_t
-Type of structures representing events from file descriptors.
-
-This structure type is ``derived'' from @objtype{ccevents_source_t}, meaning that the first field is
-anonymous of type @objtype{ccevents_source_t}.
-@end deftp
-
-
-@c page
-@node fd init
-@section Initialisation and setup
-
-
-@deftypefun void ccevents_fd_source_init (ccevents_fd_source_t * @var{fdsrc}, int @var{fd})
-Initialise an already allocated file descriptor event source.  Usually, we call this function only
-once for each file descriptor event source.  @var{fdsrc} is a pointer to an already allocated
-structure.  @var{FD} is the file descriptor.
-@end deftypefun
-
-
-@deftypefun void ccevents_fd_source_set (cce_location_t * @var{there}, ccevents_fd_source_t * @var{fdsrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
-Set up an already initialised file descriptor event source to wait for an event.  If an error
-occurs: raise an exception by performing a non--local exit to @var{there}.
-
-After the event represented by the arguments has been served or has expired: this function can be
-called again for the same @var{fdsrc} to set up waiting for another event.
-
-@var{fdsrc} is a pointer to an already initialised file descriptor event source.
-
-@var{event_inquirer} is a pointer to the function used to query the file descriptor for events.
-This function decides which events are expected: readability, writability, exceptional condition.
-
-@var{event_handler} is a pointer to the function used to handle a file descriptor event.
-@end deftypefun
-
-
-To set up waiting for a readable event, in @math{5} seconds, on a pipe's file descriptor we can do
-(using nested functions as allowed by a @gcc{} extension):
-
-@smallexample
-ccevents_group_t        grp[1];
-ccevents_fd_source_t    fdsrc[1];
-ccevents_timeout_t      expiration_time;
-int                     X[2];
-cce_location_t          L[1];
-
-void event_handler (cce_location_t * there,
-                    ccevents_group_t   * grp,
-                    ccevents_source_t  * src)
-@{
-  // We should do something here.
-  return;
-@}
-void expiration_handler (cce_location_t * there,
-                         ccevents_group_t   * grp,
-                         ccevents_source_t  * src)
-@{
-  // We should do something here.
-  return;
-@}
-
-/* X[0] is the readable end.  X[1] is the writable end. */
-pipe(X);
-
-if (cce_location(L)) @{
-  cce_run_error_handlers(L);
-  cce_condition_free(cce_condition(L));
-@} else @{
-  ccevents_fd_source_init(fdsrc, X[0]);
-  ccevents_fd_source_set(L, fdsrc,
-    ccevents_query_fd_readability, event_handler);
-
-  ccevents_timeout_init(L, &expiration_time, 5, 0, 0);
-  ccevents_source_set_timeout(fdsrc,
-    expiration_time, expiration_handler);
-
-  ccevents_group_init(grp);
-  ccevents_group_enqueue_source(grp, fdsrc);
-  ccevents_group_enter(grp, 10);
-
-  cce_run_cleanup_handlers(L);
-@}
-@end smallexample
-
-@c page
-@node fd query
-@section Predefined query functions
-
-
-@deftypefun bool ccevents_query_fd_readability (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{fdsrc})
-Query a file descriptor for readability.  This function matches the type
-@objtype{ccevents_source_event_inquirer_fun_t}.  Return @true{} if the file descriptor is readable,
-otherwise return @false{}.  If an error occurs: the value of @code{errno} might be mutated; an
-exception is raised by performing a non--local exit to @var{there}.
-
-If the file descriptor is not readable: the event source referenced by @var{fdsrc} is re--enqueued
-in the group referenced by @var{grp}.
-
-Beware that some file descriptors are always readable.
-@end deftypefun
-
-
-@deftypefun bool ccevents_query_fd_writability (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{fdsrc})
-Query a file descriptor for writability.  This function matches the type
-@objtype{ccevents_source_event_inquirer_fun_t}.  Return @true{} if the file descriptor is writable,
-otherwise return @false{}.  If an error occurs: the value of @code{errno} might be mutated; an
-exception is raised by performing a non--local exit to @var{there}.
-
-If the file descriptor is not writable: the event source referenced by @var{fdsrc} is re--enqueued
-in the group referenced by @var{grp}.
-
-Beware that some file descriptors are always writable.
-@end deftypefun
-
-
-@deftypefun bool ccevents_query_fd_exception (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{fdsrc})
-Query a file descriptor for an exception; this is useful when the file descriptor is a network
-socket.  This function matches the type @objtype{ccevents_source_event_inquirer_fun_t}.  Return
-@true{} if the file descriptor has received an exception signal, otherwise return @false{}.  If an
-error occurs: the value of @code{errno} might be mutated; an exception is raised by performing a
-non--local exit to @var{there}.
-
-If the file descriptor has not received an exception: the event source referenced by @var{fdsrc} is
-re--enqueued in the group referenced by @var{grp}.
-@end deftypefun
-
-@c page
-@node signals
-@chapter Interprocess signals
-
-
-The block/unblock (@bub{}) @api{} is a simplified interface to detect the arrival of interprocess
-signals; if it does not suit the application's model, we should just ignore it.
-
-@menu
-* signals bub::                 Setting up the block/unblock @api{}.
-* signals sources::             Signals event sources.
-@end menu
-
-@c page
-@node signals bub
-@section Setting up the block/unblock @api{}
-
-
-The following functions operate on global variables that are private to @value{PACKAGE}.  This makes
-the @api{} multithread unsafe.
-
-
-@deftypefun void ccevents_signal_bub_init (void)
-Initialise the @bub{} @api{}, enabling signal handling.  Block all the signals and register a
-handler for each.
-
-For all the signals, the function @cfunc{sigaction} is called with a reference to @objtype{struct
-sigaction} in which the field @code{.sa_flags} has the following flags set: @code{SA_RESTART},
-@code{SA_NOCLDSTOP}.
-@end deftypefun
-
-
-@deftypefun void ccevents_signal_bub_final (void)
-Finalise the @bub{} @api{}, disabling signal handling.  Set all the handlers to @code{SIG_IGN}, then
-unblock the signals.
-@end deftypefun
-
-
-@deftypefun void ccevents_signal_bub_acquire (void)
-Unblock then block all the signals.  This causes blocked signals to be delivered.
-@end deftypefun
-
-
-@deftypefun bool ccevents_signal_bub_delivered (int @var{signum})
-Return @true{} if the signal @var{signum} was delivered to this process since the last call to
-@cfunc{ccevents_signal_bub_init}, @cfunc{ccevents_signal_bub_final} or
-@cfunc{ccevents_signal_bub_delivered} with this value of @var{signum}.  Calling this function clears
-the internal flag for signal @var{signum}.  If the return value is @false{}: the signal was not
-delivered.
-
-@strong{NOTE} We need to remember that it is not possible to reliably determine the number of
-signals of a kind sent to a process, because in some cases multiple signals are merged together.
-@end deftypefun
-
-
-As usage example, the following program will print @samp{true} and exit successfully:
-
-@example
-#include <ccevents.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <signal.h>
-
-int
-main (int argc, const char *const argv[])
-@{
-  ccevents_signal_bub_init();
-  @{
-    bool        flag;
-    raise(SIGUSR1);
-    ccevents_signal_bub_acquire();
-    flag = ccevents_signal_bub_delivered(SIGUSR1);
-    fprintf(stderr, "delivered? %s\n", ((flag)? "true" : "false"));
-  @}
-  ccevents_signal_bub_final();
-  exit(EXIT_SUCCESS);
-@}
-@end example
-
-@c page
-@node signals sources
-@section Signals event sources
-
-
-To use the @api{} described here we have to initialise the signals @bub{} @api{} by calling
-@cfunc{ccevents_signal_bub_init}.
-
-
-@deftp {Struct Typedef} ccevents_signal_bub_source_t
-Type of data structures using signals as event source through the @bub{} @api{}.  Every instance of
-this type uses a single signal as source.
-@end deftp
-
-
-@deftypefun void ccevents_signal_bub_source_init (ccevents_task_source_t * @var{src}, int @var{signum})
-Initialise an already allocated source structure to react to the delivery of signals of type
-@var{signum}.  Apply @cfunc{ccevents_source_init} to @var{src}.  Do not start the event waiting:
-this is done by @cfunc{ccevents_signal_bub_source_set}.
-
-The event inquirer function associated to @var{src} calls @cfunc{ccevents_signal_bub_delivered} and,
-if no signal was delivered, re--enqueues the source in the group; otherwise it leaves @var{src}
-dequeued.
-@end deftypefun
-
-
-@deftypefun void ccevents_signal_bub_source_set (cce_location_t * @var{there}, ccevents_signal_source_t * @var{src}, ccevents_source_event_handler_fun_t * @var{event_handler})
-Start the waiting for the selected signal.  If an exceptional condition is raised: perform a
-non--local exit by jumping to @var{there}.
-@end deftypefun
-
-
-As example, here is how to setup an event source to wait for the delivery of @samp{SIGUSR1}:
-
-@example
-#include <ccevents.h>
-#include <stdlib.h>
-#include <signal.h>
-
-static bool
-acquire_signals_inquirer (cce_location_t    * there,
-                          ccevents_group_t  * grp,
-                          ccevents_source_t * src)
-@{
-  ccevents_signal_bub_acquire();
-  ccevents_group_enqueue_source(grp, src);
-  return false;
-@}
-
-static volatile sig_atomic_t signal_flag = 0;
-
-static void
-signal_handler (cce_location_t    * there,
-                ccevents_group_t  * grp,
-                ccevents_source_t * src)
-@{
-  signal_flag = 1;
-@}
-
-int
-main (int argc, const char *const argv[])
-@{
-  ccevents_group_t grp[1];
-
-  /* This event source runs its inquirer function again
-     and again to acquire signals with the BUB API. */
-  ccevents_task_source_t acquire_signals_src[1];
-
-  /* This event source reacts to the delivery of SIGUSR1. */
-  ccevents_signal_bub_source_t sigsrc[1];
-
-  cce_location_t L[1];
-
-  ccevents_signal_bub_init();
-  @{
-    ccevents_group_init(grp);
-    ccevents_task_source_init(acquire_signals_src);
-    ccevents_signal_bub_source_init(sigsrc, SIGUSR1);
-
-    if (cce_location(L)) @{
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
-    @} else @{
-      ccevents_task_source_set(L, acquire_signals_src,
-         acquire_signals_inquirer,
-         ccevents_source_dummy_event_handler);
-      ccevents_signal_bub_source_set(L, sigsrc, signal_handler);
-      ccevents_group_enqueue_source(grp, sigsrc);
-      ccevents_group_enqueue_source(grp, acquire_signals_src);
-      ccevents_group_enter(grp, 1000);
-      cce_run_cleanup_handlers(L);
-    @}
-  @}
-  ccevents_signal_bub_final();
-  exit(EXIT_SUCCESS);
-@}
-@end example
 
 @c page
 @node helpers
