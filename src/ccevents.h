@@ -477,7 +477,7 @@ ccevents_decl ccevents_source_event_inquirer_fun_t ccevents_query_fd_exception;
 
 __attribute__((const,always_inline))
 static inline ccevents_fd_source_t *
-ccevents_fd_source_from_source (ccevents_source_t * src)
+ccevents_cast_fd_source_from_source (ccevents_source_t * src)
 {
   return (ccevents_fd_source_t *)src;
 }

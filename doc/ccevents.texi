@@ -1374,16 +1374,6 @@ descriptor.  This @api{} is @strong{not} suitable for server programs that need 
 number of connections per second, but it should be easy to use, for example, to organise
 communication between processes through pipes or socket pairs.
 
-@menu
-* sources fd typedefs::         Type definitions.
-* sources fd init::             Initialisation and setup.
-* sources fd query::            Predefined query functions.
-@end menu
-
-@c page
-@node sources fd typedefs
-@subsection Type definitions
-
 
 @deftp {Struct Typedef} ccevents_fd_source_t
 Type of structures representing events from file descriptors.
@@ -1393,9 +1383,22 @@ anonymous of type @objtype{ccevents_source_t}.
 @end deftp
 
 
-@c page
-@node sources fd init
-@subsection Initialisation and setup
+@deftypefn {Inline Function} {ccevents_fd_source_t *} ccevents_cast_fd_source_from_source (ccevents_source_t * @var{src})
+Cast function which explicitly documents that this pointer type conversion is sometimes necessary.
+It can be used, for example, in an event handler function as follows:
+
+@example
+void
+event_handler (cce_location_t    * there,
+               ccevents_group_t  * grp,
+               ccevents_source_t * src)
+@{
+  ccevents_fd_source_t * fdsrc =
+    ccevents_cast_fd_source_from_source(src);
+  ...
+@}
+@end example
+@end deftypefn
 
 
 @deftypefun void ccevents_fd_source_init (ccevents_fd_source_t * @var{fdsrc}, int @var{fd})
@@ -1469,9 +1472,8 @@ if (cce_location(L)) @{
 @}
 @end smallexample
 
-@c page
-@node sources fd query
-@subsection Predefined query functions
+
+@value{PACKAGE} defines the following event inquirer functions.
 
 
 @deftypefun bool ccevents_query_fd_readability (cce_location_t * @var{there}, ccevents_group_t * @var{grp}, ccevents_source_t * @var{fdsrc})
