@@ -1383,7 +1383,7 @@ anonymous of type @objtype{ccevents_source_t}.
 @end deftp
 
 
-@deftypefn {Inline Function} {ccevents_fd_source_t *} ccevents_cast_fd_source_from_source (ccevents_source_t * @var{src})
+@deftypefn {Inline Function} {ccevents_fd_source_t *} ccevents_cast_to_fd_source_from_source (ccevents_source_t * @var{src})
 Cast function which explicitly documents that this pointer type conversion is sometimes necessary.
 It can be used, for example, in an event handler function as follows:
 
@@ -1394,7 +1394,25 @@ event_handler (cce_location_t    * there,
                ccevents_source_t * src)
 @{
   ccevents_fd_source_t * fdsrc =
-    ccevents_cast_fd_source_from_source(src);
+    ccevents_cast_to_fd_source_from_source(src);
+  ...
+@}
+@end example
+@end deftypefn
+
+
+@deftypefn {Generic Macro} {ccevents_fd_source_t *} ccevents_cast_to_fd_source (ccevents_source_t * @var{src})
+Generic cast macro which explicitly documents that this pointer type conversion is sometimes
+necessary.  It can be used, for example, in an event handler function as follows:
+
+@example
+void
+event_handler (cce_location_t    * there,
+               ccevents_group_t  * grp,
+               ccevents_source_t * src)
+@{
+  ccevents_fd_source_t * fdsrc =
+    ccevents_cast_to_fd_source(src);
   ...
 @}
 @end example

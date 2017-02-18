@@ -244,8 +244,7 @@ test_standalone_exception (void)
 
       void readable_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
       {
-	ccevents_fd_source_t * fds =
-	  ccevents_cast_fd_source_from_source(src);
+	ccevents_fd_source_t * fds = ccevents_cast_to_fd_source(src);
 	int	len;
 	readable_flag = true;
 	len = recv(fds->fd, read_buf + read_len, 10, 0);
@@ -254,7 +253,7 @@ test_standalone_exception (void)
       }
       void exception_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
       {
-	ccevents_fd_source_t * fds = ccevents_cast_fd_source_from_source(src);
+	ccevents_fd_source_t * fds = ccevents_cast_to_fd_source(src);
 	int	len;
 	exception_flag = true;
 	len = recv(fds->fd, except_buf + except_len, 1, MSG_OOB);
@@ -374,7 +373,7 @@ test_talking_processes_with_groups (void)
     /* Master's write event handler. */
     void master_write_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
     {
-      ccevents_fd_source_t * fdsrc = ccevents_cast_fd_source_from_source(src);
+      ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
       fprintf(stderr, "%s: master state %d\n", __func__, state);
       switch (state) {
       case 0: /* Send greetings. */
@@ -410,7 +409,7 @@ test_talking_processes_with_groups (void)
     /* Master's read event handler. */
     void master_read_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
     {
-      ccevents_fd_source_t * fdsrc = ccevents_cast_fd_source_from_source(src);
+      ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
       fprintf(stderr, "%s: master state %d\n", __func__, state);
       switch (state) {
       case 1: /* Read greetings. */
@@ -515,7 +514,7 @@ test_talking_processes_with_groups (void)
     /* Slave's read event handler. */
     void slave_read_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
     {
-      ccevents_fd_source_t * fdsrc = ccevents_cast_fd_source_from_source(src);
+      ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
       fprintf(stderr, "%s: slave state %d\n", __func__, state);
       switch (state) {
       case 0: /* Read greetings. */
@@ -564,7 +563,7 @@ test_talking_processes_with_groups (void)
     /* Slave's write event handler. */
     void slave_write_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
     {
-      ccevents_fd_source_t * fdsrc = ccevents_cast_fd_source_from_source(src);
+      ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
       fprintf(stderr, "%s: slave state %d\n", __func__, state);
       switch (state) {
       case 1: /* Send greetings. */

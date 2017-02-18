@@ -283,15 +283,17 @@ ccevents_is_a_timeout_overflow_C (const cce_condition_t * C)
  ** Timeval handling.
  ** ----------------------------------------------------------------- */
 
+typedef struct ccevents_timeval_t	ccevents_timeval_t;
+
 /* This is like  "struct timeval" but it is guaranteed  to be normalised
  * such that:
  *
  *    0 <= tv_sec  <= LONG_MAX
  *    0 <= tv_usec <= 999999
  */
-typedef struct ccevents_timeval_t {
+struct ccevents_timeval_t {
   struct timeval;
-} ccevents_timeval_t;
+};
 
 /* Pointer   to   a   constant,   statically   allocated   instance   of
    "ccevents_timeval_t"  representing  a  conventionally  infinite  time
@@ -477,10 +479,13 @@ ccevents_decl ccevents_source_event_inquirer_fun_t ccevents_query_fd_exception;
 
 __attribute__((const,always_inline))
 static inline ccevents_fd_source_t *
-ccevents_cast_fd_source_from_source (ccevents_source_t * src)
+ccevents_cast_to_fd_source_from_source (ccevents_source_t * src)
 {
   return (ccevents_fd_source_t *)src;
 }
+
+#define ccevents_cast_to_fd_source(SRC)		\
+  _Generic(SRC, ccevents_source_t *: ccevents_cast_to_fd_source_from_source(SRC))
 
 /** --------------------------------------------------------------------
  ** Task fragment event sources.
