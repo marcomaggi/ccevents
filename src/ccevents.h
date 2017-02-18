@@ -488,12 +488,7 @@ ccevents_fd_source_from_source (ccevents_source_t * src)
 
 struct ccevents_task_source_t {
   ccevents_source_t;
-  /* Pointer to function  to be called to query the  file descriptor for
-     the expected event. */
   ccevents_source_event_inquirer_fun_t *	event_inquirer;
-
-  /* Pointer  to  function to  be  called  whenever the  expected  event
-     happens. */
   ccevents_source_event_handler_fun_t *		event_handler;
 };
 
@@ -511,8 +506,10 @@ ccevents_decl void ccevents_task_source_set (cce_location_t * there, ccevents_ta
 
 struct ccevents_signal_bub_source_t {
   ccevents_source_t;
+
   /* The signal number to which this event source must react. */
   int	signum;
+
   /* Pointer  to  function to  be  called  whenever the  expected  event
      happens. */
   ccevents_source_event_handler_fun_t *		event_handler;
