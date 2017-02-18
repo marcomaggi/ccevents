@@ -463,17 +463,24 @@ struct ccevents_fd_source_t {
   ccevents_source_event_handler_fun_t *		event_handler;
 };
 
-ccevents_decl void ccevents_fd_event_source_init (ccevents_fd_source_t * fdsrc, int fd)
+ccevents_decl void ccevents_fd_source_init (ccevents_fd_source_t * fdsrc, int fd)
   __attribute__((leaf,nonnull(1)));
 
-ccevents_decl void ccevents_fd_event_source_set (cce_location_t * there, ccevents_fd_source_t * fdsrc,
-						 ccevents_source_event_inquirer_fun_t * event_inquirer,
-						 ccevents_source_event_handler_fun_t * event_handler)
+ccevents_decl void ccevents_fd_source_set (cce_location_t * there, ccevents_fd_source_t * fdsrc,
+					   ccevents_source_event_inquirer_fun_t * event_inquirer,
+					   ccevents_source_event_handler_fun_t * event_handler)
   __attribute__((nonnull(1,2,3,4)));
 
 ccevents_decl ccevents_source_event_inquirer_fun_t ccevents_query_fd_readability;
 ccevents_decl ccevents_source_event_inquirer_fun_t ccevents_query_fd_writability;
 ccevents_decl ccevents_source_event_inquirer_fun_t ccevents_query_fd_exception;
+
+__attribute__((const,always_inline))
+static inline ccevents_fd_source_t *
+ccevents_fd_source_from_source (ccevents_source_t * src)
+{
+  return (ccevents_fd_source_t *)src;
+}
 
 /** --------------------------------------------------------------------
  ** Task fragment event sources.

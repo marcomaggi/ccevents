@@ -1132,7 +1132,7 @@ method_event_inquirer (cce_location_t * there,
                        ccevents_group_t   * grp,
                        ccevents_source_t  * src)
 @{
-  CCEVENTS_PC(ccevents__task_source_t, tksrc, src);
+  CCEVENTS_PC(ccevents_task_source_t, tksrc, src);
   return tksrc->event_inquirer(there, grp, tksrc);
 @}
 
@@ -1141,7 +1141,7 @@ method_event_handler (cce_location_t * there,
                       ccevents_group_t   * grp,
                       ccevents_source_t  * src)
 @{
-  CCEVENTS_PC(ccevents__task_source_t, tksrc, src);
+  CCEVENTS_PC(ccevents_task_source_t, tksrc, src);
   return tksrc->event_handler(there, grp, tksrc);
 @}
 
@@ -1572,14 +1572,14 @@ anonymous of type @objtype{ccevents_source_t}.
 @section Initialisation and setup
 
 
-@deftypefun void ccevents_fd_event_source_init (ccevents_fd_source_t * @var{fdsrc}, int @var{fd})
+@deftypefun void ccevents_fd_source_init (ccevents_fd_source_t * @var{fdsrc}, int @var{fd})
 Initialise an already allocated file descriptor event source.  Usually, we call this function only
 once for each file descriptor event source.  @var{fdsrc} is a pointer to an already allocated
 structure.  @var{FD} is the file descriptor.
 @end deftypefun
 
 
-@deftypefun void ccevents_fd_event_source_set (cce_location_t * @var{there}, ccevents_fd_source_t * @var{fdsrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
+@deftypefun void ccevents_fd_source_set (cce_location_t * @var{there}, ccevents_fd_source_t * @var{fdsrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
 Set up an already initialised file descriptor event source to wait for an event.  If an error
 occurs: raise an exception by performing a non--local exit to @var{there}.
 
@@ -1627,8 +1627,8 @@ if (cce_location(L)) @{
   cce_run_error_handlers(L);
   cce_condition_free(cce_condition(L));
 @} else @{
-  ccevents_fd_event_source_init(fdsrc, X[0]);
-  ccevents_fd_event_source_set(L, fdsrc,
+  ccevents_fd_source_init(fdsrc, X[0]);
+  ccevents_fd_source_set(L, fdsrc,
     ccevents_query_fd_readability, event_handler);
 
   ccevents_timeout_init(L, &expiration_time, 5, 0, 0);
