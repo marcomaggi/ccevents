@@ -477,15 +477,16 @@ ccevents_decl ccevents_source_event_inquirer_fun_t ccevents_query_fd_readability
 ccevents_decl ccevents_source_event_inquirer_fun_t ccevents_query_fd_writability;
 ccevents_decl ccevents_source_event_inquirer_fun_t ccevents_query_fd_exception;
 
+/* Output of: (my-c-insert-cast-function "ccevents" "source" "fd_source") */
 __attribute__((const,always_inline))
 static inline ccevents_fd_source_t *
 ccevents_cast_to_fd_source_from_source (ccevents_source_t * src)
 {
   return (ccevents_fd_source_t *)src;
 }
-
 #define ccevents_cast_to_fd_source(SRC)		\
   _Generic(SRC, ccevents_source_t *: ccevents_cast_to_fd_source_from_source(SRC))
+/* End of output. */
 
 /** --------------------------------------------------------------------
  ** Task fragment event sources.
