@@ -125,7 +125,7 @@ ccevents_query_fd_readability (cce_location_t * there, ccevents_group_t * grp, c
   rv = select(1+(fdsrc->fd), &set, NULL, NULL, &timeout);
   if (-1 == rv) {
     /* An error occurred. */
-    cce_raise(there, cce_errno_condition(rv));
+    cce_raise(there, cce_errno_C(rv));
   } else {
     /* Success.  RV  contains the number  of file descriptors  ready for
        reading; in this case it can be only 1 or 0. */
@@ -155,7 +155,7 @@ ccevents_query_fd_writability (cce_location_t * there, ccevents_group_t * grp, c
   //fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fdsrc->fd, rv);
   if (-1 == rv) {
     /* An error occurred. */
-    cce_raise(there, cce_errno_condition(rv));
+    cce_raise(there, cce_errno_C(rv));
   } else {
     /* Success.  RV  contains the number  of file descriptors  ready for
        writing; in this case it can be only 1 or 0. */
@@ -184,7 +184,7 @@ ccevents_query_fd_exception (cce_location_t * there, ccevents_group_t * grp, cce
   rv = select(1+(fdsrc->fd), NULL, NULL, &set, &timeout);
   if (-1 == rv) {
     /* An error occurred. */
-    cce_raise(there, cce_errno_condition(rv));
+    cce_raise(there, cce_errno_C(rv));
   } else {
     /* Success.   RV  contains  the  number of  file  descriptors  which
        received an exception; in this case it can be only 1 or 0. */

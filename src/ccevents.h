@@ -171,7 +171,7 @@ __attribute__((pure,nonnull(1),always_inline))
 static inline bool
 ccevents_is_a_base_C (const cce_condition_t * C)
 {
-  return cce_condition_is_a(C, ccevents_base_D);
+  return cce_is_a_condition(C, ccevents_base_D);
 }
 
 /* ------------------------------------------------------------------ */
@@ -192,7 +192,7 @@ __attribute__((pure,nonnull(1),always_inline))
 static inline bool
 ccevents_is_a_timeval_C (const cce_condition_t * C)
 {
-  return cce_condition_is_a(C, ccevents_timeval_D);
+  return cce_is_a_condition(C, ccevents_timeval_D);
 }
 
 /* ------------------------------------------------------------------ */
@@ -213,7 +213,7 @@ __attribute__((pure,nonnull(1),always_inline))
 static inline bool
 ccevents_is_a_timeval_invalid_C (const cce_condition_t * C)
 {
-  return cce_condition_is_a(C, ccevents_timeval_invalid_D);
+  return cce_is_a_condition(C, ccevents_timeval_invalid_D);
 }
 
 /* ------------------------------------------------------------------ */
@@ -234,7 +234,7 @@ __attribute__((pure,nonnull(1),always_inline))
 static inline bool
 ccevents_is_a_timeval_overflow_C (const cce_condition_t * C)
 {
-  return cce_condition_is_a(C, ccevents_timeval_overflow_D);
+  return cce_is_a_condition(C, ccevents_timeval_overflow_D);
 }
 
 /* ------------------------------------------------------------------ */
@@ -255,7 +255,7 @@ __attribute__((pure,nonnull(1),always_inline))
 static inline bool
 ccevents_is_a_timeout_invalid_C (const cce_condition_t * C)
 {
-  return cce_condition_is_a(C, ccevents_timeout_invalid_D);
+  return cce_is_a_condition(C, ccevents_timeout_invalid_D);
 }
 
 /* ------------------------------------------------------------------ */
@@ -276,7 +276,7 @@ __attribute__((pure,nonnull(1),always_inline))
 static inline bool
 ccevents_is_a_timeout_overflow_C (const cce_condition_t * C)
 {
-  return cce_condition_is_a(C, ccevents_timeout_overflow_D);
+  return cce_is_a_condition(C, ccevents_timeout_overflow_D);
 }
 
 /** --------------------------------------------------------------------

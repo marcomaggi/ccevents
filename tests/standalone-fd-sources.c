@@ -381,7 +381,7 @@ test_talking_processes_with_groups (void)
 	  fprintf(stderr, "master: send 'hello'\n");
 	  errno = 0;
 	  if (strlen("hello\n") != write(fdsrc->fd, "hello\n", strlen("hello\n"))) {
-	    cce_raise(there, cce_errno_condition(errno));
+	    cce_raise(there, cce_errno_C(errno));
 	  }
 	  state = 1;
 	}
@@ -391,7 +391,7 @@ test_talking_processes_with_groups (void)
 	  fprintf(stderr, "master: send 'quit'\n");
 	  errno = 0;
 	  if (strlen("quit\n") != write(write_fd, "quit\n", strlen("quit\n"))) {
-	    cce_raise(there, cce_errno_condition(errno));
+	    cce_raise(there, cce_errno_C(errno));
 	  }
 	  state = 3;
 	}
@@ -418,7 +418,7 @@ test_talking_processes_with_groups (void)
 	  errno = 0;
 	  count = read(fdsrc->fd, buf, 10);
 	  if (-1 == count) {
-	    cce_raise(there, cce_errno_condition(errno));
+	    cce_raise(there, cce_errno_C(errno));
 	  }
 	  buf[count] = '\0';
 	  assert(0 == strncmp("hello\n", buf, strlen("hello\n")));
@@ -438,7 +438,7 @@ test_talking_processes_with_groups (void)
 	  errno = 0;
 	  count = read(fdsrc->fd, buf, 10);
 	  if (-1 == count) {
-	    cce_raise(there, cce_errno_condition(errno));
+	    cce_raise(there, cce_errno_C(errno));
 	  }
 	  buf[count] = '\0';
 	  assert(0 == strncmp("quit\n", buf, strlen("quit\n")));
@@ -521,7 +521,7 @@ test_talking_processes_with_groups (void)
 	  errno = 0;
 	  count = read(fdsrc->fd, buf, 10);
 	  if (-1 == count) {
-	    cce_raise(there, cce_errno_condition(errno));
+	    cce_raise(there, cce_errno_C(errno));
 	  }
 	  buf[count] = '\0';
 	  assert(0 == strncmp("hello\n", buf, strlen("hello\n")));
@@ -541,7 +541,7 @@ test_talking_processes_with_groups (void)
 	  errno = 0;
 	  count = read(fdsrc->fd, buf, 10);
 	  if (-1 == count) {
-	    cce_raise(there, cce_errno_condition(errno));
+	    cce_raise(there, cce_errno_C(errno));
 	  }
 	  buf[count] = '\0';
 	  assert(0 == strncmp("quit\n", buf, strlen("quit\n")));
@@ -568,7 +568,7 @@ test_talking_processes_with_groups (void)
 	  fprintf(stderr, "slave: send 'hello'\n");
 	  errno = 0;
 	  if (strlen("hello\n") != write(fdsrc->fd, "hello\n", strlen("hello\n"))) {
-	    cce_raise(there, cce_errno_condition(errno));
+	    cce_raise(there, cce_errno_C(errno));
 	  }
 	  fprintf(stderr, "slave: sent 'hello'\n");
 	  state = 2;
@@ -584,7 +584,7 @@ test_talking_processes_with_groups (void)
 	  fprintf(stderr, "slave: send 'quit'\n");
 	  errno = 0;
 	  if (strlen("quit\n") != write(fdsrc->fd, "quit\n", strlen("quit\n"))) {
-	    cce_raise(there, cce_errno_condition(errno));
+	    cce_raise(there, cce_errno_C(errno));
 	  }
 	  state = 0;
 	}
@@ -634,7 +634,7 @@ test_talking_processes_with_groups (void)
       errno = 0;
       pid   = fork();
       if (-1 == pid) {
-	cce_raise(L, cce_errno_condition(errno));
+	cce_raise(L, cce_errno_C(errno));
       } else if (0 == pid) {
 	/* This is the child process. */
 	slave_process();
@@ -650,7 +650,7 @@ test_talking_processes_with_groups (void)
 	errno = 0;
 	rv    = waitpid(pid, &wstatus, 0);
 	if (-1 == rv) {
-	  cce_raise(L, cce_errno_condition(errno));
+	  cce_raise(L, cce_errno_C(errno));
 	}
 	assert(WIFEXITED(wstatus));
 	assert(0 == WEXITSTATUS(wstatus));
