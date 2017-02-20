@@ -1272,6 +1272,42 @@ next step.
 @end deftypefun
 
 
+@deftypefn {Inline Function} {ccevents_task_source_t *} ccevents_cast_to_task_source_from_source (ccevents_source_t * @var{src})
+Cast function which explicitly documents that this pointer type conversion is sometimes necessary.
+It can be used, for example, in an event handler function as follows:
+
+@example
+void
+event_handler (cce_location_t    * there,
+               ccevents_group_t  * grp,
+               ccevents_source_t * src)
+@{
+  ccevents_task_source_t * fdsrc =
+    ccevents_cast_to_task_source_from_source(src);
+  ...
+@}
+@end example
+@end deftypefn
+
+
+@deftypefn {Generic Macro} {ccevents_task_source_t *} ccevents_cast_to_task_source (ccevents_source_t * @var{src})
+Generic cast macro which explicitly documents that this pointer type conversion is sometimes
+necessary.  It can be used, for example, in an event handler function as follows:
+
+@example
+void
+event_handler (cce_location_t    * there,
+               ccevents_group_t  * grp,
+               ccevents_source_t * src)
+@{
+  ccevents_task_source_t * fdsrc =
+    ccevents_cast_to_task_source(src);
+  ...
+@}
+@end example
+@end deftypefn
+
+
 The task source is meant to be used as follows:
 
 @smallexample
@@ -1363,6 +1399,42 @@ Initialise an already allocated source structure.  This function applies
 Start the timer for the source referenced by @var{timsrc}.  If an exceptional condition is raised:
 perform a non--local exit by jumping to @var{there}.
 @end deftypefun
+
+
+@deftypefn {Inline Function} {ccevents_timer_source_t *} ccevents_cast_to_timer_source_from_source (ccevents_source_t * @var{src})
+Cast function which explicitly documents that this pointer type conversion is sometimes necessary.
+It can be used, for example, in an event handler function as follows:
+
+@example
+void
+event_handler (cce_location_t    * there,
+               ccevents_group_t  * grp,
+               ccevents_source_t * src)
+@{
+  ccevents_timer_source_t * fdsrc =
+    ccevents_cast_to_timer_source_from_source(src);
+  ...
+@}
+@end example
+@end deftypefn
+
+
+@deftypefn {Generic Macro} {ccevents_timer_source_t *} ccevents_cast_to_timer_source (ccevents_source_t * @var{src})
+Generic cast macro which explicitly documents that this pointer type conversion is sometimes
+necessary.  It can be used, for example, in an event handler function as follows:
+
+@example
+void
+event_handler (cce_location_t    * there,
+               ccevents_group_t  * grp,
+               ccevents_source_t * src)
+@{
+  ccevents_timer_source_t * fdsrc =
+    ccevents_cast_to_timer_source(src);
+  ...
+@}
+@end example
+@end deftypefn
 
 @c page
 @node sources fd
@@ -1640,6 +1712,42 @@ dequeued.
 Start the waiting for the selected signal.  If an exceptional condition is raised: perform a
 non--local exit by jumping to @var{there}.
 @end deftypefun
+
+
+@deftypefn {Inline Function} {ccevents_signal_bub_source_t *} ccevents_cast_to_signal_bub_source_from_source (ccevents_source_t * @var{src})
+Cast function which explicitly documents that this pointer type conversion is sometimes necessary.
+It can be used, for example, in an event handler function as follows:
+
+@example
+void
+event_handler (cce_location_t    * there,
+               ccevents_group_t  * grp,
+               ccevents_source_t * src)
+@{
+  ccevents_signal_bub_source_t * fdsrc =
+    ccevents_cast_to_signal_bub_source_from_source(src);
+  ...
+@}
+@end example
+@end deftypefn
+
+
+@deftypefn {Generic Macro} {ccevents_signal_bub_source_t *} ccevents_cast_to_signal_bub_source (ccevents_source_t * @var{src})
+Generic cast macro which explicitly documents that this pointer type conversion is sometimes
+necessary.  It can be used, for example, in an event handler function as follows:
+
+@example
+void
+event_handler (cce_location_t    * there,
+               ccevents_group_t  * grp,
+               ccevents_source_t * src)
+@{
+  ccevents_signal_bub_source_t * fdsrc =
+    ccevents_cast_to_signal_bub_source(src);
+  ...
+@}
+@end example
+@end deftypefn
 
 
 As example, here is how to setup an event source to wait for the delivery of @samp{SIGUSR1}:

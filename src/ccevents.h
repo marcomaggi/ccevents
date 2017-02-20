@@ -506,6 +506,17 @@ ccevents_decl void ccevents_task_source_set (cce_location_t * there, ccevents_ta
 					     ccevents_source_event_handler_fun_t      * event_handler)
   __attribute__((nonnull(1,2,3,4)));
 
+/* Output of: (my-c-insert-cast-function "ccevents" "source" "task_source") */
+__attribute__((const,always_inline))
+static inline ccevents_task_source_t *
+ccevents_cast_to_task_source_from_source (ccevents_source_t * src)
+{
+  return (ccevents_task_source_t *)src;
+}
+#define ccevents_cast_to_task_source(SRC)		\
+  _Generic(SRC, ccevents_source_t *: ccevents_cast_to_task_source_from_source(SRC))
+/* End of output. */
+
 /** --------------------------------------------------------------------
  ** Interprocess signal events sources.
  ** ----------------------------------------------------------------- */
@@ -537,6 +548,17 @@ ccevents_decl void ccevents_signal_bub_source_set (cce_location_t * there, cceve
 						   ccevents_source_event_handler_fun_t  * event_handler)
   __attribute__((nonnull(1,2,3)));
 
+/* Output of: (my-c-insert-cast-function "ccevents" "source" "signal_bub_source") */
+__attribute__((const,always_inline))
+static inline ccevents_signal_bub_source_t *
+ccevents_cast_to_signal_bub_source_from_source (ccevents_source_t * src)
+{
+  return (ccevents_signal_bub_source_t *)src;
+}
+#define ccevents_cast_to_signal_bub_source(SRC)		\
+  _Generic(SRC, ccevents_source_t *: ccevents_cast_to_signal_bub_source_from_source(SRC))
+/* End of output. */
+
 /** --------------------------------------------------------------------
  ** Timer events sources.
  ** ----------------------------------------------------------------- */
@@ -550,6 +572,17 @@ ccevents_decl void ccevents_timer_source_init (ccevents_timer_source_t * timsrc)
 
 ccevents_decl void ccevents_timer_source_set (cce_location_t * there, ccevents_timer_source_t * timsrc)
   __attribute__((nonnull(1,2)));
+
+/* Output of: (my-c-insert-cast-function "ccevents" "source" "timer_source") */
+__attribute__((const,always_inline))
+static inline ccevents_timer_source_t *
+ccevents_cast_to_timer_source_from_source (ccevents_source_t * src)
+{
+  return (ccevents_timer_source_t *)src;
+}
+#define ccevents_cast_to_timer_source(SRC)		\
+  _Generic(SRC, ccevents_source_t *: ccevents_cast_to_timer_source_from_source(SRC))
+/* End of output. */
 
 /** --------------------------------------------------------------------
  ** Sources groups.
