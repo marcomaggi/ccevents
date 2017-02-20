@@ -62,7 +62,7 @@ ccevents_task_source_init (ccevents_task_source_t * tksrc)
 }
 
 void
-ccevents_task_source_set (cce_location_t * there, ccevents_task_source_t * tksrc,
+ccevents_task_source_set (ccevents_task_source_t * tksrc,
 			  ccevents_source_event_inquirer_fun_t     * event_inquirer,
 			  ccevents_source_event_handler_fun_t      * event_handler)
 /* Set up an already initialised source to wait for an event.  Start the

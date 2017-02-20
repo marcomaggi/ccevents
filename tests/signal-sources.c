@@ -132,11 +132,11 @@ test_source (void)
       cce_run_error_handlers(L);
       cce_condition_free(cce_condition(L));
     } else {
-      ccevents_task_source_set(L, acquire_signals_src, acquire_signals_inquirer,
+      ccevents_task_source_set(acquire_signals_src, acquire_signals_inquirer,
 			       ccevents_source_dummy_event_handler);
-      ccevents_task_source_set(L, raise_signal_src, raise_signal_inquirer,
+      ccevents_task_source_set(raise_signal_src, raise_signal_inquirer,
 			       ccevents_source_dummy_event_handler);
-      ccevents_signal_bub_source_set(L, sigsrc, signal_handler);
+      ccevents_signal_bub_source_set(sigsrc, signal_handler);
       ccevents_group_enqueue_source(grp, sigsrc);
       ccevents_group_enqueue_source(grp, acquire_signals_src);
       ccevents_group_enqueue_source(grp, raise_signal_src);
@@ -191,10 +191,10 @@ test_source_for_documentation (void)
       cce_run_error_handlers(L);
       cce_condition_free(cce_condition(L));
     } else {
-      ccevents_task_source_set(L, acquire_signals_src,
+      ccevents_task_source_set(acquire_signals_src,
 			       acquire_signals_inquirer,
 			       ccevents_source_dummy_event_handler);
-      ccevents_signal_bub_source_set(L, sigsrc, signal_handler);
+      ccevents_signal_bub_source_set(sigsrc, signal_handler);
       ccevents_group_enqueue_source(grp, sigsrc);
       ccevents_group_enqueue_source(grp, acquire_signals_src);
       ccevents_group_enter(grp);

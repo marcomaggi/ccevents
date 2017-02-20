@@ -86,8 +86,7 @@ ccevents_fd_source_init (ccevents_fd_source_t * fdsrc, int fd)
   fdsrc->event_handler		= default_event_handler;
 }
 void
-ccevents_fd_source_set (cce_location_t * there,
-			ccevents_fd_source_t * fdsrc,
+ccevents_fd_source_set (ccevents_fd_source_t * fdsrc,
 			ccevents_source_event_inquirer_fun_t * event_inquirer,
 			ccevents_source_event_handler_fun_t * event_handler)
 /* Set up an already initialised fd  source to wait for an event.  Start

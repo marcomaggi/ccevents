@@ -61,9 +61,5 @@ ccevents_timer_source_init (ccevents_timer_source_t * timsrc)
 {
   ccevents_source_init(timsrc, &methods_table);
 }
-void
-ccevents_timer_source_set (cce_location_t * there, ccevents_timer_source_t * timsrc)
-{
-}
 
 /* end of file */

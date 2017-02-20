@@ -86,7 +86,7 @@ test_standalone_readability (void)
     /* fprintf(stderr, "X[0] = %d, X[1] = %d\n", X[0], X[1]); */
     ccevents_fd_source_init(fdsrc, X[0]);
     ccevents_source_set_timeout(fdsrc, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
-    ccevents_fd_source_set(L, fdsrc, ccevents_query_fd_readability, event_handler);
+    ccevents_fd_source_set(fdsrc, ccevents_query_fd_readability, event_handler);
 
     ccevents_group_init(grp, INT_MAX);
 
@@ -156,7 +156,7 @@ test_standalone_writability (void)
     /* fprintf(stderr, "X[0] = %d, X[1] = %d\n", X[0], X[1]); */
     ccevents_fd_source_init(fds, X[1]);
     ccevents_source_set_timeout(fds, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
-    ccevents_fd_source_set(L, fds, ccevents_query_fd_writability, event_handler);
+    ccevents_fd_source_set(fds, ccevents_query_fd_writability, event_handler);
 
     ccevents_group_init(grp, INT_MAX);
 
@@ -269,11 +269,11 @@ test_standalone_exception (void)
       //fprintf(stderr, "socketpair: server_sock = %d, client_sock = %d\n", server_sock, client_sock);
       ccevents_fd_source_init(&readable_fd_source, server_sock);
       ccevents_source_set_timeout(&readable_fd_source, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
-      ccevents_fd_source_set(L, &readable_fd_source, ccevents_query_fd_readability, readable_event_handler);
+      ccevents_fd_source_set(&readable_fd_source, ccevents_query_fd_readability, readable_event_handler);
 
       ccevents_fd_source_init(&exception_fd_source, server_sock);
       ccevents_source_set_timeout(&exception_fd_source, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
-      ccevents_fd_source_set(L, &exception_fd_source, ccevents_query_fd_exception, exception_event_handler);
+      ccevents_fd_source_set(&exception_fd_source, ccevents_query_fd_exception, exception_event_handler);
 
       ccevents_group_init(grp, INT_MAX);
 
@@ -400,8 +400,7 @@ test_talking_processes_with_groups (void)
 	assert(0);
 	break;
       }
-      ccevents_fd_source_set(L, read_source,
-				   ccevents_query_fd_readability, master_read_event_handler);
+      ccevents_fd_source_set(read_source, ccevents_query_fd_readability, master_read_event_handler);
       ccevents_group_enqueue_source(grp, read_source);
       sleep_awhile();
     }
@@ -426,8 +425,7 @@ test_talking_processes_with_groups (void)
 	  fprintf(stderr, "master: recv '%s'\n", buf);
 	  state = 2;
 	  {
-	    ccevents_fd_source_set(L, write_source,
-					 ccevents_query_fd_writability, master_write_event_handler);
+	    ccevents_fd_source_set(write_source, ccevents_query_fd_writability, master_write_event_handler);
 	    ccevents_group_enqueue_source(grp, write_source);
 	    sleep_awhile();
 	  }
@@ -473,8 +471,7 @@ test_talking_processes_with_groups (void)
       ccevents_source_set_timeout(write_source, *CCEVENTS_TIMEVAL_NEVER, master_expiration_handler);
       ccevents_group_init(grp, INT_MAX);
       {
-	ccevents_fd_source_set(L, write_source,
-				     ccevents_query_fd_writability, master_write_event_handler);
+	ccevents_fd_source_set(write_source, ccevents_query_fd_writability, master_write_event_handler);
 	ccevents_group_enqueue_source(grp, write_source);
       }
       ccevents_group_enter(grp);
@@ -531,7 +528,7 @@ test_talking_processes_with_groups (void)
 	  fprintf(stderr, "slave: recv '%s'\n", buf);
 	  state = 1;
 	  {
-	    ccevents_fd_source_set(L, write_source, ccevents_query_fd_writability, slave_write_event_handler);
+	    ccevents_fd_source_set(write_source, ccevents_query_fd_writability, slave_write_event_handler);
 	    ccevents_group_enqueue_source(grp, write_source);
 	    sleep_awhile();
 	  }
@@ -551,7 +548,7 @@ test_talking_processes_with_groups (void)
 	  fprintf(stderr, "slave: recv '%s'\n", buf);
 	  state = 3;
 	  {
-	    ccevents_fd_source_set(L, write_source, ccevents_query_fd_writability, slave_write_event_handler);
+	    ccevents_fd_source_set(write_source, ccevents_query_fd_writability, slave_write_event_handler);
 	    ccevents_group_enqueue_source(grp, write_source);
 	    sleep_awhile();
 	  }
@@ -576,7 +573,7 @@ test_talking_processes_with_groups (void)
 	  fprintf(stderr, "slave: sent 'hello'\n");
 	  state = 2;
 	  {
-	    ccevents_fd_source_set(L, read_source, ccevents_query_fd_readability, slave_read_event_handler);
+	    ccevents_fd_source_set(read_source, ccevents_query_fd_readability, slave_read_event_handler);
 	    ccevents_group_enqueue_source(grp, read_source);
 	    sleep_awhile();
 	  }
@@ -614,7 +611,7 @@ test_talking_processes_with_groups (void)
 
       ccevents_group_init(grp, INT_MAX);
       {
-	ccevents_fd_source_set(L, read_source, ccevents_query_fd_readability, slave_read_event_handler);
+	ccevents_fd_source_set(read_source, ccevents_query_fd_readability, slave_read_event_handler);
 	ccevents_group_enqueue_source(grp, read_source);
       }
       ccevents_group_enter(grp);

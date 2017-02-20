@@ -1165,8 +1165,7 @@ ccevents_task_source_init (ccevents_task_source_t * tksrc)
 @}
 
 void
-ccevents_task_source_set (cce_location_t * there,
-    ccevents_task_source_t               * tksrc,
+ccevents_task_source_set (ccevents_task_source_t * tksrc,
     ccevents_source_event_inquirer_fun_t * event_inquirer,
     ccevents_source_event_handler_fun_t  * event_handler)
 @{
@@ -1201,7 +1200,7 @@ step1 (cce_location_t * there,
 @{
   CCEVENTS_PC(ccevents_task_source_t, tksrc, src);
   // Perform the first step here.
-  ccevents_task_source_set(there, tksrc, event_inquirer, step2);
+  ccevents_task_source_set(tksrc, event_inquirer, step2);
   ccevents_group_enqueue_source(grp, tksrc);
 @}
 void
@@ -1210,7 +1209,7 @@ step2 (cce_location_t * there,
 @{
   CCEVENTS_PC(ccevents_task_source_t, tksrc, src);
   // Perform the second step here.
-  ccevents_task_source_set(there, tksrc, event_inquirer, step3);
+  ccevents_task_source_set(tksrc, event_inquirer, step3);
   ccevents_group_enqueue_source(grp, tksrc);
 @}
 void
@@ -1233,7 +1232,7 @@ doit (void)
     ccevents_task_source_t      tksrc[1];
 
     ccevents_task_source_init(tksrc);
-    ccevents_task_source_set(L, tksrc, event_inquirer, step1);
+    ccevents_task_source_set(tksrc, event_inquirer, step1);
     ccevents_group_init(grp, 3);
     ccevents_group_enqueue_source(grp, tksrc);
     ccevents_group_enter(grp);
@@ -1263,12 +1262,9 @@ Initialise an already allocated task source structure referenced by @var{src}.  
 @end deftypefun
 
 
-@deftypefun void ccevents_task_source_set (cce_location_t * @var{there}, ccevents_task_source_t * @var{tksrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
-Start the next waiting for events in @var{tksrc}.  If an exceptional condition is raised: perform a
-non--local exit by jumping to @var{there}.
-
-The @var{event_handler} is meant perform a task step and to call this function again to select the
-next step.
+@deftypefun void ccevents_task_source_set (ccevents_task_source_t * @var{tksrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
+Start the next waiting for events in @var{tksrc}.  The @var{event_handler} is meant perform a task
+step and to call this function again to select the next step.
 @end deftypefun
 
 
@@ -1282,7 +1278,7 @@ event_handler (cce_location_t    * there,
                ccevents_group_t  * grp,
                ccevents_source_t * src)
 @{
-  ccevents_task_source_t * fdsrc =
+  ccevents_task_source_t * tsksrc =
     ccevents_cast_to_task_source_from_source(src);
   ...
 @}
@@ -1300,7 +1296,7 @@ event_handler (cce_location_t    * there,
                ccevents_group_t  * grp,
                ccevents_source_t * src)
 @{
-  ccevents_task_source_t * fdsrc =
+  ccevents_task_source_t * tsksrc =
     ccevents_cast_to_task_source(src);
   ...
 @}
@@ -1333,7 +1329,7 @@ step1 (cce_location_t * there,
 @{
   ccevents_task_source_t *    tksrc = (ccevents_task_source_t *) src;
   // Perform the first step here.
-  ccevents_task_source_set(there, tksrc, event_inquirer, step2);
+  ccevents_task_source_set(tksrc, event_inquirer, step2);
   ccevents_group_enqueue_source(grp, tksrc);
 @}
 void
@@ -1342,7 +1338,7 @@ step2 (cce_location_t * there,
 @{
   ccevents_task_source_t *    tksrc = (ccevents_task_source_t *) src;
   // Perform the second step here.
-  ccevents_task_source_set(there, tksrc, event_inquirer, step3);
+  ccevents_task_source_set(tksrc, event_inquirer, step3);
   ccevents_group_enqueue_source(grp, tksrc);
 @}
 void
@@ -1364,7 +1360,7 @@ doit (void)
     cce_condition_free(cce_condition(L));
   @} else @{
     ccevents_task_source_init(tksrc);
-    ccevents_task_source_set(L, tksrc, event_inquirer, step1);
+    ccevents_task_source_set(tksrc, event_inquirer, step1);
     ccevents_group_init(grp);
     ccevents_group_enqueue_source(grp, tksrc);
     ccevents_group_enter(grp, 3);
@@ -1395,12 +1391,6 @@ Initialise an already allocated source structure.  This function applies
 @end deftypefun
 
 
-@deftypefun void ccevents_timer_source_set (cce_location_t * @var{there}, ccevents_timer_source_t * @var{timsrc})
-Start the timer for the source referenced by @var{timsrc}.  If an exceptional condition is raised:
-perform a non--local exit by jumping to @var{there}.
-@end deftypefun
-
-
 @deftypefn {Inline Function} {ccevents_timer_source_t *} ccevents_cast_to_timer_source_from_source (ccevents_source_t * @var{src})
 Cast function which explicitly documents that this pointer type conversion is sometimes necessary.
 It can be used, for example, in an event handler function as follows:
@@ -1411,7 +1401,7 @@ event_handler (cce_location_t    * there,
                ccevents_group_t  * grp,
                ccevents_source_t * src)
 @{
-  ccevents_timer_source_t * fdsrc =
+  ccevents_timer_source_t * timsrc =
     ccevents_cast_to_timer_source_from_source(src);
   ...
 @}
@@ -1429,7 +1419,7 @@ event_handler (cce_location_t    * there,
                ccevents_group_t  * grp,
                ccevents_source_t * src)
 @{
-  ccevents_timer_source_t * fdsrc =
+  ccevents_timer_source_t * timsrc =
     ccevents_cast_to_timer_source(src);
   ...
 @}
@@ -1498,12 +1488,10 @@ structure.  @var{FD} is the file descriptor.
 @end deftypefun
 
 
-@deftypefun void ccevents_fd_source_set (cce_location_t * @var{there}, ccevents_fd_source_t * @var{fdsrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
-Set up an already initialised file descriptor event source to wait for an event.  If an error
-occurs: raise an exception by performing a non--local exit to @var{there}.
-
-After the event represented by the arguments has been served or has expired: this function can be
-called again for the same @var{fdsrc} to set up waiting for another event.
+@deftypefun void ccevents_fd_source_set (ccevents_fd_source_t * @var{fdsrc}, ccevents_source_event_inquirer_fun_t * @var{event_inquirer}, ccevents_source_event_handler_fun_t * @var{event_handler})
+Set up an already initialised file descriptor event source to wait for an event.  After the event
+represented by the arguments has been served or has expired: this function can be called again for
+the same @var{fdsrc} to set up waiting for another event.
 
 @var{fdsrc} is a pointer to an already initialised file descriptor event source.
 
@@ -1547,7 +1535,7 @@ if (cce_location(L)) @{
   cce_condition_free(cce_condition(L));
 @} else @{
   ccevents_fd_source_init(fdsrc, X[0]);
-  ccevents_fd_source_set(L, fdsrc,
+  ccevents_fd_source_set(fdsrc,
     ccevents_query_fd_readability, event_handler);
 
   ccevents_timeout_init(L, &expiration_time, 5, 0, 0);
@@ -1708,7 +1696,7 @@ dequeued.
 @end deftypefun
 
 
-@deftypefun void ccevents_signal_bub_source_set (cce_location_t * @var{there}, ccevents_signal_source_t * @var{src}, ccevents_source_event_handler_fun_t * @var{event_handler})
+@deftypefun void ccevents_signal_bub_source_set (ccevents_signal_source_t * @var{src}, ccevents_source_event_handler_fun_t * @var{event_handler})
 Start the waiting for the selected signal.  If an exceptional condition is raised: perform a
 non--local exit by jumping to @var{there}.
 @end deftypefun
@@ -1724,7 +1712,7 @@ event_handler (cce_location_t    * there,
                ccevents_group_t  * grp,
                ccevents_source_t * src)
 @{
-  ccevents_signal_bub_source_t * fdsrc =
+  ccevents_signal_bub_source_t * sigsrc =
     ccevents_cast_to_signal_bub_source_from_source(src);
   ...
 @}
@@ -1742,7 +1730,7 @@ event_handler (cce_location_t    * there,
                ccevents_group_t  * grp,
                ccevents_source_t * src)
 @{
-  ccevents_signal_bub_source_t * fdsrc =
+  ccevents_signal_bub_source_t * sigsrc =
     ccevents_cast_to_signal_bub_source(src);
   ...
 @}
@@ -1801,10 +1789,10 @@ main (int argc, const char *const argv[])
       cce_run_error_handlers(L);
       cce_condition_free(cce_condition(L));
     @} else @{
-      ccevents_task_source_set(L, acquire_signals_src,
+      ccevents_task_source_set(acquire_signals_src,
          acquire_signals_inquirer,
          ccevents_source_dummy_event_handler);
-      ccevents_signal_bub_source_set(L, sigsrc, signal_handler);
+      ccevents_signal_bub_source_set(sigsrc, signal_handler);
       ccevents_group_enqueue_source(grp, sigsrc);
       ccevents_group_enqueue_source(grp, acquire_signals_src);
       ccevents_group_enter(grp, 1000);

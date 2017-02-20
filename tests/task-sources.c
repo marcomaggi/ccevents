@@ -61,14 +61,14 @@ test_single_task (void)
   {
     ccevents_task_source_t *	tksrc = (ccevents_task_source_t *) src;
     step1_flag = true;
-    ccevents_task_source_set(there, tksrc, event_inquirer, step2);
+    ccevents_task_source_set(tksrc, event_inquirer, step2);
     ccevents_group_enqueue_source(grp, tksrc);
   }
   void step2 (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
   {
     ccevents_task_source_t *	tksrc = (ccevents_task_source_t *) src;
     step2_flag = true;
-    ccevents_task_source_set(there, tksrc, event_inquirer, step3);
+    ccevents_task_source_set(tksrc, event_inquirer, step3);
     ccevents_group_enqueue_source(grp, tksrc);
   }
   void step3 (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
@@ -89,7 +89,7 @@ test_single_task (void)
       ccevents_source_set_timeout(tksrc, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
       ccevents_group_init(grp, 3);
       ccevents_group_enqueue_source(grp, tksrc);
-      ccevents_task_source_set(L, tksrc, event_inquirer, step1);
+      ccevents_task_source_set(tksrc, event_inquirer, step1);
       ccevents_group_enter(grp);
       cce_run_cleanup_handlers(L);
     }
@@ -155,7 +155,7 @@ test_multi_tasks (void)
     task_t *	tsk = (task_t *) src;
     fprintf(stderr, "%s: step1\n", tsk->name);
     tsk->step1_flag = true;
-    ccevents_task_source_set(there, tsk, event_inquirer, step2);
+    ccevents_task_source_set(tsk, event_inquirer, step2);
     ccevents_group_enqueue_source(grp, tsk);
   }
   void step2 (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
@@ -163,7 +163,7 @@ test_multi_tasks (void)
     task_t *	tsk = (task_t *) src;
     fprintf(stderr, "%s: step2\n", tsk->name);
     tsk->step2_flag = true;
-    ccevents_task_source_set(there, tsk, event_inquirer, step3);
+    ccevents_task_source_set(tsk, event_inquirer, step3);
     ccevents_group_enqueue_source(grp, tsk);
   }
   void step3 (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
@@ -192,9 +192,9 @@ test_multi_tasks (void)
       ccevents_group_enqueue_source(grp, tsk1);
       ccevents_group_enqueue_source(grp, tsk2);
       ccevents_group_enqueue_source(grp, tsk3);
-      ccevents_task_source_set(L, tsk1, event_inquirer, step1);
-      ccevents_task_source_set(L, tsk2, event_inquirer, step1);
-      ccevents_task_source_set(L, tsk3, event_inquirer, step1);
+      ccevents_task_source_set(tsk1, event_inquirer, step1);
+      ccevents_task_source_set(tsk2, event_inquirer, step1);
+      ccevents_task_source_set(tsk3, event_inquirer, step1);
       ccevents_group_enter(grp);
       cce_run_cleanup_handlers(L);
     }

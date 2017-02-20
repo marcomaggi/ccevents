@@ -468,10 +468,10 @@ struct ccevents_fd_source_t {
 ccevents_decl void ccevents_fd_source_init (ccevents_fd_source_t * fdsrc, int fd)
   __attribute__((leaf,nonnull(1)));
 
-ccevents_decl void ccevents_fd_source_set (cce_location_t * there, ccevents_fd_source_t * fdsrc,
+ccevents_decl void ccevents_fd_source_set (ccevents_fd_source_t * fdsrc,
 					   ccevents_source_event_inquirer_fun_t * event_inquirer,
 					   ccevents_source_event_handler_fun_t * event_handler)
-  __attribute__((nonnull(1,2,3,4)));
+  __attribute__((nonnull(1,2,3)));
 
 ccevents_decl ccevents_source_event_inquirer_fun_t ccevents_query_fd_readability;
 ccevents_decl ccevents_source_event_inquirer_fun_t ccevents_query_fd_writability;
@@ -501,10 +501,10 @@ struct ccevents_task_source_t {
 ccevents_decl void ccevents_task_source_init (ccevents_task_source_t * tksrc)
   __attribute__((leaf,nonnull(1)));
 
-ccevents_decl void ccevents_task_source_set (cce_location_t * there, ccevents_task_source_t * tksrc,
+ccevents_decl void ccevents_task_source_set (ccevents_task_source_t * tksrc,
 					     ccevents_source_event_inquirer_fun_t     * event_inquirer,
 					     ccevents_source_event_handler_fun_t      * event_handler)
-  __attribute__((nonnull(1,2,3,4)));
+  __attribute__((nonnull(1,2,3)));
 
 /* Output of: (my-c-insert-cast-function "ccevents" "source" "task_source") */
 __attribute__((const,always_inline))
@@ -544,9 +544,9 @@ ccevents_decl bool ccevents_signal_bub_delivered (int signum)
 ccevents_decl void ccevents_signal_bub_source_init (ccevents_signal_bub_source_t * sigsrc, int signum)
   __attribute__((leaf,nonnull(1)));
 
-ccevents_decl void ccevents_signal_bub_source_set (cce_location_t * there, ccevents_signal_bub_source_t * sigsrc,
+ccevents_decl void ccevents_signal_bub_source_set (ccevents_signal_bub_source_t * sigsrc,
 						   ccevents_source_event_handler_fun_t  * event_handler)
-  __attribute__((nonnull(1,2,3)));
+  __attribute__((nonnull(1,2)));
 
 /* Output of: (my-c-insert-cast-function "ccevents" "source" "signal_bub_source") */
 __attribute__((const,always_inline))
@@ -569,9 +569,6 @@ struct ccevents_timer_source_t {
 
 ccevents_decl void ccevents_timer_source_init (ccevents_timer_source_t * timsrc)
   __attribute__((leaf,nonnull(1)));
-
-ccevents_decl void ccevents_timer_source_set (cce_location_t * there, ccevents_timer_source_t * timsrc)
-  __attribute__((nonnull(1,2)));
 
 /* Output of: (my-c-insert-cast-function "ccevents" "source" "timer_source") */
 __attribute__((const,always_inline))

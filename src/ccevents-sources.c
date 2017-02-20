@@ -57,10 +57,7 @@ ccevents_source_dummy_event_handler (cce_location_t     * L   CCEVENTS_UNUSED,
 
 void
 ccevents_source_init (ccevents_source_t * src, const ccevents_source_vtable_t * vtable)
-/* Initialise an already  allocated source structure.  Do  not start the
-   event waiting: this is done by "ccevents_source_set()". */
 {
-  //fprintf(stderr, "%s: enter\n", __func__);
   src->vtable			= vtable;
   src->prev			= NULL;
   src->next			= NULL;

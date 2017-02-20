@@ -151,7 +151,7 @@ ccevents_signal_bub_source_init (ccevents_signal_bub_source_t * sigsrc, int sign
 }
 
 void
-ccevents_signal_bub_source_set (cce_location_t * there, ccevents_signal_bub_source_t * sigsrc,
+ccevents_signal_bub_source_set (ccevents_signal_bub_source_t * sigsrc,
 				ccevents_source_event_handler_fun_t      * event_handler)
 /* Set up an already initialised source to wait for an event.  Start the
    expiration timer.
