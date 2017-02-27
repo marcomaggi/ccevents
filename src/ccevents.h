@@ -485,7 +485,7 @@ ccevents_cast_to_fd_source_from_source (ccevents_source_t * src)
   return (ccevents_fd_source_t *)src;
 }
 #define ccevents_cast_to_fd_source(SRC)		\
-  _Generic(SRC, ccevents_source_t *: ccevents_cast_to_fd_source_from_source(SRC))
+  _Generic((SRC), ccevents_source_t *: ccevents_cast_to_fd_source_from_source)(SRC)
 /* End of output. */
 
 /** --------------------------------------------------------------------
@@ -514,7 +514,7 @@ ccevents_cast_to_task_source_from_source (ccevents_source_t * src)
   return (ccevents_task_source_t *)src;
 }
 #define ccevents_cast_to_task_source(SRC)		\
-  _Generic(SRC, ccevents_source_t *: ccevents_cast_to_task_source_from_source(SRC))
+  _Generic((SRC), ccevents_source_t *: ccevents_cast_to_task_source_from_source)(SRC)
 /* End of output. */
 
 /** --------------------------------------------------------------------
@@ -556,7 +556,7 @@ ccevents_cast_to_signal_bub_source_from_source (ccevents_source_t * src)
   return (ccevents_signal_bub_source_t *)src;
 }
 #define ccevents_cast_to_signal_bub_source(SRC)		\
-  _Generic(SRC, ccevents_source_t *: ccevents_cast_to_signal_bub_source_from_source(SRC))
+  _Generic((SRC), ccevents_source_t *: ccevents_cast_to_signal_bub_source_from_source)(SRC)
 /* End of output. */
 
 /** --------------------------------------------------------------------
@@ -578,7 +578,7 @@ ccevents_cast_to_timer_source_from_source (ccevents_source_t * src)
   return (ccevents_timer_source_t *)src;
 }
 #define ccevents_cast_to_timer_source(SRC)		\
-  _Generic(SRC, ccevents_source_t *: ccevents_cast_to_timer_source_from_source(SRC))
+  _Generic((SRC), ccevents_source_t *: ccevents_cast_to_timer_source_from_source)(SRC)
 /* End of output. */
 
 /** --------------------------------------------------------------------
