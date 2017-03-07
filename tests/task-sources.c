@@ -42,38 +42,37 @@ test_single_task (void)
   volatile bool			step2_flag = false;
   volatile bool			step3_flag = false;
 
-  auto ccevents_source_event_inquirer_fun_t	event_inquirer;
-  auto ccevents_source_expiration_handler_fun_t	expiration_handler;
-  auto ccevents_source_event_handler_fun_t	step1;
-  auto ccevents_source_event_handler_fun_t	step2;
-  auto ccevents_source_event_handler_fun_t	step3;
+  auto ccevents_event_inquirer_t	event_inquirer;
+  auto ccevents_timeout_handler_t	expiration_handler;
+  auto ccevents_event_handler_t	step1;
+  auto ccevents_event_handler_t	step2;
+  auto ccevents_event_handler_t	step3;
 
-  bool event_inquirer (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+  bool event_inquirer (cce_location_t * there, ccevents_source_t * src)
   /* The next step is always ready to be executed. */
   {
     return true;
   }
-  void expiration_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+  void expiration_handler (cce_location_t * there, ccevents_source_t * src)
   {
     expiration_flag = true;
   }
-  void step1 (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+  void step1 (cce_location_t * there, ccevents_source_t * src)
   {
     ccevents_task_source_t *	tksrc = (ccevents_task_source_t *) src;
     step1_flag = true;
     ccevents_task_source_set(tksrc, event_inquirer, step2);
-    ccevents_group_enqueue_source(grp, tksrc);
   }
-  void step2 (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+  void step2 (cce_location_t * there, ccevents_source_t * src)
   {
     ccevents_task_source_t *	tksrc = (ccevents_task_source_t *) src;
     step2_flag = true;
     ccevents_task_source_set(tksrc, event_inquirer, step3);
-    ccevents_group_enqueue_source(grp, tksrc);
   }
-  void step3 (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+  void step3 (cce_location_t * there, ccevents_source_t * src)
   {
     step3_flag = true;
+    ccevents_source_dequeue_itself(src);
   }
 
   /* Do it. */
@@ -122,11 +121,11 @@ test_multi_tasks (void)
   volatile bool		error_flag = false;
 
   auto void task_init (task_t * tsk, const char * name);
-  auto ccevents_source_event_inquirer_fun_t	event_inquirer;
-  auto ccevents_source_expiration_handler_fun_t	expiration_handler;
-  auto ccevents_source_event_handler_fun_t	step1;
-  auto ccevents_source_event_handler_fun_t	step2;
-  auto ccevents_source_event_handler_fun_t	step3;
+  auto ccevents_event_inquirer_t	event_inquirer;
+  auto ccevents_timeout_handler_t	expiration_handler;
+  auto ccevents_event_handler_t	step1;
+  auto ccevents_event_handler_t	step2;
+  auto ccevents_event_handler_t	step3;
 
   void task_init (task_t * tsk, const char * name)
   {
@@ -138,35 +137,33 @@ test_multi_tasks (void)
     tsk->step3_flag		= false;
   }
 
-  bool event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
+  bool event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
   /* The next step is always ready to be executed. */
   {
     task_t *	tsk = (task_t *) src;
     fprintf(stderr, "%s: query for readiness\n", tsk->name);
     return true;
   }
-  void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
+  void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
   {
     task_t *	tsk = (task_t *) src;
     tsk->expiration_flag = true;
   }
-  void step1 (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
+  void step1 (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
   {
     task_t *	tsk = (task_t *) src;
     fprintf(stderr, "%s: step1\n", tsk->name);
     tsk->step1_flag = true;
     ccevents_task_source_set(tsk, event_inquirer, step2);
-    ccevents_group_enqueue_source(grp, tsk);
   }
-  void step2 (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
+  void step2 (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
   {
     task_t *	tsk = (task_t *) src;
     fprintf(stderr, "%s: step2\n", tsk->name);
     tsk->step2_flag = true;
     ccevents_task_source_set(tsk, event_inquirer, step3);
-    ccevents_group_enqueue_source(grp, tsk);
   }
-  void step3 (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
+  void step3 (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
   {
     task_t *	tsk = (task_t *) src;
     fprintf(stderr, "%s: step3\n", tsk->name);

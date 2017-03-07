@@ -74,13 +74,13 @@ test_sources_removal_from_head (void)
   assert(true == ccevents_group_contains_source(G, C));
   assert(true == ccevents_group_contains_source(G, D));
 
-  ccevents_group_remove_source(G, A);
+  ccevents_source_dequeue_itself(A);
   assert(3 == ccevents_group_number_of_sources(G));
-  ccevents_group_remove_source(G, B);
+  ccevents_source_dequeue_itself(B);
   assert(2 == ccevents_group_number_of_sources(G));
-  ccevents_group_remove_source(G, C);
+  ccevents_source_dequeue_itself(C);
   assert(1 == ccevents_group_number_of_sources(G));
-  ccevents_group_remove_source(G, D);
+  ccevents_source_dequeue_itself(D);
   assert(0 == ccevents_group_number_of_sources(G));
 
   assert(false == ccevents_source_is_enqueued(A));
@@ -137,13 +137,13 @@ test_sources_removal_from_tail (void)
   assert(true == ccevents_group_contains_source(G, C));
   assert(true == ccevents_group_contains_source(G, D));
 
-  ccevents_group_remove_source(G, D);
+  ccevents_source_dequeue_itself(D);
   assert(3 == ccevents_group_number_of_sources(G));
-  ccevents_group_remove_source(G, C);
+  ccevents_source_dequeue_itself(C);
   assert(2 == ccevents_group_number_of_sources(G));
-  ccevents_group_remove_source(G, B);
+  ccevents_source_dequeue_itself(B);
   assert(1 == ccevents_group_number_of_sources(G));
-  ccevents_group_remove_source(G, A);
+  ccevents_source_dequeue_itself(A);
   assert(0 == ccevents_group_number_of_sources(G));
 
   assert(false == ccevents_source_is_enqueued(A));
@@ -200,13 +200,13 @@ test_sources_removal_from_middle (void)
   assert(true == ccevents_group_contains_source(G, C));
   assert(true == ccevents_group_contains_source(G, D));
 
-  ccevents_group_remove_source(G, B);
+  ccevents_source_dequeue_itself(B);
   assert(3 == ccevents_group_number_of_sources(G));
-  ccevents_group_remove_source(G, C);
+  ccevents_source_dequeue_itself(C);
   assert(2 == ccevents_group_number_of_sources(G));
-  ccevents_group_remove_source(G, A);
+  ccevents_source_dequeue_itself(A);
   assert(1 == ccevents_group_number_of_sources(G));
-  ccevents_group_remove_source(G, D);
+  ccevents_source_dequeue_itself(D);
   assert(0 == ccevents_group_number_of_sources(G));
 
   assert(false == ccevents_source_is_enqueued(A));

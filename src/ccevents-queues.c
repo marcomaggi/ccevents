@@ -28,114 +28,133 @@
 
 #include "ccevents-internals.h"
 
+
+/** --------------------------------------------------------------------
+ ** Helpers.
+ ** ----------------------------------------------------------------- */
+
+__attribute__((nonnull(1),always_inline))
+static inline void
+link_nodes_prev_next (ccevents_queue_node_t * prev, ccevents_queue_node_t * next)
+{
+  prev->next	= next;
+  next->prev	= prev;
+}
+
+
+/** --------------------------------------------------------------------
+ ** Queue functions.
+ ** ----------------------------------------------------------------- */
+
 void
 ccevents_queue_init (ccevents_queue_t * Q)
 {
-  Q->head	= NULL;
-  Q->tail	= NULL;
-}
-
-bool
-ccevents_queue_is_not_empty (const ccevents_queue_t * Q)
-{
-  return (NULL != Q->head)? true : false;
-}
-
-size_t
-ccevents_queue_number_of_items (const ccevents_queue_t * Q)
-{
-  const ccevents_queue_node_t *	N;
-  size_t			len = 0;
-
-  for (N = Q->head; N; N = N->next) {
-    ++len;
-  }
-  return len;
-}
-
-bool
-ccevents_queue_contains_item (const ccevents_queue_t * Q, const ccevents_queue_node_t * N)
-{
-  const ccevents_queue_node_t *	iter;
-
-  for (iter = Q->head; iter; iter = iter->next) {
-    if (iter == N) {
-      return true;
-    }
-  }
-  return false;
+  Q->current		= NULL;
+  Q->number_of_nodes	= 0;
 }
 
 void
-ccevents_queue_enqueue (ccevents_queue_t * Q, ccevents_queue_node_t * new_tail)
-/* Enqueue NEW_TAIL in the group N. */
+ccevents_queue_advance_current (ccevents_queue_t * Q)
 {
-  if (Q->tail) {
-    /* There is at least one item in the list.  Append "new_tail" as the
-       new tail. */
-    ccevents_queue_node_t *	previous_tail = Q->tail;
-    previous_tail->next		= new_tail;
-    new_tail->prev		= previous_tail;
-    Q->tail	= new_tail;
-  } else {
-    /* The list is empty.  Fill it with "new_tail" as only item. */
-    Q->head	= new_tail;
-    Q->tail	= new_tail;
+  if (ccevents_queue_is_not_empty(Q)) {
+    Q->current = Q->current->next;
   }
+}
+
+void
+ccevents_queue_enqueue (ccevents_queue_t * Q, ccevents_queue_node_t * new_current)
+/* Enqueue NEW_CURRENT in the queue Q.
+ *
+ *     Before:                                After:
+ *
+ *     -------------                        -------------
+ *    |   prev      |                      |   prev      |
+ *     -------------                       -------------
+ *          | prev->next                         | prev->next
+ *          v                                    v
+ *     -------------                        -------------
+ *    | old_current |                      | new_current |
+ *     -------------                        -------------
+ *                                               | new_current->next
+ *                                               v
+ *                                          -------------
+ *                                         | old_current |
+ *                                          -------------
+ *
+ */
+{
+  if (ccevents_queue_is_not_empty(Q)) {
+    /* The queue is not empty. */
+    ccevents_queue_node_t *	old_current = Q->current;
+    ccevents_queue_node_t *	prev        = old_current->prev;
+    link_nodes_prev_next(new_current, old_current);
+    link_nodes_prev_next(prev,        new_current);
+  } else {
+    /* The queue is empty. */
+    link_nodes_prev_next(new_current, new_current);
+  }
+  new_current->base	= Q;
+  Q->current		= new_current;
+  ++(Q->number_of_nodes);
 }
 
 ccevents_queue_node_t *
 ccevents_queue_dequeue (ccevents_queue_t * Q)
-/* Pop an  events source  from the  head of the  list of  events sources
-   enqueued for the next run.  Return NULL if the list is empty. */
+/* Remove the  current node from the  queue and return a  pointer to it;
+   return NULL if the queue is empty. */
 {
-  ccevents_queue_node_t *	next_source = Q->head;
-  if (next_source) {
-    /* Detach the dequeued source from the group. */
-    Q->head		= next_source->next;
-    if (Q->head) {
-      Q->head->prev	= NULL;
+  ccevents_queue_node_t *	old_current = Q->current;
+  if (old_current) {
+    /* Detach the queue from the node. */
+    --(Q->number_of_nodes);
+    if (Q->number_of_nodes) {
+      /* There is at least one other node in the queue. */
+      Q->current		= old_current->next;
+      old_current->next->prev	= old_current->prev;
+      old_current->prev->next	= old_current->next;
+    } else {
+      /* The old current is the only node in the queue. */
+      Q->current	= NULL;
     }
-    /* If the dequeued source was the only one: reset the tail too. */
-    if (next_source == Q->tail) {
-      Q->tail = NULL;
-    }
-    /* Detach the dequeued source from the list. */
-    next_source->prev			= NULL;
-    next_source->next			= NULL;
+    /* Detach the dequeued node from the queue. */
+    ccevents_queue_node_init(old_current);
   }
-  return next_source;
+  return old_current;
+}
+
+
+/** --------------------------------------------------------------------
+ ** Node functions.
+ ** ----------------------------------------------------------------- */
+
+void
+ccevents_queue_node_init (ccevents_queue_node_t * N)
+{
+  N->base	= NULL;
+  N->next	= NULL;
+  N->prev	= NULL;
 }
 
 void
-ccevents_queue_remove (ccevents_queue_t * Q, ccevents_queue_node_t * N)
+ccevents_queue_node_dequeue_itself (ccevents_queue_node_t * N)
+/* Remove the node from its queue.  If the node is not eneueued: nothing
+   happens. */
 {
-  if (Q->head == N) {
-    /* Detach the source from the head. */
-    Q->head = N->next;
-    if (Q->head) {
-      Q->tail->prev = NULL;
+  ccevents_queue_t *	Q = N->base;
+  if (Q) {
+    if (ccevents_queue_current_node(Q) == N) {
+      /* The node is the current one.  Special handling. */
+      ccevents_queue_dequeue(Q);
+    } else {
+      /* This node is not the current.  Just extract it. */
+      N->next->prev	= N->prev;
+      N->prev->next	= N->next;
+      --(Q->number_of_nodes);
+      N->base	= NULL;
+      N->next	= NULL;
+      N->prev	= NULL;
     }
-    /* If the removed source was the only one: reset the tail too. */
-    if (N == Q->tail) {
-      Q->tail = NULL;
-    }
-  } else if (Q->tail == N) {
-    /* Detach the source from the tail. */
-    Q->tail = N->prev;
-    if (Q->tail) {
-      Q->tail->next = NULL;
-    }
-    /* If the removed source was the only one: reset the head too. */
-    if (N == Q->head) {
-      Q->head = NULL;
-    }
-  } else {
-    N->prev->next = N->next;
-    N->next->prev = N->prev;
   }
-  N->prev = NULL;
-  N->next = NULL;
 }
 
 /* end of file */

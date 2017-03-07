@@ -34,15 +34,12 @@
 
 static bool
 method_event_inquirer (cce_location_t    * there CCEVENTS_UNUSED,
-		       ccevents_group_t  * grp,
-		       ccevents_source_t * src)
+		       ccevents_source_t * src   CCEVENTS_UNUSED)
 {
-  ccevents_group_enqueue_source(grp, src);
   return false;
 }
 static void
 method_event_handler (cce_location_t    * there CCEVENTS_UNUSED,
-		      ccevents_group_t  * grp   CCEVENTS_UNUSED,
 		      ccevents_source_t * src   CCEVENTS_UNUSED)
 {
   return;

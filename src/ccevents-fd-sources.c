@@ -35,16 +35,14 @@
  ** ----------------------------------------------------------------- */
 
 static bool
-default_event_query (cce_location_t *	L	CCEVENTS_UNUSED,
-		     ccevents_group_t *		grp	CCEVENTS_UNUSED,
-		     ccevents_source_t *	fdsrc	CCEVENTS_UNUSED)
+default_event_query (cce_location_t    * L	CCEVENTS_UNUSED,
+		     ccevents_source_t * fdsrc	CCEVENTS_UNUSED)
 {
   return false;
 }
 static void
-default_event_handler (cce_location_t *	L	CCEVENTS_UNUSED,
-		       ccevents_group_t *	grp	CCEVENTS_UNUSED,
-		       ccevents_source_t *	fdsrc	CCEVENTS_UNUSED)
+default_event_handler (cce_location_t    * L     CCEVENTS_UNUSED,
+		       ccevents_source_t * fdsrc CCEVENTS_UNUSED)
 {
   return;
 }
@@ -54,16 +52,16 @@ default_event_handler (cce_location_t *	L	CCEVENTS_UNUSED,
  ** ----------------------------------------------------------------- */
 
 static bool
-method_event_inquirer (cce_location_t * L, ccevents_group_t * grp, ccevents_source_t * src)
+method_event_inquirer (cce_location_t * L, ccevents_source_t * src)
 {
   CCEVENTS_PC(ccevents_fd_source_t, fdsrc, src);
-  return fdsrc->event_inquirer(L, grp, fdsrc);
+  return fdsrc->event_inquirer(L, fdsrc);
 }
 static void
-method_event_handler (cce_location_t * L, ccevents_group_t * grp, ccevents_source_t * src)
+method_event_handler (cce_location_t * L, ccevents_source_t * src)
 {
   CCEVENTS_PC(ccevents_fd_source_t, fdsrc, src);
-  return fdsrc->event_handler(L, grp, fdsrc);
+  return fdsrc->event_handler(L, fdsrc);
 }
 static const ccevents_source_vtable_t methods_table = {
   .event_inquirer	= method_event_inquirer,
@@ -87,8 +85,8 @@ ccevents_fd_source_init (ccevents_fd_source_t * fdsrc, int fd)
 }
 void
 ccevents_fd_source_set (ccevents_fd_source_t * fdsrc,
-			ccevents_source_event_inquirer_fun_t * event_inquirer,
-			ccevents_source_event_handler_fun_t * event_handler)
+			ccevents_event_inquirer_t * event_inquirer,
+			ccevents_event_handler_t * event_handler)
 /* Set up an already initialised fd  source to wait for an event.  Start
    the expiration timer.
 
@@ -111,7 +109,7 @@ ccevents_fd_source_set (ccevents_fd_source_t * fdsrc,
  ** ----------------------------------------------------------------- */
 
 bool
-ccevents_query_fd_readability (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_query_fd_readability (cce_location_t * there, ccevents_source_t * src)
 /* Query a file descriptor for readability. */
 {
   /* Remember that "select()" might mutate this struct. */
@@ -130,17 +128,12 @@ ccevents_query_fd_readability (cce_location_t * there, ccevents_group_t * grp, c
     /* Success.  RV  contains the number  of file descriptors  ready for
        reading; in this case it can be only 1 or 0. */
     //fprintf(stderr, "%s: rv=%d\n", __func__, rv);
-    if (1 == rv) {
-      return true;
-    } else {
-      ccevents_group_enqueue_source(grp, src);
-      return false;
-    }
+    return (1 == rv)? true : false;
   }
 }
 
 bool
-ccevents_query_fd_writability (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_query_fd_writability (cce_location_t * there, ccevents_source_t * src)
 /* Query a file descriptor for writability. */
 {
   /* Remember that "select()" might mutate this struct. */
@@ -160,17 +153,12 @@ ccevents_query_fd_writability (cce_location_t * there, ccevents_group_t * grp, c
     /* Success.  RV  contains the number  of file descriptors  ready for
        writing; in this case it can be only 1 or 0. */
     //fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fdsrc->fd, rv);
-    if (1 == rv) {
-      return true;
-    } else {
-      ccevents_group_enqueue_source(grp, src);
-      return false;
-    }
+    return (1 == rv)? true : false;
   }
 }
 
 bool
-ccevents_query_fd_exception (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_query_fd_exception (cce_location_t * there, ccevents_source_t * src)
 /* Query a file descriptor for exception. */
 {
   /* Remember that "select()" might mutate this struct. */
@@ -188,12 +176,7 @@ ccevents_query_fd_exception (cce_location_t * there, ccevents_group_t * grp, cce
   } else {
     /* Success.   RV  contains  the  number of  file  descriptors  which
        received an exception; in this case it can be only 1 or 0. */
-    if (1 == rv) {
-      return true;
-    } else {
-      ccevents_group_enqueue_source(grp, src);
-      return false;
-    }
+    return (1 == rv)? true : false;
   }
 }
 

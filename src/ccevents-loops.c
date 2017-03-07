@@ -28,73 +28,64 @@
 
 #include "ccevents-internals.h"
 
+
+/** --------------------------------------------------------------------
+ ** Helpers.
+ ** ----------------------------------------------------------------- */
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline ccevents_group_t *
+ccevents_loop_current_group (const ccevents_loop_t * loop)
+{
+  return (ccevents_group_t *)ccevents_queue_current_node(loop->groups);
+}
+
+__attribute__((nonnull(1),always_inline))
+static inline void
+ccevents_loop_advance_to_next_group (ccevents_loop_t * loop)
+{
+  ccevents_queue_advance_current(loop->groups);
+}
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline bool
+ccevents_loop_no_request_to_leave_asap (const ccevents_loop_t * loop)
+{
+  return (loop->request_to_leave_asap)? false : true;
+}
+
+
+/** --------------------------------------------------------------------
+ ** Loop functions.
+ ** ----------------------------------------------------------------- */
+
 void
 ccevents_loop_init (ccevents_loop_t * loop)
 {
-  ccevents_queue_init(&(loop->groups));
+  ccevents_queue_init(loop->groups);
   loop->request_to_leave_asap	= false;
-}
-
-bool
-ccevents_loop_queue_is_not_empty (const ccevents_loop_t * loop)
-{
-  return ccevents_queue_is_not_empty(&(loop->groups));
-}
-
-size_t
-ccevents_loop_number_of_groups (const ccevents_loop_t * loop)
-{
-  return ccevents_queue_number_of_items(&(loop->groups));
-}
-
-bool
-ccevents_loop_contains_group (const ccevents_loop_t * loop, const ccevents_group_t * grp)
-{
-  return ccevents_queue_contains_item (&(loop->groups), grp);
-}
-
-void
-ccevents_loop_enqueue_group (ccevents_loop_t * loop, ccevents_group_t * grp)
-{
-  ccevents_queue_enqueue (&(loop->groups), grp);
-}
-
-ccevents_group_t *
-ccevents_loop_dequeue_group (ccevents_loop_t * loop)
-{
-  return (ccevents_group_t *)ccevents_queue_dequeue(&(loop->groups));
-}
-
-void
-ccevents_loop_remove_group (ccevents_loop_t * loop, ccevents_group_t * grp)
-{
-  ccevents_queue_remove(&(loop->groups), grp);
 }
 
 void
 ccevents_loop_enter (ccevents_loop_t * loop)
 {
-  if (0) fprintf(stderr, "%s: enter\n", __func__);
   loop->request_to_leave_asap = false;
   {
-    ccevents_group_t *	grp = (ccevents_group_t *)loop->groups.head;
-    while (grp && (!(loop->request_to_leave_asap))) {
-      if (0) fprintf(stderr, "%s: here\n", __func__);
-      ccevents_group_enter(grp);
-      grp = (ccevents_group_t *)grp->next;
-      if (! grp) {
-	grp =  (ccevents_group_t *)loop->groups.head;
+    while (ccevents_loop_no_request_to_leave_asap(loop) &&
+	   ccevents_loop_queue_is_not_empty(loop)) {
+      ccevents_group_t *	grp = ccevents_loop_current_group(loop);
+      if (grp) {
+	/* We need to  remember that whenever we  apply the do_one_event
+	   function to a source: the  source's methods might dequeue the
+	   group from the loop making the next one the new current.  So,
+	   to  avoid  double  advancing,  we advance  now  to  the  next
+	   group. */
+	ccevents_loop_advance_to_next_group(loop);
+	ccevents_group_enter(grp);
       }
     }
   }
   loop->request_to_leave_asap = false;
-}
-
-void
-ccevents_loop_post_request_to_leave_asap (ccevents_loop_t * loop)
-/* Post a request to exit ASAP the loop for this loop. */
-{
-  loop->request_to_leave_asap = true;
 }
 
 /* end of file */

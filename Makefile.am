@@ -54,7 +54,11 @@ libccevents_la_SOURCES= \
 	src/ccevents-fd-sources.c
 
 #page
-#### tests
+#### interface to "make check"
+#
+# Read "Parallel Test Harness" in the documentation of GNU Automake to
+# understand how to use this interface for "make check".
+#
 
 check_PROGRAMS	= \
 	tests/version			\
@@ -99,7 +103,23 @@ tests_signal_sources_LDADD		= $(ccevents_tests_ldadd)
 tests_main_loop_CPPFLAGS		= $(ccevents_tests_cppflags)
 tests_main_loop_LDADD			= $(ccevents_tests_ldadd)
 
+#page
+#### interface to "make instcheck"
+
 installcheck-local: $(TESTS)
 	@for f in $(TESTS); do $(builddir)/$$f; done
+
+#page
+#### running test programs under gdb
+
+GDB_ENV		= LD_LIBRARY_PATH=$(builddir)/.libs:$(LD_LIBRARY_PATH); export LD_LIBRARY_PATH;
+GDB		= gdb
+GDB_RUN		= $(GDB_ENV) $(GDB)
+
+.PHONY: gdb-test
+
+gdb-test:
+	test -f $(builddir)/.gdbinit || ln -s $(top_srcdir)/.gdbinit $(builddir)/.gdbinit
+	$(GDB_RUN) $(builddir)/tests/.libs/*$(file)*
 
 ### end of file

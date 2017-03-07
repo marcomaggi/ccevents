@@ -33,16 +33,16 @@
  ** ----------------------------------------------------------------- */
 
 static bool
-method_event_inquirer (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+method_event_inquirer (cce_location_t * there, ccevents_source_t * src)
 {
   CCEVENTS_PC(ccevents_task_source_t, tksrc, src);
-  return tksrc->event_inquirer(there, grp, tksrc);
+  return tksrc->event_inquirer(there, tksrc);
 }
 static void
-method_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+method_event_handler (cce_location_t * there, ccevents_source_t * src)
 {
   CCEVENTS_PC(ccevents_task_source_t, tksrc, src);
-  return tksrc->event_handler(there, grp, tksrc);
+  return tksrc->event_handler(there, tksrc);
 }
 static const ccevents_source_vtable_t methods_table = {
   .event_inquirer	= method_event_inquirer,
@@ -62,9 +62,9 @@ ccevents_task_source_init (ccevents_task_source_t * tksrc)
 }
 
 void
-ccevents_task_source_set (ccevents_task_source_t * tksrc,
-			  ccevents_source_event_inquirer_fun_t     * event_inquirer,
-			  ccevents_source_event_handler_fun_t      * event_handler)
+ccevents_task_source_set (ccevents_task_source_t    * tksrc,
+			  ccevents_event_inquirer_t * event_inquirer,
+			  ccevents_event_handler_t  * event_handler)
 /* Set up an already initialised source to wait for an event.  Start the
    expiration timer.
 */

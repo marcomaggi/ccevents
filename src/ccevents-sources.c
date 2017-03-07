@@ -31,124 +31,110 @@
 
 #include "ccevents-internals.h"
 
-static void
-default_expiration_handler (cce_location_t     * L   CCEVENTS_UNUSED,
-			    ccevents_group_t   * grp CCEVENTS_UNUSED,
-			    ccevents_source_t  * src CCEVENTS_UNUSED)
-{
-  return;
-}
+
+/** --------------------------------------------------------------------
+ ** Dummy handler functions.
+ ** ----------------------------------------------------------------- */
 
 bool
-ccevents_source_dummy_event_inquirer (cce_location_t * L CCEVENTS_UNUSED,
-				      ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_dummy_event_inquirer_false (cce_location_t    * L   CCEVENTS_UNUSED,
+				     ccevents_source_t * src CCEVENTS_UNUSED)
 {
-  ccevents_group_enqueue_source(grp, src);
   return false;
+}
+bool
+ccevents_dummy_event_inquirer_true (cce_location_t    * L   CCEVENTS_UNUSED,
+				    ccevents_source_t * src CCEVENTS_UNUSED)
+{
+  return true;
 }
 
 void
-ccevents_source_dummy_event_handler (cce_location_t     * L   CCEVENTS_UNUSED,
-				     ccevents_group_t   * grp CCEVENTS_UNUSED,
-				     ccevents_source_t  * src CCEVENTS_UNUSED)
+ccevents_dummy_event_handler (cce_location_t     * L   CCEVENTS_UNUSED,
+			      ccevents_source_t  * src CCEVENTS_UNUSED)
 {
   return;
 }
+
+void
+ccevents_dummy_timeout_handler (cce_location_t     * L   CCEVENTS_UNUSED,
+				ccevents_source_t  * src CCEVENTS_UNUSED)
+{
+  return;
+}
+
+
+/** --------------------------------------------------------------------
+ ** Event sources API.
+ ** ----------------------------------------------------------------- */
 
 void
 ccevents_source_init (ccevents_source_t * src, const ccevents_source_vtable_t * vtable)
 {
+  ccevents_queue_node_init(src);
   src->vtable			= vtable;
-  src->prev			= NULL;
-  src->next			= NULL;
+  src->grp			= NULL;
   src->expiration_time		= *CCEVENTS_TIMEVAL_NEVER;
-  src->expiration_handler	= default_expiration_handler;
+  src->expiration_handler	= ccevents_dummy_timeout_handler;
 }
 
 void
 ccevents_source_set_timeout (ccevents_source_t * src, ccevents_timeval_t expiration_time,
-			     ccevents_source_expiration_handler_fun_t * expiration_handler)
+			     ccevents_timeout_handler_t * expiration_handler)
 {
   src->expiration_time		= expiration_time;
   src->expiration_handler	= expiration_handler;
 }
 
 bool
-ccevents_source_query (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_source_query (cce_location_t * there, ccevents_source_t * src)
 /* Query SRC for a pending event to be served.  Return TRUE if a pending
    event exists, otherwise return FALSE.
 
    If querying for an event raises an exceptional condition: a non-local
    exit is performed to THERE.
-
-   When this function is called SRC has been dequeued from GRP: it is up
-   to  the inquiry  function, or  an exceptional  condition handler,  to
-   re-enqueue SRC into GRP or not.
 */
 {
-  return src->vtable->event_inquirer(there, grp, src);
+  return src->vtable->event_inquirer(there, src);
 }
 
 void
-ccevents_source_handle_event (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_source_handle_event (cce_location_t * there, ccevents_source_t * src)
 /* Handle a  pending event for SRC.   This function must be  called only
    after  a  call  to  "ccevents_source_query()"  applied  to  the  same
-   operands returns TRUE.
-
-   If handling  the event raises  an exceptional condition:  a non-local
-   exit is performed to THERE.
-
-   When this function is called SRC has been dequeued from GRP: it is up
-   to  the  event  handler,  or an  exceptional  condition  handler,  to
-   re-enqueue SRC into GRP or not.
+   operands returns TRUE.   If handling the event  raises an exceptional
+   condition: a non-local exit is performed to THERE.
 */
 {
-  src->vtable->event_handler(there, grp, src);
+  src->vtable->event_handler(there, src);
 }
 
 void
-ccevents_source_handle_expiration (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
-/* Handle a timeout expiration event for SRC.
-
-   If handling  the event raises  an exceptional condition:  a non-local
-   exit is performed to THERE.
-
-   When this function is called SRC has been dequeued from GRP: it is up
-   to the  expiration handler, or  an exceptional condition  handler, to
-   re-enqueue SRC into GRP or not.
-*/
+ccevents_source_handle_expiration (cce_location_t * there, ccevents_source_t * src)
+/* Handle a  timeout expiration  event for SRC.   If handling  the event
+   raises an  exceptional condition:  a non-local  exit is  performed to
+   THERE. */
 {
-  src->expiration_handler(there, grp, src);
+  src->expiration_handler(there, src);
 }
 
 bool
-ccevents_source_do_one_event (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_source_do_one_event (cce_location_t * there, ccevents_source_t * src)
 /* Consume one event  from SRC, if there is a  pending one.  Return TRUE
-   if one event was served or the timeout expired; otherwise FALSE.
-
+   if  one event  was served  or the  timeout expired;  otherwise FALSE.
    Exceptions raised while querying an  event source or serving an event
    will cause a non-local exit to THERE.
-
-   When this function is called SRC has been dequeued from GRP: it is up
-   to the handlers,  or an exceptional condition  handler, to re-enqueue
-   SRC into GRP or not.
 */
 {
   if (ccevents_timeval_is_expired_timeout(src->expiration_time)) {
-    ccevents_source_handle_expiration(there, grp, src);
+    ccevents_source_handle_expiration(there, src);
     return true;
-  } else if (ccevents_source_query(there, grp, src)) {
-    ccevents_source_handle_event(there, grp, src);
+  } else if (ccevents_source_query(there, src)) {
+    ccevents_source_handle_event(there, src);
     return true;
   } else {
     return false;
   }
-}
-
-bool
-ccevents_source_is_enqueued (const ccevents_source_t * src)
-{
-  return (src->next || src->prev)? true : false;
 }
 
 /* end of file */

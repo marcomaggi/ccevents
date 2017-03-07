@@ -82,42 +82,36 @@ test_source (void)
 
   ccevents_signal_bub_init();
   {
-    ccevents_group_t		grp[1];
+    ccevents_group_t			grp[1];
     /* This events source runs its  inquirer function again and again to
        acquire signals with the BUB API. */
-    ccevents_task_source_t	acquire_signals_src[1];
+    ccevents_task_source_t		acquire_signals_src[1];
     /* This events source  runs its inquirer function once  to raise the
        signal.  The event handler is never run. */
-    ccevents_task_source_t	raise_signal_src[1];
+    ccevents_task_source_t		raise_signal_src[1];
     /* This events source reacts to delivery of SIGUSR1. */
     ccevents_signal_bub_source_t	sigsrc[1];
-    cce_location_t		L[1];
+    cce_location_t			L[1];
 
-    bool acquire_signals_inquirer (cce_location_t * there CCEVENTS_UNUSED,
-				   ccevents_group_t * grp, ccevents_source_t * src)
+    bool acquire_signals_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
     {
       ccevents_signal_bub_acquire();
-      ccevents_group_enqueue_source(grp, src);
       return false;
     }
-    void acquire_signals_handler (cce_location_t * there CCEVENTS_UNUSED,
-				  ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
+    void acquire_signals_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
     {
       return;
     }
-    bool raise_signal_inquirer (cce_location_t * there CCEVENTS_UNUSED,
-				ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
+    bool raise_signal_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
     {
       raise(SIGUSR1);
       return false;
     }
-    void raise_signal_handler (cce_location_t * there CCEVENTS_UNUSED,
-			       ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
+    void raise_signal_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
     {
       return;
     }
-    void signal_handler (cce_location_t * there CCEVENTS_UNUSED,
-			 ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
+    void signal_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
     {
       signal_flag = true;
     }
@@ -132,10 +126,8 @@ test_source (void)
       cce_run_error_handlers(L);
       cce_condition_free(cce_condition(L));
     } else {
-      ccevents_task_source_set(acquire_signals_src, acquire_signals_inquirer,
-			       ccevents_source_dummy_event_handler);
-      ccevents_task_source_set(raise_signal_src, raise_signal_inquirer,
-			       ccevents_source_dummy_event_handler);
+      ccevents_task_source_set(acquire_signals_src, acquire_signals_inquirer, ccevents_dummy_event_handler);
+      ccevents_task_source_set(raise_signal_src,       raise_signal_inquirer, ccevents_dummy_event_handler);
       ccevents_signal_bub_source_set(sigsrc, signal_handler);
       ccevents_group_enqueue_source(grp, sigsrc);
       ccevents_group_enqueue_source(grp, acquire_signals_src);
@@ -165,17 +157,12 @@ test_source_for_documentation (void)
   volatile sig_atomic_t signal_flag = 0;
   volatile bool		error_flag = false;
 
-  bool acquire_signals_inquirer (cce_location_t * there CCEVENTS_UNUSED,
-				 ccevents_group_t * grp,
-				 ccevents_source_t * src)
+  bool acquire_signals_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     ccevents_signal_bub_acquire();
-    ccevents_group_enqueue_source(grp, src);
     return false;
   }
-  void signal_handler (cce_location_t    * there CCEVENTS_UNUSED,
-		       ccevents_group_t  * grp   CCEVENTS_UNUSED,
-		       ccevents_source_t * src   CCEVENTS_UNUSED)
+  void signal_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     signal_flag = 1;
   }
@@ -191,9 +178,7 @@ test_source_for_documentation (void)
       cce_run_error_handlers(L);
       cce_condition_free(cce_condition(L));
     } else {
-      ccevents_task_source_set(acquire_signals_src,
-			       acquire_signals_inquirer,
-			       ccevents_source_dummy_event_handler);
+      ccevents_task_source_set(acquire_signals_src, acquire_signals_inquirer, ccevents_dummy_event_handler);
       ccevents_signal_bub_source_set(sigsrc, signal_handler);
       ccevents_group_enqueue_source(grp, sigsrc);
       ccevents_group_enqueue_source(grp, acquire_signals_src);

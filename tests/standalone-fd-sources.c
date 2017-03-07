@@ -56,8 +56,8 @@ test_standalone_readability (void)
    with "pipe(2)". */
 {
   int			X[2];
-  volatile bool		error_flag = false;
-  volatile bool		event_flag = false;
+  volatile bool		error_flag   = false;
+  volatile bool		event_flag   = false;
   volatile bool		timeout_flag = false;
   cce_location_t	L[1];
 
@@ -72,27 +72,25 @@ test_standalone_readability (void)
     ccevents_group_t		grp[1];
     ccevents_fd_source_t	fdsrc[1];
 
-    void event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
-			ccevents_source_t * fdsrc CCEVENTS_UNUSED)
+    void event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * fdsrc CCEVENTS_UNUSED)
     {
       event_flag = true;
     }
-    void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
-			     ccevents_source_t * fdsrc CCEVENTS_UNUSED)
+    void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * fdsrc CCEVENTS_UNUSED)
     {
       timeout_flag = true;
     }
 
     /* fprintf(stderr, "X[0] = %d, X[1] = %d\n", X[0], X[1]); */
     ccevents_fd_source_init(fdsrc, X[0]);
-    ccevents_source_set_timeout(fdsrc, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
     ccevents_fd_source_set(fdsrc, ccevents_query_fd_readability, event_handler);
+    ccevents_source_set_timeout(fdsrc, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
 
     ccevents_group_init(grp, INT_MAX);
 
     /* No event is pending: try to serve one. */
     {
-      assert(false == ccevents_source_do_one_event(L, grp, fdsrc));
+      assert(false == ccevents_source_do_one_event(L, fdsrc));
       assert(false == event_flag);
       assert(false == timeout_flag);
     }
@@ -100,7 +98,7 @@ test_standalone_readability (void)
     /* Write to the pipe, serve the event. */
     {
       assert(1 == write(X[1], "Z", 1));
-      assert(true == ccevents_source_do_one_event(L, grp, fdsrc));
+      assert(true == ccevents_source_do_one_event(L, fdsrc));
       cce_run_cleanup_handlers(L);
       {
 	char	buf[1] = { '0' };
@@ -140,29 +138,27 @@ test_standalone_writability (void)
     error_flag = true;
   } else {
     ccevents_group_t		grp[1];
-    ccevents_fd_source_t	fds[1];
+    ccevents_fd_source_t	fdsrc[1];
 
-    void event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
-			ccevents_source_t * fds CCEVENTS_UNUSED)
+    void event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * fdsrc CCEVENTS_UNUSED)
     {
       event_flag = true;
     }
-    void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
-			     ccevents_source_t * fds CCEVENTS_UNUSED)
+    void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * fdsrc CCEVENTS_UNUSED)
     {
       timeout_flag = true;
     }
 
     /* fprintf(stderr, "X[0] = %d, X[1] = %d\n", X[0], X[1]); */
-    ccevents_fd_source_init(fds, X[1]);
-    ccevents_source_set_timeout(fds, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
-    ccevents_fd_source_set(fds, ccevents_query_fd_writability, event_handler);
+    ccevents_fd_source_init(fdsrc, X[1]);
+    ccevents_source_set_timeout(fdsrc, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
+    ccevents_fd_source_set(fdsrc, ccevents_query_fd_writability, event_handler);
 
     ccevents_group_init(grp, INT_MAX);
 
     /* The pipe is always writable. */
     {
-      assert(true == ccevents_source_do_one_event(L, grp, fds));
+      assert(true == ccevents_source_do_one_event(L, fdsrc));
       cce_run_cleanup_handlers(L);
       assert(true  == event_flag);
       assert(false == timeout_flag);
@@ -242,26 +238,25 @@ test_standalone_exception (void)
       char			except_buf[2] = { '\0', '\0' };
       int			except_len = 0;
 
-      void readable_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
+      void readable_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
       {
-	ccevents_fd_source_t * fds = ccevents_cast_to_fd_source(src);
+	ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
 	int	len;
 	readable_flag = true;
-	len = recv(fds->fd, read_buf + read_len, 10, 0);
+	len = recv(fdsrc->fd, read_buf + read_len, 10, 0);
 	//fprintf(stderr, "%s: read %d bytes\n", __func__, len);
 	read_len += len;
       }
-      void exception_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src)
+      void exception_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
       {
-	ccevents_fd_source_t * fds = ccevents_cast_to_fd_source(src);
+	ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
 	int	len;
 	exception_flag = true;
-	len = recv(fds->fd, except_buf + except_len, 1, MSG_OOB);
+	len = recv(fdsrc->fd, except_buf + except_len, 1, MSG_OOB);
 	//fprintf(stderr, "%s: read %d bytes\n", __func__, len);
 	except_len += len;
       }
-      void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
-			       ccevents_source_t * src CCEVENTS_UNUSED)
+      void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
       {
 	timeout_flag = true;
       }
@@ -291,7 +286,7 @@ test_standalone_exception (void)
 
       /* Serve the readable event. */
       {
-	assert(true == ccevents_source_do_one_event(L, grp, &readable_fd_source));
+	assert(true == ccevents_source_do_one_event(L, &readable_fd_source));
 	assert(true == readable_flag);
 	assert(false == exception_flag);
 	assert(false == timeout_flag);
@@ -301,7 +296,7 @@ test_standalone_exception (void)
 
       /* Serve the readable event. */
       {
-	assert(true == ccevents_source_do_one_event(L, grp, &exception_fd_source));
+	assert(true == ccevents_source_do_one_event(L, &exception_fd_source));
 	assert(true == readable_flag);
 	assert(true == exception_flag);
 	assert(false == timeout_flag);
@@ -311,7 +306,7 @@ test_standalone_exception (void)
 
       /* Serve the readable event. */
       {
-	assert(true == ccevents_source_do_one_event(L, grp, &readable_fd_source));
+	assert(true == ccevents_source_do_one_event(L, &readable_fd_source));
 	assert(true == readable_flag);
 	//fprintf(stderr, "read_len = %d, read_buf = %s\n", (int)read_len, read_buf);
 	assert(0 == strncmp(read_buf, "123456789", 9));
@@ -366,15 +361,12 @@ test_talking_processes_with_groups (void)
     cce_register_cleanup_handler(L, &H1);
     cce_register_cleanup_handler(L, &H2);
 
-    auto ccevents_source_event_handler_fun_t master_read_event_handler;
-    auto ccevents_source_event_handler_fun_t master_write_event_handler;
-    auto ccevents_source_event_handler_fun_t master_expiration_handler;
-
     /* Master's write event handler. */
-    void master_write_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+    void master_write_event_handler (cce_location_t * there, ccevents_source_t * src)
     {
       ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
-      fprintf(stderr, "%s: master state %d\n", __func__, state);
+      ccevents_source_dequeue_itself(write_source);
+      fprintf(stderr, "%s: enter, master state %d\n", __func__, state);
       switch (state) {
       case 0: /* Send greetings. */
 	{
@@ -384,6 +376,7 @@ test_talking_processes_with_groups (void)
 	    cce_raise(there, cce_errno_C(errno));
 	  }
 	  state = 1;
+	  ccevents_group_enqueue_source(grp, read_source);
 	}
 	break;
       case 2: /* Send quitting. */
@@ -394,21 +387,22 @@ test_talking_processes_with_groups (void)
 	    cce_raise(there, cce_errno_C(errno));
 	  }
 	  state = 3;
+	  ccevents_group_enqueue_source(grp, read_source);
 	}
 	break;
       default:
 	assert(0);
 	break;
       }
-      ccevents_fd_source_set(read_source, ccevents_query_fd_readability, master_read_event_handler);
-      ccevents_group_enqueue_source(grp, read_source);
+      fprintf(stderr, "%s: leave, master state %d\n", __func__, state);
       sleep_awhile();
     }
 
     /* Master's read event handler. */
-    void master_read_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+    void master_read_event_handler (cce_location_t * there, ccevents_source_t * src)
     {
       ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
+      ccevents_source_dequeue_itself(read_source);
       fprintf(stderr, "%s: master state %d\n", __func__, state);
       switch (state) {
       case 1: /* Read greetings. */
@@ -424,11 +418,8 @@ test_talking_processes_with_groups (void)
 	  assert(0 == strncmp("hello\n", buf, strlen("hello\n")));
 	  fprintf(stderr, "master: recv '%s'\n", buf);
 	  state = 2;
-	  {
-	    ccevents_fd_source_set(write_source, ccevents_query_fd_writability, master_write_event_handler);
-	    ccevents_group_enqueue_source(grp, write_source);
-	    sleep_awhile();
-	  }
+	  ccevents_group_enqueue_source(grp, write_source);
+	  sleep_awhile();
 	}
 	break;
       case 3: /* Read quitting. */
@@ -453,13 +444,6 @@ test_talking_processes_with_groups (void)
       }
     }
 
-    void master_expiration_handler (cce_location_t * there CCEVENTS_UNUSED,
-				    ccevents_group_t * grp CCEVENTS_UNUSED,
-				    ccevents_source_t * src CCEVENTS_UNUSED)
-    {
-      return;
-    }
-
     /* Do the talking. */
     if (cce_location(L)) {
       cce_run_error_handlers(L);
@@ -467,8 +451,10 @@ test_talking_processes_with_groups (void)
     } else {
       ccevents_fd_source_init(read_source, read_fd);
       ccevents_fd_source_init(write_source, write_fd);
-      ccevents_source_set_timeout(read_source, *CCEVENTS_TIMEVAL_NEVER, master_expiration_handler);
-      ccevents_source_set_timeout(write_source, *CCEVENTS_TIMEVAL_NEVER, master_expiration_handler);
+      ccevents_fd_source_set(read_source,  ccevents_query_fd_readability, master_read_event_handler);
+      ccevents_fd_source_set(write_source, ccevents_query_fd_writability, master_write_event_handler);
+      ccevents_source_set_timeout(read_source,  *CCEVENTS_TIMEVAL_NEVER, ccevents_dummy_timeout_handler);
+      ccevents_source_set_timeout(write_source, *CCEVENTS_TIMEVAL_NEVER, ccevents_dummy_timeout_handler);
       ccevents_group_init(grp, INT_MAX);
       {
 	ccevents_fd_source_set(write_source, ccevents_query_fd_writability, master_write_event_handler);
@@ -504,12 +490,8 @@ test_talking_processes_with_groups (void)
     cce_register_cleanup_handler(L, &H1);
     cce_register_cleanup_handler(L, &H2);
 
-    auto ccevents_source_event_handler_fun_t slave_read_event_handler;
-    auto ccevents_source_event_handler_fun_t slave_write_event_handler;
-    auto ccevents_source_event_handler_fun_t slave_expiration_handler;
-
     /* Slave's read event handler. */
-    void slave_read_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+    void slave_read_event_handler (cce_location_t * there, ccevents_source_t * src)
     {
       ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
       fprintf(stderr, "%s: slave state %d\n", __func__, state);
@@ -527,11 +509,9 @@ test_talking_processes_with_groups (void)
 	  assert(0 == strncmp("hello\n", buf, strlen("hello\n")));
 	  fprintf(stderr, "slave: recv '%s'\n", buf);
 	  state = 1;
-	  {
-	    ccevents_fd_source_set(write_source, ccevents_query_fd_writability, slave_write_event_handler);
-	    ccevents_group_enqueue_source(grp, write_source);
-	    sleep_awhile();
-	  }
+	  ccevents_source_dequeue_itself(read_source);
+	  ccevents_group_enqueue_source(grp, write_source);
+	  sleep_awhile();
 	}
 	break;
       case 2: /* Read quitting. */
@@ -547,18 +527,16 @@ test_talking_processes_with_groups (void)
 	  assert(0 == strncmp("quit\n", buf, strlen("quit\n")));
 	  fprintf(stderr, "slave: recv '%s'\n", buf);
 	  state = 3;
-	  {
-	    ccevents_fd_source_set(write_source, ccevents_query_fd_writability, slave_write_event_handler);
-	    ccevents_group_enqueue_source(grp, write_source);
-	    sleep_awhile();
-	  }
+	  ccevents_source_dequeue_itself(read_source);
+	  ccevents_group_enqueue_source(grp, write_source);
+	  sleep_awhile();
 	}
 	break;
       }
     }
 
     /* Slave's write event handler. */
-    void slave_write_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+    void slave_write_event_handler (cce_location_t * there, ccevents_source_t * src)
     {
       ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
       fprintf(stderr, "%s: slave state %d\n", __func__, state);
@@ -572,11 +550,9 @@ test_talking_processes_with_groups (void)
 	  }
 	  fprintf(stderr, "slave: sent 'hello'\n");
 	  state = 2;
-	  {
-	    ccevents_fd_source_set(read_source, ccevents_query_fd_readability, slave_read_event_handler);
-	    ccevents_group_enqueue_source(grp, read_source);
-	    sleep_awhile();
-	  }
+	  ccevents_source_dequeue_itself(write_source);
+	  ccevents_group_enqueue_source(grp, read_source);
+	  sleep_awhile();
 	}
 	break;
       case 3: /* Send quitting. */
@@ -587,15 +563,10 @@ test_talking_processes_with_groups (void)
 	    cce_raise(there, cce_errno_C(errno));
 	  }
 	  state = 0;
+	  ccevents_source_dequeue_itself(src);
 	}
 	break;
       }
-    }
-
-    void slave_expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp CCEVENTS_UNUSED,
-				   ccevents_source_t * src CCEVENTS_UNUSED)
-    {
-      return;
     }
 
     /* Do the talking. */
@@ -606,12 +577,13 @@ test_talking_processes_with_groups (void)
     } else {
       ccevents_fd_source_init(read_source, read_fd);
       ccevents_fd_source_init(write_source, write_fd);
-      ccevents_source_set_timeout( read_source, *CCEVENTS_TIMEVAL_NEVER, slave_expiration_handler);
-      ccevents_source_set_timeout(write_source, *CCEVENTS_TIMEVAL_NEVER, slave_expiration_handler);
+      ccevents_fd_source_set(read_source,  ccevents_query_fd_readability, slave_read_event_handler);
+      ccevents_fd_source_set(write_source, ccevents_query_fd_writability, slave_write_event_handler);
+      ccevents_source_set_timeout( read_source, *CCEVENTS_TIMEVAL_NEVER, ccevents_dummy_timeout_handler);
+      ccevents_source_set_timeout(write_source, *CCEVENTS_TIMEVAL_NEVER, ccevents_dummy_timeout_handler);
 
       ccevents_group_init(grp, INT_MAX);
       {
-	ccevents_fd_source_set(read_source, ccevents_query_fd_readability, slave_read_event_handler);
 	ccevents_group_enqueue_source(grp, read_source);
       }
       ccevents_group_enter(grp);

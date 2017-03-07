@@ -41,19 +41,16 @@ test_loop_single_group (void)
   volatile bool			error_flag = false;
   volatile int			count = 0;
 
-  bool event_inquirer (cce_location_t * there CCEVENTS_UNUSED,
-		       ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
+  bool event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     return true;
   }
-  void event_handler (cce_location_t * there CCEVENTS_UNUSED,
-		      ccevents_group_t * grp, ccevents_source_t * src)
+  void event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
   {
     ++count;
-    if (count < 4) {
-      ccevents_group_enqueue_source(grp, src);
-    } else {
-      ccevents_loop_remove_group(loop, grp);
+    if (count == 4) {
+      ccevents_group_dequeue_itself(ccevents_source_group(src));
+      ccevents_source_dequeue_itself(src);
     }
   }
 
@@ -91,21 +88,18 @@ test_loop_post_exit (void)
   volatile bool			error_flag = false;
   volatile int			count = 0;
 
-  bool event_inquirer (cce_location_t * there CCEVENTS_UNUSED,
-		       ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
+  bool event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     return true;
   }
-  void event_handler (cce_location_t * there CCEVENTS_UNUSED,
-		      ccevents_group_t * grp, ccevents_source_t * src)
+  void event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     ++count;
-    ccevents_group_enqueue_source(grp, src);
     if (4 == count) {
       ccevents_group_post_request_to_leave_asap(grp);
       ccevents_loop_post_request_to_leave_asap(loop);
     }
-    if (0) fprintf(stderr, "%s: leaving count=%d\n", __func__, count);
+    if (0) { fprintf(stderr, "%s: leaving count=%d\n", __func__, count); }
   }
 
   if (cce_location(L)) {
@@ -142,28 +136,21 @@ test_loop_multi_groups (void)
   volatile bool			error_flag = false;
   volatile int			countA = 0, countB = 0, countC = 0;
 
-  bool event_inquirer (cce_location_t * there CCEVENTS_UNUSED,
-		       ccevents_group_t * grp CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
+  bool event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     return true;
   }
-  void event_handler_A (cce_location_t * there CCEVENTS_UNUSED,
-			ccevents_group_t * grp, ccevents_source_t * src)
+  void event_handler_A (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     ++countA;
-    ccevents_group_enqueue_source(grp, src);
   }
-  void event_handler_B (cce_location_t * there CCEVENTS_UNUSED,
-			ccevents_group_t * grp, ccevents_source_t * src)
+  void event_handler_B (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     ++countB;
-    ccevents_group_enqueue_source(grp, src);
   }
-  void event_handler_C (cce_location_t * there CCEVENTS_UNUSED,
-			ccevents_group_t * grp, ccevents_source_t * src)
+  void event_handler_C (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     ++countC;
-    ccevents_group_enqueue_source(grp, src);
     if (4 == countC) {
       ccevents_loop_post_request_to_leave_asap(loop);
     }

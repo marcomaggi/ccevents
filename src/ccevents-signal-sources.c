@@ -44,9 +44,7 @@ signal_bub_handler (int signum)
 /* The signal handler registered by the BUB API. */
 {
   arrived_signals[signum] = 1;
-  if (0) {
-    fprintf(stderr, "%s: %d\n", __func__, signum);
-  }
+  if (0) { fprintf(stderr, "%s: %d\n", __func__, signum); }
 }
 
 /** --------------------------------------------------------------------
@@ -112,24 +110,20 @@ ccevents_signal_bub_delivered (int signum)
  ** ----------------------------------------------------------------- */
 
 static bool
-method_event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_group_t * grp, ccevents_source_t * src)
+method_event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
 /* Return true if the signal  SIGSRC->SIGNUM has been delivered at least
    once since  the last call to  "ccevents_signal_bub_acquire()".  Clear
    the signal flag.
 */
 {
   CCEVENTS_PC(ccevents_signal_bub_source_t, sigsrc, src);
-  bool	flag = ccevents_signal_bub_delivered(sigsrc->signum);
-  if (! flag) {
-    ccevents_group_enqueue_source(grp, src);
-  }
-  return flag;
+  return ccevents_signal_bub_delivered(sigsrc->signum);
 }
 static void
-method_event_handler (cce_location_t * there, ccevents_group_t * grp, ccevents_source_t * src)
+method_event_handler (cce_location_t * there, ccevents_source_t * src)
 {
   CCEVENTS_PC(ccevents_signal_bub_source_t, sigsrc, src);
-  return sigsrc->event_handler(there, grp, sigsrc);
+  return sigsrc->event_handler(there, sigsrc);
 }
 static const ccevents_source_vtable_t methods_table = {
   .event_inquirer	= method_event_inquirer,
@@ -152,7 +146,7 @@ ccevents_signal_bub_source_init (ccevents_signal_bub_source_t * sigsrc, int sign
 
 void
 ccevents_signal_bub_source_set (ccevents_signal_bub_source_t * sigsrc,
-				ccevents_source_event_handler_fun_t      * event_handler)
+				ccevents_event_handler_t * event_handler)
 /* Set up an already initialised source to wait for an event.  Start the
    expiration timer.
 */

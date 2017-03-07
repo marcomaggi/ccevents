@@ -5,11 +5,15 @@
 
   Abstract
 
-
+	Groups are collections of event sources that must be queried for
+	pending events with the same priority.  Multiple groups are used
+	to establish a  priority order between sets  of sources.  Events
+	from higher priority groups should  be served before events from
+	lower priority groups.
 
   Copyright (C) 2017 Marco Maggi <marco.maggi-ipsu@poste.it>
 
-  This is free software; you  can redistribute it and/or modify it under
+  This is free software; you can  redistribute it and/or modify it under
   the terms of the GNU Lesser General Public License as published by the
   Free Software  Foundation; either version  3.0 of the License,  or (at
   your option) any later version.
@@ -28,75 +32,51 @@
 
 #include "ccevents-internals.h"
 
-void
-ccevents_group_init (ccevents_group_t * grp, size_t served_events_watermark)
+
+/** --------------------------------------------------------------------
+ ** Helpers.
+ ** ----------------------------------------------------------------- */
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline ccevents_source_t *
+ccevents_group_current_source (ccevents_group_t * grp)
 {
-  ccevents_queue_init(&(grp->sources));
-  grp->prev			= NULL;
-  grp->next			= NULL;
-  grp->request_to_leave_asap	= false;
-  grp->served_events_watermark	= served_events_watermark;
+  return (ccevents_source_t *)ccevents_queue_current_node(grp->sources);
 }
 
-bool
-ccevents_group_queue_is_not_empty (const ccevents_group_t * grp)
+__attribute__((nonnull(1),always_inline))
+static inline void
+ccevents_group_advance_to_next_source (ccevents_group_t * grp)
 {
-  return ccevents_queue_is_not_empty(&(grp->sources));
+  ccevents_queue_advance_current(grp->sources);
 }
 
-size_t
-ccevents_group_number_of_sources (const ccevents_group_t * grp)
+__attribute__((pure,nonnull(1),always_inline))
+static inline bool
+ccevents_group_no_request_to_leave_asap (ccevents_group_t * grp)
 {
-  return ccevents_queue_number_of_items(&(grp->sources));
+  return (grp->request_to_leave_asap)? false : true;
 }
 
-bool
-ccevents_group_contains_source (const ccevents_group_t * grp, const ccevents_source_t * src)
+__attribute__((nonnull(1),always_inline))
+static inline bool
+ccevents_group_servicing_attempts_watermark_not_reached (ccevents_group_t * grp, size_t servicing_atempts_count)
 {
-  return ccevents_queue_contains_item (&(grp->sources), src);
+  return (servicing_atempts_count < grp->servicing_attempts_watermark);
 }
 
-void
-ccevents_group_enqueue_source (ccevents_group_t * grp, ccevents_source_t * new_tail)
-{
-  ccevents_queue_enqueue (&(grp->sources), new_tail);
-}
-
-ccevents_source_t *
-ccevents_group_dequeue_source (ccevents_group_t * grp)
-{
-  return (ccevents_source_t *)ccevents_queue_dequeue(&(grp->sources));
-}
+
+/** --------------------------------------------------------------------
+ ** Group functions.
+ ** ----------------------------------------------------------------- */
 
 void
-ccevents_group_remove_source (ccevents_group_t * grp, ccevents_source_t * src)
+ccevents_group_init (ccevents_group_t * grp, size_t servicing_attempts_watermark)
 {
-  ccevents_queue_remove(&(grp->sources), src);
-}
-
-bool
-ccevents_group_run_do_one_event (ccevents_group_t * grp)
-/* Dequeue the next  events source and serve one event  from it.  Return
-   TRUE if, after  serving one event: more event sources  are waiting to
-   be  served; otherwise  return FALSE  if  no more  events sources  are
-   waiting.
-*/
-{
-  ccevents_source_t *	next_source = ccevents_group_dequeue_source(grp);
-  if (next_source) {
-    /* We establish  a location  here to  catch and  discard exceptional
-       conditions raised by the events source. */
-    cce_location_t	L[1];
-
-    if (cce_location(L)) {
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
-    } else {
-      ccevents_source_do_one_event(L, grp, next_source);
-      cce_run_cleanup_handlers(L);
-    }
-  }
-  return ccevents_group_queue_is_not_empty(grp);
+  ccevents_queue_node_init(grp);
+  ccevents_queue_init(grp->sources);
+  grp->request_to_leave_asap		= false;
+  grp->servicing_attempts_watermark	= servicing_attempts_watermark;
 }
 
 void
@@ -106,41 +86,37 @@ ccevents_group_enter (ccevents_group_t * grp)
    level has been reached.
 */
 {
-  size_t	served_events_count = 0;
+  grp->request_to_leave_asap	= false;
+  {
+    volatile size_t	servicing_attempts_count = 0;
 
-  /* Set up GRP to start the next run of events servicing.  The run will
-     serve at most SERVED_EVENTS_WATERMARK events. */
-  {
-    grp->request_to_leave_asap	= false;
-    served_events_count		= 0;
-  }
-  /* Enter the  loop and serve events  until: no more event  sources are
-     enqueued;  a  request  to  leave  the  loop-out  is  detected;  the
-     watermark level has been reached. */
-  {
-    for (bool one_more_source = true;
-	 ((!(grp->request_to_leave_asap)) && one_more_source && (served_events_count < grp->served_events_watermark));
-	 one_more_source = ccevents_group_run_do_one_event(grp)) {
-      ++(served_events_count);
-      if (0) {
-	fprintf(stderr, "%s: loop, one_more_source=%d, count=%ld, max=%ld\n",
-		__func__, (int)one_more_source, served_events_count,
-		grp->served_events_watermark);
+    while (ccevents_group_no_request_to_leave_asap(grp) &&
+	   ccevents_group_queue_is_not_empty(grp)       &&
+	   ccevents_group_servicing_attempts_watermark_not_reached(grp, servicing_attempts_count)) {
+      ccevents_source_t *	next_source = ccevents_group_current_source(grp);
+      if (next_source) {
+	cce_location_t	L[1];
+
+	/* We need to  remember that whenever we  apply the do_one_event
+	   function to a source: the  source's methods might dequeue the
+	   source  itself from  the group  making the  next one  the new
+	   current.  So,  to avoid double  advancing, we advance  now to
+	   the next source. */
+	ccevents_group_advance_to_next_source(grp);
+
+	++servicing_attempts_count;
+
+	if (cce_location(L)) {
+	  cce_run_error_handlers(L);
+	  cce_condition_free(cce_condition(L));
+	} else {
+	  ccevents_source_do_one_event(L, next_source);
+	  cce_run_cleanup_handlers(L);
+	}
       }
     }
   }
-  /* Reset GRP after ending a run of events servicing. */
-  {
-    grp->request_to_leave_asap	= false;
-    served_events_count		= 0;
-  }
-}
-
-void
-ccevents_group_post_request_to_leave_asap (ccevents_group_t * grp)
-/* Post a request to exit ASAP the loop for this group. */
-{
-  grp->request_to_leave_asap = true;
+  grp->request_to_leave_asap	= false;
 }
 
 /* end of file */

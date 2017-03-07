@@ -37,12 +37,11 @@ test_single_timer_expiration (void)
   volatile bool		error_flag      = false;
   volatile bool		expiration_flag = false;
 
-  void expiration_handler (cce_location_t    * there CCEVENTS_UNUSED,
-			   ccevents_group_t  * grp   CCEVENTS_UNUSED,
-			   ccevents_source_t * src   CCEVENTS_UNUSED)
+  void timeout_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
   {
     //fprintf(stderr, "%s: here\n", __func__);
     expiration_flag = true;
+    ccevents_source_dequeue_itself(src);
   }
 
   {
@@ -63,7 +62,7 @@ test_single_timer_expiration (void)
 
       expiration_to = ccevents_timeout_init(L, 0, 1, 0);
       expiration_tv = ccevents_timeout_start(L, expiration_to);
-      ccevents_source_set_timeout(timsrc, expiration_tv, expiration_handler);
+      ccevents_source_set_timeout(timsrc, expiration_tv, timeout_handler);
 
       ccevents_group_init(grp, 100);
       ccevents_group_enqueue_source(grp, timsrc);
