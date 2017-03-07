@@ -36,6 +36,7 @@ extern "C" {
 #endif
 
 #include <ccexceptions.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include <limits.h>
 #include <time.h>
@@ -475,9 +476,6 @@ struct ccevents_source_t {
 
   const ccevents_source_vtable_t *	vtable;
 
-  /* NULL or the group in which this source is enqueued. */
-  ccevents_group_t *	grp;
-
   /* The expiration time for the next event in this event source. */
   ccevents_timeval_t		expiration_time;
   /* The expiration handler for this  event source.  Pointer to function
@@ -512,14 +510,17 @@ static inline void
 ccevents_source_dequeue_itself (ccevents_source_t * src)
 {
   ccevents_queue_node_dequeue_itself(src);
-  src->grp = NULL;
 }
 
 __attribute__((pure,nonnull(1),always_inline))
 static inline ccevents_group_t *
-ccevents_source_group (ccevents_source_t * src)
+ccevents_source_get_group (ccevents_source_t * src)
 {
-  return src->grp;
+  if (src->base) {
+    return (ccevents_group_t *)((src->base) - (ptrdiff_t)offsetof(struct ccevents_source_t, base));
+  } else {
+    return NULL;
+  }
 }
 
 ccevents_decl ccevents_event_inquirer_t		ccevents_dummy_event_inquirer_true;
@@ -703,6 +704,17 @@ ccevents_group_post_request_to_leave_asap (ccevents_group_t * grp)
   grp->request_to_leave_asap = true;
 }
 
+__attribute__((pure,nonnull(1),always_inline))
+static inline ccevents_loop_t *
+ccevents_group_get_loop (ccevents_group_t * src)
+{
+  if (src->base) {
+    return (ccevents_loop_t *)((src->base) - (ptrdiff_t)offsetof(struct ccevents_group_t, base));
+  } else {
+    return NULL;
+  }
+}
+
 /* ------------------------------------------------------------------ */
 
 __attribute__((nonnull(1),always_inline))
@@ -740,7 +752,6 @@ static inline void
 ccevents_group_enqueue_source (ccevents_group_t * grp, ccevents_source_t * new_source)
 {
   ccevents_queue_enqueue(grp->sources, new_source);
-  new_source->grp = grp;
 }
 
 __attribute__((nonnull(1),always_inline))

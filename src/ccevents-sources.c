@@ -73,7 +73,6 @@ ccevents_source_init (ccevents_source_t * src, const ccevents_source_vtable_t * 
 {
   ccevents_queue_node_init(src);
   src->vtable			= vtable;
-  src->grp			= NULL;
   src->expiration_time		= *CCEVENTS_TIMEVAL_NEVER;
   src->expiration_handler	= ccevents_dummy_timeout_handler;
 }

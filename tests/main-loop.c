@@ -49,7 +49,7 @@ test_loop_single_group (void)
   {
     ++count;
     if (count == 4) {
-      ccevents_group_dequeue_itself(ccevents_source_group(src));
+      ccevents_group_dequeue_itself(ccevents_source_get_group(src));
       ccevents_source_dequeue_itself(src);
     }
   }

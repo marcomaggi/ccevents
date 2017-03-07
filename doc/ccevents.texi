@@ -1107,7 +1107,7 @@ Return @true{} if the source is enqueued in a group, otherwise return @false{}.
 @end deftypefun
 
 
-@deftypefun {ccevents_group_t *} ccevents_source_group (ccevents_source_t * @var{src})
+@deftypefun {ccevents_group_t *} ccevents_source_get_group (ccevents_source_t * @var{src})
 If the source is enqueued in a group: return a pointer to that group; otherwise return @false{}.
 @end deftypefun
 
@@ -1892,6 +1892,11 @@ called by an event handler to cause a premature return from a call to @cfunc{cce
 
 @deftypefun void ccevents_group_dequeue_itself (ccevents_group_t * @var{grp})
 Remove the group @var{grp} from its loop.  If @var{grp} is not enqueued in a loop: nothing happens.
+@end deftypefun
+
+
+@deftypefun {ccevents_loop_t *} ccevents_group_get_loop (ccevents_group_t * @var{group})
+If the group is enqueued in a loop: return a pointer to that loop; otherwise return @false{}.
 @end deftypefun
 
 @c ------------------------------------------------------------------------
