@@ -1107,7 +1107,7 @@ Return @true{} if the source is enqueued in a group, otherwise return @false{}.
 @end deftypefun
 
 
-@deftypefun {ccevents_group_t *} ccevents_source_get_group (ccevents_source_t * @var{src})
+@deftypefun {ccevents_group_t *} ccevents_source_get_group (const ccevents_source_t * @var{src})
 If the source is enqueued in a group: return a pointer to that group; otherwise return @false{}.
 @end deftypefun
 
@@ -1878,13 +1878,27 @@ set to @var{servicing_attempts_watermark}.
 
 @deftypefun void ccevents_group_enter (ccevents_group_t * @var{grp})
 Enter the loop for this group and perform the configured number of attempts to serve events from the
-enqueued sources, until: the number of attempts reaches the configured watermark level; no more
-event sources are enqueued; a request to exit is posted with
-@cfunc{ccevents_group_post_request_to_leave_asap}.
+enqueued sources, until:
+
+@itemize
+@item
+The number of attempts reaches the configured watermark level.
+
+@item
+No more event sources are enqueued.  We need to remember that every time we attempt to serve an
+event source: its methods might dequeue it from the group.
+
+@item
+A request to exit this group's loop is posted with @cfunc{ccevents_group_post_request_to_leave}.
+
+@item
+This group is enqueued in a loop and a request to exit the main loop is posted with
+@cfunc{ccevents_loop_post_request_to_leave}.
+@end itemize
 @end deftypefun
 
 
-@deftypefun void ccevents_group_post_request_to_leave_asap (ccevents_group_t * @var{grp})
+@deftypefun void ccevents_group_post_request_to_leave (ccevents_group_t * @var{grp})
 Post a request to exit as soon as possible the loop for this group.  This function is meant to be
 called by an event handler to cause a premature return from a call to @cfunc{ccevents_group_enter}.
 @end deftypefun
@@ -1895,7 +1909,7 @@ Remove the group @var{grp} from its loop.  If @var{grp} is not enqueued in a loo
 @end deftypefun
 
 
-@deftypefun {ccevents_loop_t *} ccevents_group_get_loop (ccevents_group_t * @var{group})
+@deftypefun {ccevents_loop_t *} ccevents_group_get_loop (const ccevents_group_t * @var{group})
 If the group is enqueued in a loop: return a pointer to that loop; otherwise return @false{}.
 @end deftypefun
 
@@ -1903,8 +1917,10 @@ If the group is enqueued in a loop: return a pointer to that loop; otherwise ret
 
 @subsubheading Enqueuing and dequeuing sources
 
+
 @deftypefun void ccevents_group_enqueue_source (ccevents_group_t * @var{grp}, ccevents_source_t * @var{src})
-Enqueue the event source @var{src} in the group @var{grp}.
+Enqueue the event source @var{src} in the group @var{grp}.  The new source becomes the ``current''
+source and it is serviced at the next iteration of @cfunc{ccevents_group_enter}.
 @end deftypefun
 
 
@@ -1994,17 +2010,23 @@ empty.
 
 
 @deftypefun void ccevents_loop_enter (ccevents_loop_t * @var{loop})
-Enter the loop and serve events until: no more groups are enqueued; a request to exit is posted with
-@cfunc{ccevents_loop_post_request_to_leave_asap}.
+Enter the loop and serve events until:
+
+@itemize
+@item
+No more groups are enqueued.
+
+@item
+A request to exit is posted with @cfunc{ccevents_loop_post_request_to_leave}.
+@end itemize
 
 Notice that empty groups are @strong{not} removed from a main loop; it is responsibility of the user
 code to do it.  The right way to exit from a call to this function is to invoke
-@cfunc{ccevents_loop_post_request_to_leave_asap}; for a quick exit we must also invoke
-@cfunc{ccevents_group_post_request_to_leave_asap} for the currently running group.
+@cfunc{ccevents_loop_post_request_to_leave}.
 @end deftypefun
 
 
-@deftypefun void ccevents_loop_post_request_to_leave_asap (ccevents_loop_t * @var{loop})
+@deftypefun void ccevents_loop_post_request_to_leave (ccevents_loop_t * @var{loop})
 Post a request to exit as soon as possible the loop.  This function is meant to be called by an
 event handler to cause a premature return from a call to @cfunc{ccevents_loop_enter}.
 @end deftypefun
@@ -2015,7 +2037,8 @@ event handler to cause a premature return from a call to @cfunc{ccevents_loop_en
 
 
 @deftypefun void ccevents_loop_enqueue_group (ccevents_loop_t * @var{loop}, ccevents_group_t * @var{grp})
-Enqueue the group @var{grp} in @var{loop}.
+Enqueue the group @var{grp} in @var{loop}.  The new group becomes the ``current'' group and it is
+serviced at the next iteration of @cfunc{ccevents_loop_enter}.
 @end deftypefun
 
 

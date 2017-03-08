@@ -477,10 +477,10 @@ struct ccevents_source_t {
   const ccevents_source_vtable_t *	vtable;
 
   /* The expiration time for the next event in this event source. */
-  ccevents_timeval_t		expiration_time;
+  ccevents_timeval_t			expiration_time;
   /* The expiration handler for this  event source.  Pointer to function
      to be called whenever this event expires. */
-  ccevents_timeout_handler_t * expiration_handler;
+  ccevents_timeout_handler_t *		expiration_handler;
 };
 
 ccevents_decl ccevents_event_inquirer_t		ccevents_source_query;
@@ -510,17 +510,6 @@ static inline void
 ccevents_source_dequeue_itself (ccevents_source_t * src)
 {
   ccevents_queue_node_dequeue_itself(src);
-}
-
-__attribute__((pure,nonnull(1),always_inline))
-static inline ccevents_group_t *
-ccevents_source_get_group (ccevents_source_t * src)
-{
-  if (src->base) {
-    return (ccevents_group_t *)((src->base) - (ptrdiff_t)offsetof(struct ccevents_source_t, base));
-  } else {
-    return NULL;
-  }
 }
 
 ccevents_decl ccevents_event_inquirer_t		ccevents_dummy_event_inquirer_true;
@@ -669,7 +658,7 @@ ccevents_cast_to_timer_source_from_source (ccevents_source_t * src)
 
 
 /** --------------------------------------------------------------------
- ** Sources groups.
+ ** Groups of event sources.
  ** ----------------------------------------------------------------- */
 
 /* Groups  are collection  of event  sources  that must  be queried  for
@@ -683,7 +672,7 @@ struct ccevents_group_t {
 
   /* True  if a  request  to leave  the  loop as  soon  as possible  was
      posted. */
-  bool		request_to_leave_asap;
+  bool		request_to_leave;
 
   /* Maximum  number of  consecutive event  servicing attempts  for this
      group.   When  the count  reaches  the  watermark level:  the  loop
@@ -699,20 +688,9 @@ ccevents_decl void ccevents_group_enter (ccevents_group_t * grp)
 
 __attribute__((nonnull(1),always_inline))
 static inline void
-ccevents_group_post_request_to_leave_asap (ccevents_group_t * grp)
+ccevents_group_post_request_to_leave (ccevents_group_t * grp)
 {
-  grp->request_to_leave_asap = true;
-}
-
-__attribute__((pure,nonnull(1),always_inline))
-static inline ccevents_loop_t *
-ccevents_group_get_loop (ccevents_group_t * src)
-{
-  if (src->base) {
-    return (ccevents_loop_t *)((src->base) - (ptrdiff_t)offsetof(struct ccevents_group_t, base));
-  } else {
-    return NULL;
-  }
+  grp->request_to_leave = true;
 }
 
 /* ------------------------------------------------------------------ */
@@ -774,7 +752,7 @@ struct ccevents_loop_t {
 
   /* True  if a  request  to leave  the  loop as  soon  as possible  was
      posted. */
-  bool		request_to_leave_asap;
+  bool		request_to_leave;
 };
 
 ccevents_decl void ccevents_loop_init (ccevents_loop_t * loop)
@@ -785,10 +763,10 @@ ccevents_decl void ccevents_loop_enter (ccevents_loop_t * loop)
 
 __attribute__((pure,nonnull(1),always_inline))
 static inline void
-ccevents_loop_post_request_to_leave_asap (ccevents_loop_t * loop)
+ccevents_loop_post_request_to_leave (ccevents_loop_t * loop)
 /* Post a request to exit ASAP the loop for this loop. */
 {
-  loop->request_to_leave_asap = true;
+  loop->request_to_leave = true;
 }
 
 /* ------------------------------------------------------------------ */
@@ -828,6 +806,37 @@ static inline bool
 ccevents_loop_contains_group (const ccevents_loop_t * loop, const ccevents_group_t * grp)
 {
   return ccevents_queue_contains_item(loop->groups, grp);
+}
+
+
+/** --------------------------------------------------------------------
+ ** Late functions.
+ ** ----------------------------------------------------------------- */
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline ccevents_group_t *
+ccevents_source_get_group (const ccevents_source_t * src)
+/* Given a  pointer to  source: if  the source is  enqueued in  a group,
+   return  the  pointer  to  the group;  otherwise  return  NULL.   This
+   function is defined here because it  needs the full definition of the
+   structure "ccevents_group_t". */
+{
+  return (src->base)? \
+    (ccevents_group_t *)((uint8_t*)(src->base) - (ptrdiff_t)offsetof(struct ccevents_group_t, sources)) :
+    NULL;
+}
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline ccevents_loop_t *
+ccevents_group_get_loop (const ccevents_group_t * grp)
+/* Given a pointer to group: if the  group is enqueued in a loop, return
+   the pointer  to the  loop; otherwise return  NULL.  This  function is
+   defined here  because it needs  the full definition of  the structure
+   "ccevents_loop_t". */
+{
+  return (grp->base)?
+    (ccevents_loop_t *)((uint8_t*)(grp->base) - (ptrdiff_t)offsetof(struct ccevents_loop_t, groups)) :
+    NULL;
 }
 
 

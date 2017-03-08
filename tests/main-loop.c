@@ -31,8 +31,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 static void
-test_loop_single_group (void)
+test_loop_single_group_single (void)
+/* A single group  with a single source.  Both the  group and the source
+   dequeue themselves triggering the loop exit. */
 {
   ccevents_loop_t		loop[1];
   ccevents_group_t		grp[1];
@@ -65,6 +68,7 @@ test_loop_single_group (void)
     ccevents_task_source_set(src, event_inquirer, event_handler);
     ccevents_group_enqueue_source(grp, src);
     ccevents_loop_enqueue_group(loop, grp);
+    fprintf(stderr, "%s: grp=%p\n", __func__, grp);
     ccevents_loop_enter(loop);
     cce_run_cleanup_handlers(L);
   }
@@ -78,8 +82,11 @@ test_loop_single_group (void)
   }
 }
 
+
 static void
-test_loop_post_exit (void)
+test_loop_post_exit_in_loop (void)
+/* A single group with  a single source.  A request to  exit the loop is
+   posted. */
 {
   ccevents_loop_t		loop[1];
   ccevents_group_t		grp[1];
@@ -96,8 +103,7 @@ test_loop_post_exit (void)
   {
     ++count;
     if (4 == count) {
-      ccevents_group_post_request_to_leave_asap(grp);
-      ccevents_loop_post_request_to_leave_asap(loop);
+      ccevents_loop_post_request_to_leave(loop);
     }
     if (0) { fprintf(stderr, "%s: leaving count=%d\n", __func__, count); }
   }
@@ -126,6 +132,7 @@ test_loop_post_exit (void)
   }
 }
 
+
 static void
 test_loop_multi_groups (void)
 {
@@ -143,16 +150,19 @@ test_loop_multi_groups (void)
   void event_handler_A (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     ++countA;
+    if (1) { fprintf(stderr, "%s: countA=%d\n", __func__, countA); }
   }
   void event_handler_B (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     ++countB;
+    if (1) { fprintf(stderr, "%s: countB=%d\n", __func__, countB); }
   }
   void event_handler_C (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     ++countC;
+    if (1) { fprintf(stderr, "%s: countC=%d\n", __func__, countC); }
     if (4 == countC) {
-      ccevents_loop_post_request_to_leave_asap(loop);
+      ccevents_loop_post_request_to_leave(loop);
     }
   }
 
@@ -179,9 +189,9 @@ test_loop_multi_groups (void)
     ccevents_group_enqueue_source(grpB, srcB);
     ccevents_group_enqueue_source(grpC, srcC);
 
-    ccevents_loop_enqueue_group(loop, grpA);
-    ccevents_loop_enqueue_group(loop, grpB);
     ccevents_loop_enqueue_group(loop, grpC);
+    ccevents_loop_enqueue_group(loop, grpB);
+    ccevents_loop_enqueue_group(loop, grpA);
 
     ccevents_loop_enter(loop);
     cce_run_cleanup_handlers(L);
@@ -195,13 +205,14 @@ test_loop_multi_groups (void)
   assert(4 == countC);
 }
 
+
 int
 main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
   ccevents_init();
   //
-  if (1) test_loop_single_group();
-  if (1) test_loop_post_exit();
+  if (1) test_loop_single_group_single();
+  if (1) test_loop_post_exit_in_loop();
   if (1) test_loop_multi_groups();
   //
   exit(EXIT_SUCCESS);

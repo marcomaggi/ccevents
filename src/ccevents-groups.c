@@ -53,9 +53,18 @@ ccevents_group_advance_to_next_source (ccevents_group_t * grp)
 
 __attribute__((pure,nonnull(1),always_inline))
 static inline bool
-ccevents_group_no_request_to_leave_asap (ccevents_group_t * grp)
+ccevents_group_no_request_to_leave (ccevents_group_t * grp)
 {
-  return (grp->request_to_leave_asap)? false : true;
+  if (grp->request_to_leave) {
+    return false;
+  } else {
+    ccevents_loop_t *	loop = ccevents_group_get_loop(grp);
+    if (loop) {
+      return (loop->request_to_leave)? false : true;
+    } else {
+      return true;
+    }
+  }
 }
 
 __attribute__((nonnull(1),always_inline))
@@ -75,7 +84,7 @@ ccevents_group_init (ccevents_group_t * grp, size_t servicing_attempts_watermark
 {
   ccevents_queue_node_init(grp);
   ccevents_queue_init(grp->sources);
-  grp->request_to_leave_asap		= false;
+  grp->request_to_leave		= false;
   grp->servicing_attempts_watermark	= servicing_attempts_watermark;
 }
 
@@ -86,11 +95,11 @@ ccevents_group_enter (ccevents_group_t * grp)
    level has been reached.
 */
 {
-  grp->request_to_leave_asap	= false;
+  grp->request_to_leave	= false;
   {
     volatile size_t	servicing_attempts_count = 0;
 
-    while (ccevents_group_no_request_to_leave_asap(grp) &&
+    while (ccevents_group_no_request_to_leave(grp) &&
 	   ccevents_group_queue_is_not_empty(grp)       &&
 	   ccevents_group_servicing_attempts_watermark_not_reached(grp, servicing_attempts_count)) {
       ccevents_source_t *	next_source = ccevents_group_current_source(grp);
@@ -116,7 +125,7 @@ ccevents_group_enter (ccevents_group_t * grp)
       }
     }
   }
-  grp->request_to_leave_asap	= false;
+  grp->request_to_leave	= false;
 }
 
 /* end of file */

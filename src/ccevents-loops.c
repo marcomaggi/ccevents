@@ -49,9 +49,9 @@ ccevents_loop_advance_to_next_group (ccevents_loop_t * loop)
 
 __attribute__((pure,nonnull(1),always_inline))
 static inline bool
-ccevents_loop_no_request_to_leave_asap (const ccevents_loop_t * loop)
+ccevents_loop_no_request_to_leave (const ccevents_loop_t * loop)
 {
-  return (loop->request_to_leave_asap)? false : true;
+  return (loop->request_to_leave)? false : true;
 }
 
 
@@ -63,15 +63,15 @@ void
 ccevents_loop_init (ccevents_loop_t * loop)
 {
   ccevents_queue_init(loop->groups);
-  loop->request_to_leave_asap	= false;
+  loop->request_to_leave	= false;
 }
 
 void
 ccevents_loop_enter (ccevents_loop_t * loop)
 {
-  loop->request_to_leave_asap = false;
+  loop->request_to_leave = false;
   {
-    while (ccevents_loop_no_request_to_leave_asap(loop) &&
+    while (ccevents_loop_no_request_to_leave(loop) &&
 	   ccevents_loop_queue_is_not_empty(loop)) {
       ccevents_group_t *	grp = ccevents_loop_current_group(loop);
       if (grp) {
@@ -85,7 +85,7 @@ ccevents_loop_enter (ccevents_loop_t * loop)
       }
     }
   }
-  loop->request_to_leave_asap = false;
+  loop->request_to_leave = false;
 }
 
 /* end of file */
