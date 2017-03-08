@@ -68,7 +68,6 @@ test_loop_single_group_single (void)
     ccevents_task_source_set(src, event_inquirer, event_handler);
     ccevents_group_enqueue_source(grp, src);
     ccevents_loop_enqueue_group(loop, grp);
-    fprintf(stderr, "%s: grp=%p\n", __func__, grp);
     ccevents_loop_enter(loop);
     cce_run_cleanup_handlers(L);
   }
@@ -150,17 +149,17 @@ test_loop_multi_groups (void)
   void event_handler_A (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     ++countA;
-    if (1) { fprintf(stderr, "%s: countA=%d\n", __func__, countA); }
+    if (0) { fprintf(stderr, "%s: countA=%d\n", __func__, countA); }
   }
   void event_handler_B (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     ++countB;
-    if (1) { fprintf(stderr, "%s: countB=%d\n", __func__, countB); }
+    if (0) { fprintf(stderr, "%s: countB=%d\n", __func__, countB); }
   }
   void event_handler_C (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     ++countC;
-    if (1) { fprintf(stderr, "%s: countC=%d\n", __func__, countC); }
+    if (0) { fprintf(stderr, "%s: countC=%d\n", __func__, countC); }
     if (4 == countC) {
       ccevents_loop_post_request_to_leave(loop);
     }
