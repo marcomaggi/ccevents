@@ -33,7 +33,7 @@
 
 
 static void
-test_loop_single_group_single (void)
+test_loop_single_group_single_source__dequeued_both (void)
 /* A single group  with a single source.  Both the  group and the source
    dequeue themselves triggering the loop exit. */
 {
@@ -72,6 +72,58 @@ test_loop_single_group_single (void)
     cce_run_cleanup_handlers(L);
   }
 
+  assert(false == error_flag);
+  assert(4 == count);
+
+  while (ccevents_loop_queue_is_not_empty(loop)) {
+    ccevents_group_t *    grp CCEVENTS_UNUSED;
+    grp = ccevents_loop_dequeue_group(loop);
+  }
+}
+
+
+static void
+test_loop_single_group_single_source__dequeued_group (void)
+/* A single group  with a single source.  The group  dequeues itself and
+   posts a request to exit. */
+{
+  ccevents_loop_t		loop[1];
+  ccevents_group_t		grp[1];
+  ccevents_task_source_t	src[1];
+  cce_location_t		L[1];
+  volatile bool			error_flag = false;
+  volatile int			count = 0;
+
+  bool event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
+  {
+    return true;
+  }
+  void event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
+  {
+    ++count;
+    if (count == 4) {
+      ccevents_group_t *	grp = ccevents_source_get_group(src);
+      ccevents_group_dequeue_itself(grp);
+      ccevents_group_post_request_to_leave(grp);
+    }
+  }
+
+  if (cce_location(L)) {
+    error_flag = true;
+    cce_run_error_handlers(L);
+    cce_condition_free(cce_condition(L));
+  } else {
+    ccevents_loop_init(loop);
+    ccevents_group_init(grp, 10);
+    ccevents_task_source_init(src);
+    ccevents_task_source_set(src, event_inquirer, event_handler);
+    ccevents_group_enqueue_source(grp, src);
+    ccevents_loop_enqueue_group(loop, grp);
+    ccevents_loop_enter(loop);
+    cce_run_cleanup_handlers(L);
+  }
+
+  if (0) { fprintf(stderr, "%s: count=%d\n", __func__, count); }
   assert(false == error_flag);
   assert(4 == count);
 
@@ -210,7 +262,8 @@ main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
   ccevents_init();
   //
-  if (1) test_loop_single_group_single();
+  if (1) test_loop_single_group_single_source__dequeued_both();
+  if (1) test_loop_single_group_single_source__dequeued_group();
   if (1) test_loop_post_exit_in_loop();
   if (1) test_loop_multi_groups();
   //
