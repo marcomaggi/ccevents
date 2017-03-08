@@ -75,6 +75,7 @@ ccevents_source_init (ccevents_source_t * src, const ccevents_source_vtable_t * 
   src->vtable			= vtable;
   src->expiration_time		= *CCEVENTS_TIMEVAL_NEVER;
   src->expiration_handler	= ccevents_dummy_timeout_handler;
+  src->enabled			= 1;
 }
 
 void
@@ -125,12 +126,16 @@ ccevents_source_do_one_event (cce_location_t * there, ccevents_source_t * src)
    will cause a non-local exit to THERE.
 */
 {
-  if (ccevents_timeval_is_expired_timeout(src->expiration_time)) {
-    ccevents_source_handle_expiration(there, src);
-    return true;
-  } else if (ccevents_source_query(there, src)) {
-    ccevents_source_handle_event(there, src);
-    return true;
+  if (ccevents_source_servicing_is_enabled(src)) {
+    if (ccevents_timeval_is_expired_timeout(src->expiration_time)) {
+      ccevents_source_handle_expiration(there, src);
+      return true;
+    } else if (ccevents_source_query(there, src)) {
+      ccevents_source_handle_event(there, src);
+      return true;
+    } else {
+      return false;
+    }
   } else {
     return false;
   }

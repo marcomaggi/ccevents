@@ -965,10 +965,20 @@ are subtypes of @objtype{ccevents_source_t}.
 
 
 @deftp {Struct Typedef} ccevents_source_t
-Base structure for all the event sources.  Every event source is meant to be associated to a
-group, @ref{groups, Groups of event sources}.
+Base structure type for all the event source types.  Instances of this structure must be
+binitialised with a call to @cfunc{ccevents_source_init}.
 
-Every event source contains an expiration timeout; it is meant to be used in one of two ways:
+Every event source is meant to be associated to a group, @ref{groups, Groups of event sources}.
+Sources are enqueued in a group by calling @cfunc{ccevents_group_enqueue_source}; sources are
+dequeued from their group by calling @cfunc{ccevents_source_dequeue_itself}.
+
+Servicing events can be enabled or disabled; the default after the call to
+@cfunc{ccevents_source_init} is to enable servicing.  To enable servicing we call
+@cfunc{ccevents_source_enable_servicing}; to disable it we call
+@cfunc{ccevents_source_disable_servicing};
+
+Every event source contains an expiration timeout, selected with
+@cfunc{ccevents_source_set_timeout}; it is meant to be used in one of two ways:
 
 @itemize
 @item
@@ -1024,6 +1034,9 @@ Typically, an event source has multiple event handlers that are selected in turn
 state machine; after an event handler has served an event (say: by reading data from a network
 socket), it selects another handler to move on the computation (say: to write data to the same
 network socket).
+
+If we want the source timeout to be associated to the event: every time the event handler is
+invoked, it must reset the timeout for the next run, using @cfunc{ccevents_source_set_timeout}.
 @end deftypefn
 
 
@@ -1078,9 +1091,12 @@ called, the timeout has already started.
 
 
 @deftypefun bool ccevents_source_do_one_event (cce_location_t * @var{there}, ccevents_source_t * @var{src})
-Consume one event, if there is one, from the event source referenced by @var{src}.  Return @true{}
-if one event was served or the timeout expired; otherwise return @false{}.  If an exceptional
-condition is raised: a non--local exit is performed by jumping to @var{there}.
+If servicing events for this source is enabled: consume one event, if there is one, from the event
+source referenced by @var{src}.  Return @true{} if one event was served or the timeout expired;
+otherwise return @false{}.  If an exceptional condition is raised: a non--local exit is performed by
+jumping to @var{there}.
+
+If servicing events for this source is disabled: do nothing and return @false{}.
 
 Event servicing is performed with the following steps:
 
@@ -1102,6 +1118,16 @@ function raises an exceptional condition: a non--local exit is performed by jump
 @end deftypefun
 
 
+@deftypefun void ccevents_source_dequeue_itself (ccevents_source_t * @var{src})
+Remove the source referenced by @var{src} from its group.  If @var{src} is not enqueued in a group:
+nothing happens.
+@end deftypefun
+
+@c ------------------------------------------------------------------------
+
+@subsubheading Inspection functions
+
+
 @deftypefun bool ccevents_source_is_enqueued (const ccevents_source_t * @var{src})
 Return @true{} if the source is enqueued in a group, otherwise return @false{}.
 @end deftypefun
@@ -1111,11 +1137,24 @@ Return @true{} if the source is enqueued in a group, otherwise return @false{}.
 If the source is enqueued in a group: return a pointer to that group; otherwise return @false{}.
 @end deftypefun
 
+@c ------------------------------------------------------------------------
 
-@deftypefun void ccevents_source_dequeue_itself (ccevents_source_t * @var{src})
-Remove the source referenced by @var{src} from its group.  If @var{src} is not enqueued in a group:
-nothing happens.
+@subsubheading Enabling and disabling servicing
+
+
+@deftypefun bool ccevents_source_servicing_is_enabled (const ccevents_source_t * @var{src})
+Return @true{} if servicing events for this source is enabled; otherwise return @false{}.
 @end deftypefun
+
+
+@deftypefun void ccevents_source_enable_servicing (ccevents_source_t * @var{src})
+@deftypefunx void ccevents_source_disable_servicing (ccevents_source_t * @var{src})
+Enable or disable servicing events for this source.
+@end deftypefun
+
+@c ------------------------------------------------------------------------
+
+@subsubheading Dummy event handlers and inquiry functions
 
 
 @deftypevr {Function Pointer} ccevents_event_inquirer_t ccevents_dummy_event_inquirer_true

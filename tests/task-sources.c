@@ -48,28 +48,28 @@ test_single_task (void)
   auto ccevents_event_handler_t	step2;
   auto ccevents_event_handler_t	step3;
 
-  bool event_inquirer (cce_location_t * there, ccevents_source_t * src)
+  bool event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   /* The next step is always ready to be executed. */
   {
     return true;
   }
-  void expiration_handler (cce_location_t * there, ccevents_source_t * src)
+  void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
   {
     expiration_flag = true;
   }
-  void step1 (cce_location_t * there, ccevents_source_t * src)
+  void step1 (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
   {
     ccevents_task_source_t *	tksrc = (ccevents_task_source_t *) src;
     step1_flag = true;
     ccevents_task_source_set(tksrc, event_inquirer, step2);
   }
-  void step2 (cce_location_t * there, ccevents_source_t * src)
+  void step2 (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
   {
     ccevents_task_source_t *	tksrc = (ccevents_task_source_t *) src;
     step2_flag = true;
     ccevents_task_source_set(tksrc, event_inquirer, step3);
   }
-  void step3 (cce_location_t * there, ccevents_source_t * src)
+  void step3 (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
   {
     step3_flag = true;
     ccevents_source_dequeue_itself(src);
@@ -218,7 +218,7 @@ int
 main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
   ccevents_init();
-  if (0) test_single_task();
+  if (1) test_single_task();
   if (1) test_multi_tasks();
   exit(EXIT_SUCCESS);
 }

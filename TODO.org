@@ -8,5 +8,4 @@
 
 * Add a finaliser method to the event sources.  Add a function ccevents_source_final(src).
 
-* Add a flag to temporarily disable servicing a source.
 

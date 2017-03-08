@@ -481,6 +481,12 @@ struct ccevents_source_t {
   /* The expiration handler for this  event source.  Pointer to function
      to be called whenever this event expires. */
   ccevents_timeout_handler_t *		expiration_handler;
+
+  /* Nested  anonymous struct  defined as  a bitfield.   Everybody hates
+     bitfields, but I do not care.  I'm bad. */
+  struct {
+    int		enabled: 1;
+  };
 };
 
 ccevents_decl ccevents_event_inquirer_t		ccevents_source_query;
@@ -498,12 +504,7 @@ ccevents_decl void ccevents_source_set_timeout (ccevents_source_t * src,
 ccevents_decl bool ccevents_source_do_one_event (cce_location_t * there, ccevents_source_t * src)
   __attribute__((nonnull(1,2)));
 
-__attribute__((pure,nonnull(1),always_inline))
-static inline bool
-ccevents_source_is_enqueued (const ccevents_source_t * src)
-{
-  return ccevents_queue_node_is_enqueued(src);
-}
+/* ------------------------------------------------------------------ */
 
 __attribute__((nonnull(1),always_inline))
 static inline void
@@ -511,6 +512,40 @@ ccevents_source_dequeue_itself (ccevents_source_t * src)
 {
   ccevents_queue_node_dequeue_itself(src);
 }
+
+/* ------------------------------------------------------------------ */
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline bool
+ccevents_source_is_enqueued (const ccevents_source_t * src)
+{
+  return ccevents_queue_node_is_enqueued(src);
+}
+
+/* ------------------------------------------------------------------ */
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline bool
+ccevents_source_servicing_is_enabled (const ccevents_source_t * src)
+{
+  return (bool)(src->enabled);
+}
+
+__attribute__((nonnull(1),always_inline))
+static inline void
+ccevents_source_enable_servicing (ccevents_source_t * src)
+{
+  src->enabled = 1;
+}
+
+__attribute__((nonnull(1),always_inline))
+static inline void
+ccevents_source_disable_servicing (ccevents_source_t * src)
+{
+  src->enabled = 0;
+}
+
+/* ------------------------------------------------------------------ */
 
 ccevents_decl ccevents_event_inquirer_t		ccevents_dummy_event_inquirer_true;
 ccevents_decl ccevents_event_inquirer_t		ccevents_dummy_event_inquirer_false;

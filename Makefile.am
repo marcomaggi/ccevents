@@ -65,6 +65,7 @@ check_PROGRAMS	= \
 	tests/timevals			\
 	tests/timeouts			\
 	tests/groups			\
+	tests/base-sources		\
 	tests/task-sources		\
 	tests/timer-sources		\
 	tests/standalone-fd-sources	\
@@ -87,6 +88,9 @@ tests_timeouts_LDADD			= $(ccevents_tests_ldadd)
 
 tests_timevals_CPPFLAGS			= $(ccevents_tests_cppflags)
 tests_timevals_LDADD			= $(ccevents_tests_ldadd)
+
+tests_base_sources_CPPFLAGS		= $(ccevents_tests_cppflags)
+tests_base_sources_LDADD		= $(ccevents_tests_ldadd)
 
 tests_task_sources_CPPFLAGS		= $(ccevents_tests_cppflags)
 tests_task_sources_LDADD		= $(ccevents_tests_ldadd)
