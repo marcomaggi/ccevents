@@ -47,11 +47,11 @@ libccevents_la_SOURCES= \
 	src/ccevents-queues.c		\
 	src/ccevents-loops.c		\
 	src/ccevents-groups.c		\
-	src/ccevents-sources.c		\
-	src/ccevents-task-sources.c	\
-	src/ccevents-timer-sources.c	\
-	src/ccevents-signal-sources.c	\
-	src/ccevents-fd-sources.c
+	src/ccevents-sources-base.c	\
+	src/ccevents-sources-task.c	\
+	src/ccevents-sources-timer.c	\
+	src/ccevents-sources-signal.c	\
+	src/ccevents-sources-fd.c
 
 #page
 #### interface to "make check"

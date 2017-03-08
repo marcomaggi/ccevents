@@ -89,6 +89,14 @@ ccevents_group_init (ccevents_group_t * grp, size_t servicing_attempts_watermark
 }
 
 void
+ccevents_group_final (ccevents_group_t * grp)
+{
+  while (ccevents_group_queue_is_not_empty(grp)) {
+    ccevents_source_final(ccevents_group_dequeue_source(grp));
+  }
+}
+
+void
 ccevents_group_enter (ccevents_group_t * grp)
 /* Enter the  loop for this group  and serve events until:  a request to
    exit is  posted; no more  events sources are enqueued;  the watermark

@@ -965,8 +965,9 @@ are subtypes of @objtype{ccevents_source_t}.
 
 
 @deftp {Struct Typedef} ccevents_source_t
-Base structure type for all the event source types.  Instances of this structure must be
-binitialised with a call to @cfunc{ccevents_source_init}.
+Base structure type for all the event source types.  Instances of this structure must be initialised
+with a call to @cfunc{ccevents_source_init} and finalised with a call to
+@cfunc{ccevents_source_final}.
 
 Every event source is meant to be associated to a group, @ref{groups, Groups of event sources}.
 Sources are enqueued in a group by calling @cfunc{ccevents_group_enqueue_source}; sources are
@@ -994,6 +995,10 @@ is triggered.
 By default, the timeout is set to ``never expire'' and an internal expiration handler that does
 nothing is registered in the source structure.
 @end deftp
+
+@c ------------------------------------------------------------------------
+
+@subsubheading Event methods table
 
 
 @deftypefn {Function Type} bool ccevents_event_inquirer_t (cce_location_t * @var{there}, ccevents_source_t * @var{src})
@@ -1068,6 +1073,63 @@ Pointer to the event handler function.  It is called to serve a pending event.
 See @cfunc{ccevents_source_do_one_event} for details on how these functions are used.
 @end deftp
 
+@c ------------------------------------------------------------------------
+
+@subsubheading Object methods table
+
+
+The event sources defined by @value{PACKAGE} do @strong{not require any finalisation}; it is
+responsibility of the client code to release the memory allocated to @objtype{ccevents_source_t}, if
+there is the need to do so.  Nevertheless it is possible to register a finalisation function using
+the following types.
+
+
+@deftypefn {Function Type} void ccevents_source_final_t (ccevents_source_t * @var{src})
+Finalisation function for structures of type @objtype{ccevents_source_t}.
+@end deftypefn
+
+
+@deftp {Struct Typedef} ccevents_source_otable_t
+Type of structures representing tables of function to handle instances of
+@objtype{ccevents_source_t}.  We can associate a source structure to a table by calling
+@cfunc{ccevents_source_set_otable}.  A table has the following fields:
+
+@table @code
+@item ccevents_source_final_t * final
+Pointer to a finalisation function.  This function is called by @cfunc{ccevents_source_final}.
+@end table
+@end deftp
+
+
+@deftypevr {Dynamic Constant} {const ccevents_source_otable_t * const} ccevents_source_otable_default
+Pointer to a predefined table of object methods; it is the default table selected by
+@cfunc{ccevents_source_init}.  It is set with the following functions:
+
+@table @code
+@item final
+A finalisation function that does nothing.
+@end table
+@end deftypevr
+
+
+As example, if we want to use the standard @cfunc{free} function to finalise a source structure we
+can do as follows:
+
+@example
+#include <ccevents.h>
+#include <stdlib.h>
+
+static void
+my_source_final (ccevents_source_t * src)
+@{
+  free(src);
+@}
+
+const ccevents_source_otable_t otable = @{
+  .final = my_source_final
+@}
+@end example
+
 @c page
 @node sources base api
 @subsection Application programming interface
@@ -1080,6 +1142,20 @@ as table of function pointers acting on this specific event source type.
 
 Set the event expiration timeout to never: if this setting is not overridden with
 @cfunc{ccevents_source_set_timeout}, waiting for events on this source will never expire.
+
+The internal table of object methods is set to @code{ccevents_source_otable_default}.
+@end deftypefun
+
+
+@deftypefun void ccevents_source_final (ccevents_source_t * @var{src})
+Finalise the source using the finalisation function in the registered instance of
+@objtype{ccevents_source_otable_t}.  This function is called by @cfunc{ccevents_group_final} for any
+source still enqueued in the group.
+@end deftypefun
+
+
+@deftypefun void ccevents_source_set_otable (ccevents_source_t * @var{src}, const ccevents_source_otable_t * @var{otable})
+Select a table of object methods.
 @end deftypefun
 
 
@@ -1902,9 +1978,8 @@ Type of groups of event sources.
 Instances of this type must be initialised with a call to @cfunc{ccevents_group_init} applied to an
 already allocated data structure.
 
-Instances of this type must be finalised by first dequeuing all the sources with
-@cfunc{ccevents_group_dequeue_source}, and then, if needed, by releasing the memory allocated for
-the data structure.
+Instances of this type must be finalised by calling @cfunc{ccevents_group_final}, and then, if
+needed, by releasing the memory allocated for the data structure.
 @end deftp
 
 
@@ -1912,6 +1987,12 @@ the data structure.
 Initialise an already allocated group structure.  The internal queue of event sources is initialised
 to empty.  The number of attempts to serve events for each call to @cfunc{ccevents_group_enter} is
 set to @var{servicing_attempts_watermark}.
+@end deftypefun
+
+
+@deftypefun void ccevents_group_final (ccevents_group_t * @var{src})
+For any event source still associated to the group: apply @cfunc{ccevents_source_final} to the
+pointer referencing the source.
 @end deftypefun
 
 

@@ -455,6 +455,19 @@ ccevents_timeout_is_infinite (const ccevents_timeout_t to)
  ** Base events sources.
  ** ----------------------------------------------------------------- */
 
+typedef void ccevents_source_final_t	(ccevents_source_t * src)
+  __attribute__((nonnull(1)));
+
+typedef struct ccevents_source_otable_t		ccevents_source_otable_t;
+
+struct ccevents_source_otable_t {
+  ccevents_source_final_t *		final;
+};
+
+ccevents_decl const ccevents_source_otable_t * const	ccevents_source_otable_default;
+
+/* ------------------------------------------------------------------ */
+
 typedef bool ccevents_event_inquirer_t	(cce_location_t * L, ccevents_source_t * src)
   __attribute__((nonnull(1,2)));
 
@@ -464,16 +477,21 @@ typedef void ccevents_event_handler_t	(cce_location_t * L, ccevents_source_t * s
 typedef void ccevents_timeout_handler_t	(cce_location_t * L, ccevents_source_t * src)
   __attribute__((nonnull(1,2)));
 
-typedef struct ccevents_source_vtable_t {
+typedef struct ccevents_source_vtable_t		 ccevents_source_vtable_t;
+
+struct ccevents_source_vtable_t {
   ccevents_event_inquirer_t *	event_inquirer;
   ccevents_event_handler_t *	event_handler;
-} ccevents_source_vtable_t;
+};
+
+/* ------------------------------------------------------------------ */
 
 struct ccevents_source_t {
   /* This struct is a node in the  list of event sources registered in a
      group. */
   ccevents_queue_node_t;
 
+  const ccevents_source_otable_t *	otable;
   const ccevents_source_vtable_t *	vtable;
 
   /* The expiration time for the next event in this event source. */
@@ -494,6 +512,11 @@ ccevents_decl ccevents_event_handler_t		ccevents_source_handle_event;
 ccevents_decl ccevents_timeout_handler_t	ccevents_source_handle_expiration;
 
 ccevents_decl void ccevents_source_init (ccevents_source_t * src, const ccevents_source_vtable_t * vtable)
+  __attribute__((nonnull(1)));
+
+ccevents_decl void ccevents_source_final (ccevents_source_t * src);
+
+ccevents_decl void ccevents_source_set_otable (ccevents_source_t * src, const ccevents_source_otable_t * otable)
   __attribute__((nonnull(1,2)));
 
 ccevents_decl void ccevents_source_set_timeout (ccevents_source_t * src,
@@ -650,6 +673,8 @@ ccevents_decl void ccevents_signal_bub_acquire (void)
 ccevents_decl bool ccevents_signal_bub_delivered (int signum)
   __attribute__((leaf));
 
+/* ------------------------------------------------------------------ */
+
 ccevents_decl void ccevents_signal_bub_source_init (ccevents_signal_bub_source_t * sigsrc, int signum)
   __attribute__((leaf,nonnull(1)));
 
@@ -717,6 +742,9 @@ struct ccevents_group_t {
 
 ccevents_decl void ccevents_group_init (ccevents_group_t * grp, size_t servicing_attempts_watermark)
   __attribute__((leaf,nonnull(1)));
+
+ccevents_decl void ccevents_group_final (ccevents_group_t * grp)
+  __attribute__((nonnull(1)));
 
 ccevents_decl void ccevents_group_enter (ccevents_group_t * grp)
   __attribute__((nonnull(1)));

@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 static void
 test_sources_removal_from_head (void)
 {
@@ -94,6 +95,7 @@ test_sources_removal_from_head (void)
   assert(false == ccevents_group_contains_source(G, D));
 }
 
+
 static void
 test_sources_removal_from_tail (void)
 {
@@ -157,6 +159,7 @@ test_sources_removal_from_tail (void)
   assert(false == ccevents_group_contains_source(G, D));
 }
 
+
 static void
 test_sources_removal_from_middle (void)
 {
@@ -220,6 +223,65 @@ test_sources_removal_from_middle (void)
   assert(false == ccevents_group_contains_source(G, D));
 }
 
+
+void
+test_finalisation_of_sources (void)
+{
+  ccevents_group_t		G[1];
+  ccevents_task_source_t	A[1], B[1], C[1], D[1];
+  volatile bool			finalisation_A = false;
+  volatile bool			finalisation_B = false;
+  volatile bool			finalisation_C = false;
+  volatile bool			finalisation_D = false;
+
+  void source_finalise_A (ccevents_source_t * src CCEVENTS_UNUSED)
+  {
+    finalisation_A = true;
+  }
+  void source_finalise_B (ccevents_source_t * src CCEVENTS_UNUSED)
+  {
+    finalisation_B = true;
+  }
+  void source_finalise_C (ccevents_source_t * src CCEVENTS_UNUSED)
+  {
+    finalisation_C = true;
+  }
+  void source_finalise_D (ccevents_source_t * src CCEVENTS_UNUSED)
+  {
+    finalisation_D = true;
+  }
+
+  const ccevents_source_otable_t otableA = { .final = source_finalise_A };
+  const ccevents_source_otable_t otableB = { .final = source_finalise_B };
+  const ccevents_source_otable_t otableC = { .final = source_finalise_C };
+  const ccevents_source_otable_t otableD = { .final = source_finalise_D };
+
+  ccevents_task_source_init(A);
+  ccevents_task_source_init(B);
+  ccevents_task_source_init(C);
+  ccevents_task_source_init(D);
+
+  ccevents_source_set_otable(A, &otableA);
+  ccevents_source_set_otable(B, &otableB);
+  ccevents_source_set_otable(C, &otableC);
+  ccevents_source_set_otable(D, &otableD);
+
+  ccevents_group_init(G, 10);
+
+  ccevents_group_enqueue_source(G, A);
+  ccevents_group_enqueue_source(G, B);
+  ccevents_group_enqueue_source(G, C);
+  ccevents_group_enqueue_source(G, D);
+
+  ccevents_group_final(G);
+
+  assert(true == finalisation_A);
+  assert(true == finalisation_B);
+  assert(true == finalisation_C);
+  assert(true == finalisation_D);
+}
+
+
 int
 main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
@@ -227,6 +289,7 @@ main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
   if (1) test_sources_removal_from_head();
   if (1) test_sources_removal_from_tail();
   if (1) test_sources_removal_from_middle();
+  if (1) test_finalisation_of_sources();
   exit(EXIT_SUCCESS);
 }
 

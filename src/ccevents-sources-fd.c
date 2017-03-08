@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <sys/select.h>
 
+
 /** --------------------------------------------------------------------
  ** Default functions.
  ** ----------------------------------------------------------------- */
@@ -47,6 +48,7 @@ default_event_handler (cce_location_t    * L     CCEVENTS_UNUSED,
   return;
 }
 
+
 /** --------------------------------------------------------------------
  ** Method functions.
  ** ----------------------------------------------------------------- */
@@ -68,6 +70,7 @@ static const ccevents_source_vtable_t methods_table = {
   .event_handler	= method_event_handler,
 };
 
+
 /** --------------------------------------------------------------------
  ** Initialisation and setup.
  ** ----------------------------------------------------------------- */
@@ -104,6 +107,7 @@ ccevents_fd_source_set (ccevents_fd_source_t * fdsrc,
   fdsrc->event_handler		= event_handler;
 }
 
+
 /** --------------------------------------------------------------------
  ** Predefined query functions.
  ** ----------------------------------------------------------------- */

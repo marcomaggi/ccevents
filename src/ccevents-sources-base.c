@@ -63,6 +63,23 @@ ccevents_dummy_timeout_handler (cce_location_t     * L   CCEVENTS_UNUSED,
   return;
 }
 
+static void
+ccevents_source_final_dummy (ccevents_source_t * src CCEVENTS_UNUSED)
+{
+  return;
+}
+
+
+/** --------------------------------------------------------------------
+ ** Event sources object methods table.
+ ** ----------------------------------------------------------------- */
+
+static const ccevents_source_otable_t ccevents_source_otable_default_stru = {
+  .final = ccevents_source_final_dummy
+};
+
+const ccevents_source_otable_t * const ccevents_source_otable_default = &ccevents_source_otable_default_stru;
+
 
 /** --------------------------------------------------------------------
  ** Event sources API.
@@ -72,11 +89,26 @@ void
 ccevents_source_init (ccevents_source_t * src, const ccevents_source_vtable_t * vtable)
 {
   ccevents_queue_node_init(src);
+  src->otable			= &ccevents_source_otable_default_stru;
   src->vtable			= vtable;
   src->expiration_time		= *CCEVENTS_TIMEVAL_NEVER;
   src->expiration_handler	= ccevents_dummy_timeout_handler;
   src->enabled			= 1;
 }
+
+void
+ccevents_source_set_otable (ccevents_source_t * src, const ccevents_source_otable_t * otable)
+{
+  src->otable = otable;
+}
+
+void
+ccevents_source_final (ccevents_source_t * src)
+{
+  src->otable->final(src);
+}
+
+/* ------------------------------------------------------------------ */
 
 void
 ccevents_source_set_timeout (ccevents_source_t * src, ccevents_timeval_t expiration_time,

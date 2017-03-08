@@ -29,6 +29,7 @@
 #include "ccevents-internals.h"
 #include <signal.h>
 
+
 /** --------------------------------------------------------------------
  ** Signal handler.
  ** ----------------------------------------------------------------- */
@@ -47,6 +48,7 @@ signal_bub_handler (int signum)
   if (0) { fprintf(stderr, "%s: %d\n", __func__, signum); }
 }
 
+
 /** --------------------------------------------------------------------
  ** Signal BUB API initialisation and finalisation.
  ** ----------------------------------------------------------------- */
@@ -105,6 +107,7 @@ ccevents_signal_bub_delivered (int signum)
   return flag;
 }
 
+
 /** --------------------------------------------------------------------
  ** Method functions.
  ** ----------------------------------------------------------------- */
@@ -130,6 +133,7 @@ static const ccevents_source_vtable_t methods_table = {
   .event_handler	= method_event_handler,
 };
 
+
 /** --------------------------------------------------------------------
  ** Initialisation and setup.
  ** ----------------------------------------------------------------- */
