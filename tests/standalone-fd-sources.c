@@ -365,7 +365,7 @@ test_talking_processes_with_groups (void)
     void master_write_event_handler (cce_location_t * there, ccevents_source_t * src)
     {
       ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
-      ccevents_source_dequeue_itself(write_source);
+      ccevents_source_disable_servicing(write_source);
       fprintf(stderr, "%s: enter, master state %d\n", __func__, state);
       switch (state) {
       case 0: /* Send greetings. */
@@ -376,7 +376,7 @@ test_talking_processes_with_groups (void)
 	    cce_raise(there, cce_errno_C(errno));
 	  }
 	  state = 1;
-	  ccevents_group_enqueue_source(grp, read_source);
+	  ccevents_source_enable_servicing(read_source);
 	}
 	break;
       case 2: /* Send quitting. */
@@ -387,7 +387,7 @@ test_talking_processes_with_groups (void)
 	    cce_raise(there, cce_errno_C(errno));
 	  }
 	  state = 3;
-	  ccevents_group_enqueue_source(grp, read_source);
+	  ccevents_source_enable_servicing(read_source);
 	}
 	break;
       default:
@@ -402,7 +402,7 @@ test_talking_processes_with_groups (void)
     void master_read_event_handler (cce_location_t * there, ccevents_source_t * src)
     {
       ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
-      ccevents_source_dequeue_itself(read_source);
+      ccevents_source_disable_servicing(read_source);
       fprintf(stderr, "%s: master state %d\n", __func__, state);
       switch (state) {
       case 1: /* Read greetings. */
@@ -418,7 +418,7 @@ test_talking_processes_with_groups (void)
 	  assert(0 == strncmp("hello\n", buf, strlen("hello\n")));
 	  fprintf(stderr, "master: recv '%s'\n", buf);
 	  state = 2;
-	  ccevents_group_enqueue_source(grp, write_source);
+	  ccevents_source_enable_servicing(write_source);
 	  sleep_awhile();
 	}
 	break;
@@ -435,6 +435,8 @@ test_talking_processes_with_groups (void)
 	  assert(0 == strncmp("quit\n", buf, strlen("quit\n")));
 	  fprintf(stderr, "master: recv '%s'\n", buf);
 	  state = 0;
+	  ccevents_source_dequeue_itself(read_source);
+	  ccevents_source_dequeue_itself(write_source);
 	  /* end */
 	}
 	break;
@@ -458,7 +460,9 @@ test_talking_processes_with_groups (void)
       ccevents_group_init(grp, INT_MAX);
       {
 	ccevents_fd_source_set(write_source, ccevents_query_fd_writability, master_write_event_handler);
+	ccevents_group_enqueue_source(grp, read_source);
 	ccevents_group_enqueue_source(grp, write_source);
+	ccevents_source_disable_servicing(read_source);
       }
       ccevents_group_enter(grp);
       cce_run_cleanup_handlers(L);
@@ -494,6 +498,7 @@ test_talking_processes_with_groups (void)
     void slave_read_event_handler (cce_location_t * there, ccevents_source_t * src)
     {
       ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
+      ccevents_source_disable_servicing(read_source);
       fprintf(stderr, "%s: slave state %d\n", __func__, state);
       switch (state) {
       case 0: /* Read greetings. */
@@ -509,8 +514,7 @@ test_talking_processes_with_groups (void)
 	  assert(0 == strncmp("hello\n", buf, strlen("hello\n")));
 	  fprintf(stderr, "slave: recv '%s'\n", buf);
 	  state = 1;
-	  ccevents_source_dequeue_itself(read_source);
-	  ccevents_group_enqueue_source(grp, write_source);
+	  ccevents_source_enable_servicing(write_source);
 	  sleep_awhile();
 	}
 	break;
@@ -527,8 +531,7 @@ test_talking_processes_with_groups (void)
 	  assert(0 == strncmp("quit\n", buf, strlen("quit\n")));
 	  fprintf(stderr, "slave: recv '%s'\n", buf);
 	  state = 3;
-	  ccevents_source_dequeue_itself(read_source);
-	  ccevents_group_enqueue_source(grp, write_source);
+	  ccevents_source_enable_servicing(write_source);
 	  sleep_awhile();
 	}
 	break;
@@ -539,6 +542,7 @@ test_talking_processes_with_groups (void)
     void slave_write_event_handler (cce_location_t * there, ccevents_source_t * src)
     {
       ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
+      ccevents_source_disable_servicing(write_source);
       fprintf(stderr, "%s: slave state %d\n", __func__, state);
       switch (state) {
       case 1: /* Send greetings. */
@@ -550,8 +554,7 @@ test_talking_processes_with_groups (void)
 	  }
 	  fprintf(stderr, "slave: sent 'hello'\n");
 	  state = 2;
-	  ccevents_source_dequeue_itself(write_source);
-	  ccevents_group_enqueue_source(grp, read_source);
+	  ccevents_source_enable_servicing(read_source);
 	  sleep_awhile();
 	}
 	break;
@@ -563,7 +566,9 @@ test_talking_processes_with_groups (void)
 	    cce_raise(there, cce_errno_C(errno));
 	  }
 	  state = 0;
-	  ccevents_source_dequeue_itself(src);
+	  ccevents_source_dequeue_itself(read_source);
+	  ccevents_source_dequeue_itself(write_source);
+	  /* end */
 	}
 	break;
       }
@@ -585,6 +590,8 @@ test_talking_processes_with_groups (void)
       ccevents_group_init(grp, INT_MAX);
       {
 	ccevents_group_enqueue_source(grp, read_source);
+	ccevents_group_enqueue_source(grp, write_source);
+	ccevents_source_disable_servicing(write_source);
       }
       ccevents_group_enter(grp);
       cce_run_cleanup_handlers(L);

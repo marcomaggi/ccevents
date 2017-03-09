@@ -976,7 +976,7 @@ dequeued from their group by calling @cfunc{ccevents_source_dequeue_itself}.
 Servicing events can be enabled or disabled; the default after the call to
 @cfunc{ccevents_source_init} is to enable servicing.  To enable servicing we call
 @cfunc{ccevents_source_enable_servicing}; to disable it we call
-@cfunc{ccevents_source_disable_servicing};
+@cfunc{ccevents_source_disable_servicing}.
 
 Every event source contains an expiration timeout, selected with
 @cfunc{ccevents_source_set_timeout}; it is meant to be used in one of two ways:
@@ -1216,6 +1216,36 @@ If the source is enqueued in a group: return a pointer to that group; otherwise 
 @c ------------------------------------------------------------------------
 
 @subsubheading Enabling and disabling servicing
+
+
+When a source is disabled: a call to @cfunc{ccevents_source_do_one_event} will do nothing.  If the
+source is enqueued in a group: @cfunc{ccevents_group_enter} will visit the source and just do
+nothing.
+
+This might be useful, for example, in this scenario: we want two processes A and B to communicate
+through Unix pipes; process B is spawned by process A; a call to @cfunc{pipe} configures two file
+descriptors, one for reading and one for writing.  We set up the following mechanism:
+
+@enumerate
+@item
+In process A we allocate two pipes, then we spawn process B.  Process A will keep a reading end and
+a writing end; it will close the other ends.  Process B will keep the other ends.
+
+@item
+In each process, we create an event source for each file descriptor; in each process, we enqueue
+both the sources in a group.
+
+@item
+When it is the turn of process A to read: in process A, we enable the reading source and disable the
+writing source; in process B, we enable the writing source and disable the reading source.
+
+@item
+When it is the turn of process A to write: in process A, we enable the writing source and disable
+the reading source; in process B, we enable the reading source and disable the writing source.
+
+@item
+When communication is over: in each process we dequeue both the sources from the group.
+@end enumerate
 
 
 @deftypefun bool ccevents_source_servicing_is_enabled (const ccevents_source_t * @var{src})
