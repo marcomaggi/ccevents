@@ -821,6 +821,9 @@ struct ccevents_loop_t {
 ccevents_decl void ccevents_loop_init (ccevents_loop_t * loop)
   __attribute__((leaf,nonnull(1)));
 
+ccevents_decl void ccevents_loop_final (ccevents_loop_t * loop)
+  __attribute__((nonnull(1)));
+
 ccevents_decl void ccevents_loop_enter (ccevents_loop_t * loop)
   __attribute__((nonnull(1)));
 

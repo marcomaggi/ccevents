@@ -434,8 +434,7 @@ master_state_final (master_state_t * S)
 {
   ccevents_source_dequeue_itself(S->read_source);
   ccevents_source_dequeue_itself(S->write_source);
-  ccevents_group_dequeue_itself(S->grp);
-  ccevents_group_final(S->grp);
+  ccevents_loop_final(S->loop);
   close(S->read_source[0].fd);
   close(S->write_source[0].fd);
   if (0) { fprintf(stderr, "%s: done\n", __func__); }
@@ -703,8 +702,7 @@ slave_state_final (slave_state_t * S)
 {
   ccevents_source_dequeue_itself(S->read_source);
   ccevents_source_dequeue_itself(S->write_source);
-  ccevents_group_dequeue_itself(S->grp);
-  ccevents_group_final(S->grp);
+  ccevents_loop_final(S->loop);
   close(S->read_source[0].fd);
   close(S->write_source[0].fd);
   if (0) { fprintf(stderr, "%s: done\n", __func__); }

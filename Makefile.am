@@ -64,13 +64,13 @@ check_PROGRAMS	= \
 	tests/version			\
 	tests/timevals			\
 	tests/timeouts			\
+	tests/loops			\
 	tests/groups			\
 	tests/base-sources		\
 	tests/task-sources		\
 	tests/timer-sources		\
 	tests/standalone-fd-sources	\
-	tests/signal-sources		\
-	tests/main-loop
+	tests/signal-sources
 
 TESTS				= $(check_PROGRAMS)
 
@@ -80,14 +80,17 @@ ccevents_tests_ldadd		= libccevents.la
 tests_version_CPPFLAGS			= $(ccevents_tests_cppflags)
 tests_version_LDADD			= $(ccevents_tests_ldadd)
 
-tests_groups_CPPFLAGS			= $(ccevents_tests_cppflags)
-tests_groups_LDADD			= $(ccevents_tests_ldadd)
-
 tests_timeouts_CPPFLAGS			= $(ccevents_tests_cppflags)
 tests_timeouts_LDADD			= $(ccevents_tests_ldadd)
 
 tests_timevals_CPPFLAGS			= $(ccevents_tests_cppflags)
 tests_timevals_LDADD			= $(ccevents_tests_ldadd)
+
+tests_loops_CPPFLAGS			= $(ccevents_tests_cppflags)
+tests_loops_LDADD			= $(ccevents_tests_ldadd)
+
+tests_groups_CPPFLAGS			= $(ccevents_tests_cppflags)
+tests_groups_LDADD			= $(ccevents_tests_ldadd)
 
 tests_base_sources_CPPFLAGS		= $(ccevents_tests_cppflags)
 tests_base_sources_LDADD		= $(ccevents_tests_ldadd)
@@ -103,9 +106,6 @@ tests_standalone_fd_sources_LDADD	= $(ccevents_tests_ldadd)
 
 tests_signal_sources_CPPFLAGS		= $(ccevents_tests_cppflags)
 tests_signal_sources_LDADD		= $(ccevents_tests_ldadd)
-
-tests_main_loop_CPPFLAGS		= $(ccevents_tests_cppflags)
-tests_main_loop_LDADD			= $(ccevents_tests_ldadd)
 
 #page
 #### interface to "make instcheck"

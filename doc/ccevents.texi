@@ -2022,7 +2022,8 @@ set to @var{servicing_attempts_watermark}.
 
 @deftypefun void ccevents_group_final (ccevents_group_t * @var{src})
 For any event source still associated to the group: apply @cfunc{ccevents_source_final} to the
-pointer referencing the source.
+pointer referencing the source.  This function is called by @cfunc{ccevents_loop_final} for any
+group still enqueued in the loop.
 @end deftypefun
 
 
@@ -2132,12 +2133,7 @@ ccevents_loop_enqueue_group(loop, grpB);
 
 ccevents_loop_enter(loop);
 
-/* To finalise we must extract the groups. */
-while (ccevents_loop_queue_is_not_empty(loop)) @{
-  ccevents_group_t *    grp;
-  grp = ccevents_loop_dequeue_group(loop);
-  /* Here we should finalise the group. */
-@}
+ccevents_loop_final(loop);
 @end example
 
 
@@ -2147,15 +2143,20 @@ Type of data structures representing a main event loop.
 Instances of this type must be initialised with a call to @cfunc{ccevents_loop_init} applied to an
 already allocated data structure.
 
-Instances of this type must be finalised by first dequeuing all the groups with
-@cfunc{ccevents_loop_dequeue_group}, and then, if needed, by releasing the memory allocated for the
-data structure.
+Instances of this type must be finalised with a call to @cfunc{ccevents_loop_final} and then, if
+needed, by releasing the memory allocated for the data structure.
 @end deftp
 
 
 @deftypefun void ccevents_loop_init (ccevents_loop_t * @var{loop})
 Initialise an already allocated loop structure.  The internal queue of groups is initialised to
 empty.
+@end deftypefun
+
+
+@deftypefun void ccevents_loop_final (ccevents_loop_t * @var{loop})
+For any group still enqueued in the loop: apply @cfunc{ccevents_group_final} to the pointer
+referencing the group.
 @end deftypefun
 
 

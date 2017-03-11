@@ -65,6 +65,13 @@ ccevents_loop_init (ccevents_loop_t * loop)
   ccevents_queue_init(loop->groups);
   loop->request_to_leave	= false;
 }
+void
+ccevents_loop_final (ccevents_loop_t * loop)
+{
+  while (ccevents_loop_queue_is_not_empty(loop)) {
+    ccevents_group_final(ccevents_loop_dequeue_group(loop));
+  }
+}
 
 void
 ccevents_loop_enter (ccevents_loop_t * loop)
