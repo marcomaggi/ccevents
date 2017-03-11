@@ -126,4 +126,19 @@ gdb-test:
 	test -f $(builddir)/.gdbinit || ln -s $(top_srcdir)/.gdbinit $(builddir)/.gdbinit
 	$(GDB_RUN) $(builddir)/tests/.libs/*$(file)*
 
+#page
+#### demo programs
+
+EXTRA_DIST	+= \
+	demos/processes-communicating-through-pipes.c
+
+noinst_PROGRAMS	= \
+	demos/processes-communicating-through-pipes
+
+ccevents_demos_cppflags		= -I$(srcdir)/src $(CCEXCEPTIONS_FLAGS)
+ccevents_demos_ldadd		= libccevents.la
+
+demos_processes_communicating_through_pipes_CPPFLAGS	= $(ccevents_demos_cppflags)
+demos_processes_communicating_through_pipes_LDADD	= $(ccevents_demos_ldadd)
+
 ### end of file
