@@ -129,7 +129,7 @@ entitled ``@gnu{} Free Documentation License''.
 * timeouts::                    Handling event expiration times.
 * sources::                     event sources basics.
 * groups::                      Groups of event sources.
-* loop::                        The main event loop.
+* loops::                       The main event loop.
 * helpers::                     Helper functions and macros.
 
 Appendices
@@ -2109,7 +2109,7 @@ Return @true{} if the source @var{src} is enqueued in the group @var{grp}; other
 @end deftypefun
 
 @c page
-@node loop
+@node loops
 @chapter The main event loop
 
 
