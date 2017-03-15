@@ -142,6 +142,8 @@ main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
   all_filedes_t	fds;
   int		pid;
 
+  ccevents_init();
+
   {
     cce_location_t	L[1];
     all_filedes_H_t	fds_H[1];
