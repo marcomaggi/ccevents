@@ -784,7 +784,7 @@ Consider the argument as a calendar time representing the expiration time of a t
 
 This module implements ``polling timeouts'': we set a timeout using this @api{} and when it expires
 nothing happens, we have to call a function to verify if it has expired or not.  A timeout is meant
-to be used to signal that an event has not happended in a fixed amount of time.
+to be used to signal that an event has not happened in a fixed amount of time.
 
 Here is an example of code that initialises a timeout @var{to} that will expire @math{1} second,
 @math{2} milliseconds and @math{3} microseconds after the time of the call to
@@ -1796,7 +1796,7 @@ signals; if it does not suit the application's model, we should just ignore it.
 
 
 The following functions operate on global variables that are private to @value{PACKAGE}.  This makes
-the @api{} multithread unsafe.
+the @api{} multithreading unsafe.
 
 
 @deftypefun void ccevents_signal_bub_init (void)
@@ -1992,13 +1992,15 @@ main (int argc, const char *const argv[])
 
 Groups are collections of event sources that must be queried for pending events with the same
 priority.  Multiple groups are used to establish a priority order between sets of sources.  Events
-from higher priority groups should be served before events from lower priority groups.
+from higher priority groups should be served before events from lower priority groups.  Most
+programs will have one or two groups (one for high--priority events and one for batch processing,
+like updating the Graphical User Interface).
 
 An event source enqueued in a group may not have a pending event waiting to be served, so the group
 can only ``attempt'' to serve an event source.
 
 To avoid starving lower groups, we may configure the groups so that: every, say, @math{10} attempts
-to serve an events from a higher group, we make @math{1} attempt to serve an event from a lower
+to serve an event from a higher group, we make @math{1} attempt to serve an event from a lower
 group.
 
 
