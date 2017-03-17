@@ -262,7 +262,7 @@ Return an integer representing the library interface current age.
 errors through non--local exits; @xref{Top, CCExceptions, CCExceptions, ccexceptions, CCExceptions}.
 
 The functions will raise exceptional conditions with @cfunc{cce_raise} and expect the caller to
-intercept them using the @code{cce_location_t} mechanics.  The basic code template is.
+intercept them using the @code{cce_location_t} mechanics.  The basic code template is:
 
 @example
 #include <ccevents.h>
