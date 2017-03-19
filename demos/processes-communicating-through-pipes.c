@@ -38,8 +38,8 @@
  ** Headers.
  ** ----------------------------------------------------------------- */
 
-#define CCE_INCLUDE_SYSTEM_CALLS	1
 #include "ccevents.h"
+#include <ccexceptions-system.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
