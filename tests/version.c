@@ -12,9 +12,9 @@
   See the COPYING file.
 */
 
+#include <ccevents.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ccevents.h>
 
 int
 main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)

@@ -117,6 +117,13 @@ proper release tarball, but we have to enable maintainer mode:
 
 Read the documentation.
 
+  IMPORTANT To  use the library we  must enable the POSIX  features when
+including the standard  header files; so either  we include "ccevents.h"
+as  first  header,  or  we  include  the  following  definitions  before
+including *all* the header files:
+
+   #define _POSIX_C_SOURCE	200809L
+
 
 A. Credits
 ----------
