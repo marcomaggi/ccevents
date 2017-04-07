@@ -16,7 +16,7 @@ fi
     --disable-static --enable-shared            \
     --prefix="${prefix}"			\
     --libdir="${libdir}"                        \
-    CFLAGS='-O3'				\
+    CFLAGS='-Wextra -pedantic -O3'		\
     "$@"
 
 ### end of file
