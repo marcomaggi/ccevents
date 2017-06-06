@@ -1,12 +1,13 @@
 -*- coding: utf-8-unix -*-
-Subject: [announce] Ccevents revision 0.1d0
+Subject: [announce] CCEvents revision 0.1.0-devel.0
 
 				CCEvents
 			       ==========
 
 
 This package  installs a C  language library implementing an  event loop
-for the GNU+Linux platform.  It is written in C11 with GCC extensions.
+for the GNU+Linux platform.  It is  written in standard C11 language; it
+targets POSIX systems.
 
   The package  makes use  of the  GNU Autotools  and it  is tested  on a
 GNU+Linux system.  It is distributed under the GNU Lesser General Public
@@ -30,10 +31,10 @@ the documentation is available online:
 	    <http://marcomaggi.github.io/docs/ccevents.html>
 
 
-Notes for revision 0.1d0
-------------------------
+Notes for revision 0.1.0-devel.0
+--------------------------------
 
-* First revision
+* First revision.
 
 
 ### end of file
