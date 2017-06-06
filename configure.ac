@@ -2,7 +2,7 @@ dnl @configure_input@
 dnl
 
 AC_PREREQ([2.69])
-AC_INIT([CCEvents],[0.1d0],
+AC_INIT([CCEvents],[0.1.0-devel.0],
   [marco.maggi-ipsu@poste.it],
   [ccevents],[http://marcomaggi.github.com/ccevents])
 dnl This is the revision number of this configure.ac
