@@ -32,7 +32,10 @@
 #include <stdlib.h>
 #include <signal.h>
 
-void
+
+/* Basic tests for the BUB API. */
+
+static void
 test_bub_api (void)
 {
   ccevents_signal_bub_init ();
@@ -74,128 +77,153 @@ test_bub_api (void)
   ccevents_signal_bub_final ();
 }
 
-static void
-test_source (void)
+
+/* Test the  signal source with  a group of  sources.  A task  source is
+   used to raise signals.  A task  source is used to acquire signals.  A
+   signals source is used to handle delivered SIGUSR1 signals. */
+
+typedef struct test_2_0_sigusr1_handler_t {
+  /* This events source reacts to delivery of SIGUSR1. */
+  ccevents_signal_bub_source_t	src;
+  /* This flag is set to 1 if a SIGUSR1 is received. */
+  sig_atomic_t			signal_flag;
+} test_2_0_sigusr1_handler_t;
+
+static bool
+test_2_0_signals_acquirer_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
 {
+  ccevents_signal_bub_acquire();
+  return false;
+}
+
+static bool
+test_2_0_signals_raiser_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
+{
+  raise(SIGUSR1);
+  return false;
+}
+
+static void
+test_2_0_sigusr1_handler_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * _src)
+{
+  test_2_0_sigusr1_handler_t *	sigusr1_handler = (test_2_0_sigusr1_handler_t *) _src;
+  sigusr1_handler->signal_flag = true;
+}
+
+static void
+test_2_0 (void)
+{
+  /* This struct represents the state of the SIGUSR1 signal handler. */
+  test_2_0_sigusr1_handler_t	sigusr1_handler = { .signal_flag = false };
+  /* This flag is set to true  if an exception is catched.  Otherwise it
+     is left false. */
   volatile bool		error_flag  = false;
-  volatile bool		signal_flag = false;
 
   ccevents_signal_bub_init();
   {
     ccevents_group_t			grp[1];
     /* This events source runs its  inquirer function again and again to
        acquire signals with the BUB API. */
-    ccevents_task_source_t		acquire_signals_src[1];
+    ccevents_task_source_t		signals_acquirer_src[1];
     /* This events source  runs its inquirer function once  to raise the
        signal.  The event handler is never run. */
-    ccevents_task_source_t		raise_signal_src[1];
-    /* This events source reacts to delivery of SIGUSR1. */
-    ccevents_signal_bub_source_t	sigsrc[1];
+    ccevents_task_source_t		signals_raiser_src[1];
     cce_location_t			L[1];
 
-    bool acquire_signals_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
-    {
-      ccevents_signal_bub_acquire();
-      return false;
-    }
-    void acquire_signals_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
-    {
-      return;
-    }
-    bool raise_signal_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
-    {
-      raise(SIGUSR1);
-      return false;
-    }
-    void raise_signal_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
-    {
-      return;
-    }
-    void signal_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
-    {
-      signal_flag = true;
-    }
-
     ccevents_group_init(grp, 1000);
-    ccevents_task_source_init(acquire_signals_src);
-    ccevents_task_source_init(raise_signal_src);
-    ccevents_signal_bub_source_init(sigsrc, SIGUSR1);
+    ccevents_task_source_init(signals_acquirer_src);
+    ccevents_task_source_init(signals_raiser_src);
+    ccevents_signal_bub_source_init(&sigusr1_handler.src, SIGUSR1);
 
     if (cce_location(L)) {
       error_flag = true;
       cce_run_error_handlers_final(L);
     } else {
-      ccevents_task_source_set(acquire_signals_src, acquire_signals_inquirer, ccevents_dummy_event_handler);
-      ccevents_task_source_set(raise_signal_src,       raise_signal_inquirer, ccevents_dummy_event_handler);
-      ccevents_signal_bub_source_set(sigsrc, signal_handler);
-      ccevents_group_enqueue_source(grp, sigsrc);
-      ccevents_group_enqueue_source(grp, acquire_signals_src);
-      ccevents_group_enqueue_source(grp, raise_signal_src);
+      ccevents_task_source_set(signals_acquirer_src, test_2_0_signals_acquirer_inquirer, ccevents_dummy_event_handler);
+      ccevents_task_source_set(signals_raiser_src,   test_2_0_signals_raiser_inquirer,   ccevents_dummy_event_handler);
+      ccevents_signal_bub_source_set(&sigusr1_handler.src, test_2_0_sigusr1_handler_handler);
+      ccevents_group_enqueue_source(grp, &sigusr1_handler.src);
+      ccevents_group_enqueue_source(grp, signals_acquirer_src);
+      ccevents_group_enqueue_source(grp, signals_raiser_src);
       ccevents_group_enter(grp);
       cce_run_cleanup_handlers(L);
     }
   }
   ccevents_signal_bub_final();
   assert(false == error_flag);
-  assert(true == signal_flag);
+  assert(true == sigusr1_handler.signal_flag);
+}
+
+
+/* Code  chunks for  documentation purposes.   Tests the  signals source
+   with a group of sources. */
+
+typedef struct test_3_0_sigusr1_handler_t {
+  /* This events source reacts to the delivery of SIGUSR1. */
+  ccevents_signal_bub_source_t	src;
+  /* This flag is set to 1 if a SIGUSR1 is received. */
+  sig_atomic_t			signal_flag;
+} test_3_0_sigusr1_handler_t;
+
+static bool
+test_3_0_signals_acquirer_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
+{
+  ccevents_signal_bub_acquire();
+  return false;
 }
 
 static void
-test_source_for_documentation (void)
+test_3_0_signal_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * _src)
+{
+  test_3_0_sigusr1_handler_t *	sigusr1_handler = (test_3_0_sigusr1_handler_t *) _src;
+  sigusr1_handler->signal_flag = 1;
+}
+
+static void
+test_3_0 (void)
 {
   ccevents_group_t grp[1];
-
   /* This events  source runs its  inquirer function again and  again to
      acquire signals with the BUB API. */
-  ccevents_task_source_t acquire_signals_src[1];
-
-  /* This events source reacts to the delivery of SIGUSR1. */
-  ccevents_signal_bub_source_t sigsrc[1];
-
+  ccevents_task_source_t	signals_acquirer_src[1];
+  /* This struct represents the state of the SIGUSR1 signal handler. */
+  test_3_0_sigusr1_handler_t	sigusr1_handler = { .signal_flag = 0 };
+  /* This flag is set to true  if an exception is catched.  Otherwise it
+     is left false. */
+  volatile bool			error_flag = false;
   cce_location_t L[1];
-  volatile sig_atomic_t signal_flag = 0;
-  volatile bool		error_flag = false;
-
-  bool acquire_signals_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
-  {
-    ccevents_signal_bub_acquire();
-    return false;
-  }
-  void signal_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
-  {
-    signal_flag = 1;
-  }
 
   ccevents_signal_bub_init();
   {
     ccevents_group_init(grp, 1000);
-    ccevents_task_source_init(acquire_signals_src);
-    ccevents_signal_bub_source_init(sigsrc, SIGUSR1);
+    ccevents_task_source_init(signals_acquirer_src);
+    ccevents_signal_bub_source_init(&sigusr1_handler.src, SIGUSR1);
 
     if (cce_location(L)) {
       error_flag = true;
       cce_run_error_handlers_final(L);
     } else {
-      ccevents_task_source_set(acquire_signals_src, acquire_signals_inquirer, ccevents_dummy_event_handler);
-      ccevents_signal_bub_source_set(sigsrc, signal_handler);
-      ccevents_group_enqueue_source(grp, sigsrc);
-      ccevents_group_enqueue_source(grp, acquire_signals_src);
+      ccevents_task_source_set(signals_acquirer_src, test_3_0_signals_acquirer_inquirer, ccevents_dummy_event_handler);
+      ccevents_signal_bub_source_set(&sigusr1_handler.src, test_3_0_signal_handler);
+      ccevents_group_enqueue_source(grp, &sigusr1_handler.src);
+      ccevents_group_enqueue_source(grp, signals_acquirer_src);
       ccevents_group_enter(grp);
       cce_run_cleanup_handlers(L);
     }
   }
   assert(false == error_flag);
-  assert(0 == signal_flag);
+  assert(0 == sigusr1_handler.signal_flag);
   ccevents_signal_bub_final();
 }
 
+
 int
 main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
   ccevents_init();
   if (1) test_bub_api();
-  if (1) test_source();
-  if (1) test_source_for_documentation();
+  if (1) test_2_0();
+  if (1) test_3_0();
   exit(EXIT_SUCCESS);
 }
 
