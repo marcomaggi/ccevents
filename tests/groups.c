@@ -224,37 +224,45 @@ test_sources_removal_from_middle (void)
 }
 
 
+volatile bool test_4_0_finalisation_A = false;
+volatile bool test_4_0_finalisation_B = false;
+volatile bool test_4_0_finalisation_C = false;
+volatile bool test_4_0_finalisation_D = false;
+
+static void
+test_4_0_source_finalise_A (ccevents_source_t * src CCEVENTS_UNUSED)
+{
+  test_4_0_finalisation_A = true;
+}
+
+static void
+test_4_0_source_finalise_B (ccevents_source_t * src CCEVENTS_UNUSED)
+{
+  test_4_0_finalisation_B = true;
+}
+
+static void
+test_4_0_source_finalise_C (ccevents_source_t * src CCEVENTS_UNUSED)
+{
+  test_4_0_finalisation_C = true;
+}
+
+static void
+test_4_0_source_finalise_D (ccevents_source_t * src CCEVENTS_UNUSED)
+{
+  test_4_0_finalisation_D = true;
+}
+
 void
-test_finalisation_of_sources (void)
+test_4_0_finalisation_of_sources (void)
 {
   ccevents_group_t		G[1];
   ccevents_task_source_t	A[1], B[1], C[1], D[1];
-  volatile bool			finalisation_A = false;
-  volatile bool			finalisation_B = false;
-  volatile bool			finalisation_C = false;
-  volatile bool			finalisation_D = false;
 
-  void source_finalise_A (ccevents_source_t * src CCEVENTS_UNUSED)
-  {
-    finalisation_A = true;
-  }
-  void source_finalise_B (ccevents_source_t * src CCEVENTS_UNUSED)
-  {
-    finalisation_B = true;
-  }
-  void source_finalise_C (ccevents_source_t * src CCEVENTS_UNUSED)
-  {
-    finalisation_C = true;
-  }
-  void source_finalise_D (ccevents_source_t * src CCEVENTS_UNUSED)
-  {
-    finalisation_D = true;
-  }
-
-  const ccevents_source_otable_t otableA = { .final = source_finalise_A };
-  const ccevents_source_otable_t otableB = { .final = source_finalise_B };
-  const ccevents_source_otable_t otableC = { .final = source_finalise_C };
-  const ccevents_source_otable_t otableD = { .final = source_finalise_D };
+  const ccevents_source_otable_t otableA = { .final = test_4_0_source_finalise_A };
+  const ccevents_source_otable_t otableB = { .final = test_4_0_source_finalise_B };
+  const ccevents_source_otable_t otableC = { .final = test_4_0_source_finalise_C };
+  const ccevents_source_otable_t otableD = { .final = test_4_0_source_finalise_D };
 
   ccevents_task_source_init(A);
   ccevents_task_source_init(B);
@@ -275,10 +283,10 @@ test_finalisation_of_sources (void)
 
   ccevents_group_final(G);
 
-  assert(true == finalisation_A);
-  assert(true == finalisation_B);
-  assert(true == finalisation_C);
-  assert(true == finalisation_D);
+  assert(true == test_4_0_finalisation_A);
+  assert(true == test_4_0_finalisation_B);
+  assert(true == test_4_0_finalisation_C);
+  assert(true == test_4_0_finalisation_D);
 }
 
 
@@ -289,7 +297,7 @@ main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
   if (1) test_sources_removal_from_head();
   if (1) test_sources_removal_from_tail();
   if (1) test_sources_removal_from_middle();
-  if (1) test_finalisation_of_sources();
+  if (1) test_4_0_finalisation_of_sources();
   exit(EXIT_SUCCESS);
 }
 
