@@ -32,25 +32,28 @@
 #include <stdlib.h>
 
 
+static volatile bool test_1_0_event_flag = false;
+
+static bool
+test_1_0_event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
+{
+  return true;
+}
 static void
-test_enabling_and_disabling_servicing (void)
+test_1_0_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
+{
+  test_1_0_event_flag = true;
+}
+
+static void
+test_1_0_enabling_and_disabling_servicing (void)
 {
   ccevents_source_t	src[1];
   volatile bool		error_flag = false;
-  volatile bool		event_flag = false;
-
-  bool event_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
-  {
-    return true;
-  }
-  void event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
-  {
-    event_flag = true;
-  }
 
   ccevents_source_vtable_t vtable = {
-    .event_inquirer = event_inquirer,
-    .event_handler  = event_handler
+    .event_inquirer = test_1_0_event_inquirer,
+    .event_handler  = test_1_0_event_handler
   };
 
   {
@@ -63,10 +66,10 @@ test_enabling_and_disabling_servicing (void)
       ccevents_source_init(src, &vtable);
       ccevents_source_disable_servicing(src);
       ccevents_source_do_one_event(L, src);
-      assert(false == event_flag);
+      assert(false == test_1_0_event_flag);
       ccevents_source_enable_servicing(src);
       ccevents_source_do_one_event(L, src);
-      assert(true  == event_flag);
+      assert(true  == test_1_0_event_flag);
       cce_run_cleanup_handlers(L);
     }
   }
@@ -78,7 +81,7 @@ int
 main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
   ccevents_init();
-  if (1) test_enabling_and_disabling_servicing();
+  if (1) test_1_0_enabling_and_disabling_servicing();
    exit(EXIT_SUCCESS);
 }
 
