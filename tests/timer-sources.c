@@ -31,18 +31,21 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
+static volatile bool test_1_0_expiration_flag = false;
+
 static void
-test_single_timer_expiration (void)
+test_1_0_timeout_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
+{
+  //fprintf(stderr, "%s: here\n", __func__);
+  test_1_0_expiration_flag = true;
+  ccevents_source_dequeue_itself(src);
+}
+
+static void
+test_1_0_single_timer_expiration (void)
 {
   volatile bool		error_flag      = false;
-  volatile bool		expiration_flag = false;
-
-  void timeout_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
-  {
-    //fprintf(stderr, "%s: here\n", __func__);
-    expiration_flag = true;
-    ccevents_source_dequeue_itself(src);
-  }
 
   {
     cce_location_t		L[1];
@@ -61,7 +64,7 @@ test_single_timer_expiration (void)
 
       expiration_to = ccevents_timeout_init(L, 0, 1, 0);
       expiration_tv = ccevents_timeout_start(L, expiration_to);
-      ccevents_source_set_timeout(timsrc, expiration_tv, timeout_handler);
+      ccevents_source_set_timeout(timsrc, expiration_tv, test_1_0_timeout_handler);
 
       ccevents_group_init(grp, 100);
       ccevents_group_enqueue_source(grp, timsrc);
@@ -77,14 +80,15 @@ test_single_timer_expiration (void)
     }
   }
   assert(false == error_flag);
-  assert(true  == expiration_flag);
+  assert(true  == test_1_0_expiration_flag);
 }
 
+
 int
 main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
   ccevents_init();
-  if (1) test_single_timer_expiration();
+  if (1) test_1_0_single_timer_expiration();
   exit(EXIT_SUCCESS);
 }
 
