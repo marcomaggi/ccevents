@@ -126,7 +126,7 @@ static void
 method_event_handler (cce_location_t * there, ccevents_source_t * src)
 {
   CCEVENTS_PC(ccevents_signal_bub_source_t, sigsrc, src);
-  return sigsrc->event_handler(there, sigsrc);
+  sigsrc->event_handler(there, sigsrc);
 }
 static const ccevents_source_vtable_t methods_table = {
   .event_inquirer	= method_event_inquirer,

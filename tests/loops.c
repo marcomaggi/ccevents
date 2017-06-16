@@ -59,8 +59,7 @@ test_loop_single_group_single_source__dequeued_both (void)
 
   if (cce_location(L)) {
     error_flag = true;
-    cce_run_error_handlers(L);
-    cce_condition_free(cce_condition(L));
+    cce_run_error_handlers_final(L);
   } else {
     ccevents_loop_init(loop);
     ccevents_group_init(grp, 10);
@@ -110,8 +109,7 @@ test_loop_single_group_single_source__dequeued_group (void)
 
   if (cce_location(L)) {
     error_flag = true;
-    cce_run_error_handlers(L);
-    cce_condition_free(cce_condition(L));
+    cce_run_error_handlers_final(L);
   } else {
     ccevents_loop_init(loop);
     ccevents_group_init(grp, 10);
@@ -161,8 +159,7 @@ test_loop_post_exit_in_loop (void)
 
   if (cce_location(L)) {
     error_flag = true;
-    cce_run_error_handlers(L);
-    cce_condition_free(cce_condition(L));
+    cce_run_error_handlers_final(L);
   } else {
     ccevents_loop_init(loop);
     ccevents_group_init(grp, 10);
@@ -219,8 +216,7 @@ test_loop_multi_groups (void)
 
   if (cce_location(L)) {
     error_flag = true;
-    cce_run_error_handlers(L);
-    cce_condition_free(cce_condition(L));
+    cce_run_error_handlers_final(L);
   } else {
     ccevents_loop_init(loop);
 

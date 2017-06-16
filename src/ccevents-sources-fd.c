@@ -63,7 +63,7 @@ static void
 method_event_handler (cce_location_t * L, ccevents_source_t * src)
 {
   CCEVENTS_PC(ccevents_fd_source_t, fdsrc, src);
-  return fdsrc->event_handler(L, fdsrc);
+  fdsrc->event_handler(L, fdsrc);
 }
 static const ccevents_source_vtable_t methods_table = {
   .event_inquirer	= method_event_inquirer,
@@ -128,7 +128,7 @@ ccevents_query_fd_readability (cce_location_t * there, ccevents_source_t * src)
   if (0) { fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fdsrc->fd, rv); }
   if (-1 == rv) {
     /* An error occurred. */
-    cce_raise(there, cce_errno_C(rv));
+    cce_raise(there, cce_condition_new_errno_clear());
   } else {
     /* Success.  RV  contains the number  of file descriptors  ready for
        reading; in this case it can be only 1 or 0. */
@@ -153,7 +153,7 @@ ccevents_query_fd_writability (cce_location_t * there, ccevents_source_t * src)
   if (0) { fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fdsrc->fd, rv); }
   if (-1 == rv) {
     /* An error occurred. */
-    cce_raise(there, cce_errno_C(rv));
+    cce_raise(there, cce_condition_new_errno_clear());
   } else {
     /* Success.  RV  contains the number  of file descriptors  ready for
        writing; in this case it can be only 1 or 0. */
@@ -177,7 +177,7 @@ ccevents_query_fd_exception (cce_location_t * there, ccevents_source_t * src)
   rv = select(1+(fdsrc->fd), NULL, NULL, &set, &timeout);
   if (-1 == rv) {
     /* An error occurred. */
-    cce_raise(there, cce_errno_C(rv));
+    cce_raise(there, cce_condition_new_errno_clear());
   } else {
     /* Success.   RV  contains  the  number of  file  descriptors  which
        received an exception; in this case it can be only 1 or 0. */

@@ -124,8 +124,7 @@ ccevents_group_enter (ccevents_group_t * grp)
 	++servicing_attempts_count;
 
 	if (cce_location(L)) {
-	  cce_run_error_handlers(L);
-	  cce_condition_free(cce_condition(L));
+	  cce_run_error_handlers_final(L);
 	} else {
 	  ccevents_source_do_one_event(L, next_source);
 	  cce_run_cleanup_handlers(L);

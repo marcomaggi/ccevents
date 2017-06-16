@@ -123,14 +123,14 @@ cce_handler_all_filedes_close (const cce_condition_t * C CCE_UNUSED, cce_handler
 void
 cce_cleanup_handler_all_filedes_init (cce_location_t * there, all_filedes_H_t * H, all_filedes_t * fds)
 {
-  H->handler_function	= cce_handler_all_filedes_close;
+  H->function	= cce_handler_all_filedes_close;
   H->fds		= fds;
   cce_register_cleanup_handler(there, H);
 }
 void
 cce_error_handler_all_filedes_init (cce_location_t * there, all_filedes_H_t * H, all_filedes_t * fds)
 {
-  H->handler_function	= cce_handler_all_filedes_close;
+  H->function	= cce_handler_all_filedes_close;
   H->fds		= fds;
   cce_register_error_handler(there, H);
 }
@@ -152,7 +152,7 @@ main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
       cce_run_error_handlers(L);
       fprintf(stderr, "%s: error: %s\n", progname,
 	      cce_condition_static_message(cce_condition(L)));
-      cce_condition_free(cce_condition(L));
+      cce_condition_delete(cce_condition(L));
       exit(EXIT_FAILURE);
     } else {
       fds = allocate_all_filedes(L);
@@ -175,7 +175,7 @@ main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
       cce_run_error_handlers(L);
       fprintf(stderr, "%s: error: %s\n", progname,
 	      cce_condition_static_message(cce_condition(L)));
-      cce_condition_free(cce_condition(L));
+      cce_condition_delete(cce_condition(L));
       exit(EXIT_FAILURE);
     } else {
       parent_process(fds.parent_read_child_write, fds.parent_write_child_read);
@@ -201,8 +201,8 @@ allocate_all_filedes (cce_location_t * there)
    we do not care here. */
 {
   cce_location_t	L[1];
-  cce_handler_pipedes_t	forwards_pipe_H[1];
-  cce_handler_pipedes_t	backwards_pipe_H[1];
+  cce_handler_t		forwards_pipe_H[1];
+  cce_handler_t		backwards_pipe_H[1];
   int			forwards_pipe[2];
   int			backwards_pipe[2];
   all_filedes_t		fds;
@@ -233,7 +233,7 @@ allocate_all_filedes (cce_location_t * there)
     }
 
     /* Run this to test the reaction to pipe creation errors. */
-    if (0) { cce_raise(there, cce_unknown_C); }
+    if (0) { cce_raise(there, cce_condition_new_unknown()); }
 
     cce_run_cleanup_handlers(L);
     return fds;
@@ -367,7 +367,7 @@ void
 cleanup_handler_master_state_init (cce_location_t * there, master_state_H_t * S_handler, master_state_t * S)
 {
   S_handler->state		= S;
-  S_handler->handler_function	= cleanup_handler_master_state;
+  S_handler->function	= cleanup_handler_master_state;
   cce_register_cleanup_handler(there, S_handler);
 }
 
@@ -375,7 +375,7 @@ void
 error_handler_master_state_init (cce_location_t * there, master_state_H_t * S_handler, master_state_t * S)
 {
   S_handler->state		= S;
-  S_handler->handler_function	= cleanup_handler_master_state;
+  S_handler->function	= cleanup_handler_master_state;
   cce_register_error_handler(there, S_handler);
 }
 
@@ -386,18 +386,18 @@ parent_process (int parent_read_child_write_fd, int parent_write_child_read_fd)
    it.  When communication  is finished: check for  errors; finalise the
    structures; finally return. */
 {
-  cce_location_t		L[1];
-  cce_handler_filedes_t		read_fd_H[1];
-  cce_handler_filedes_t		write_fd_H[1];
-  master_state_t		S;
-  master_state_H_t		state_H[1];
+  cce_location_t	L[1];
+  cce_handler_t		read_fd_H[1];
+  cce_handler_t		write_fd_H[1];
+  master_state_t	S;
+  master_state_H_t	state_H[1];
 
   if (0) { fprintf(stderr, "%s: enter\n", __func__); }
 
   if (cce_location(L)) {
     cce_run_error_handlers(L);
     fprintf(stderr, "%s error: %s\n", __func__, cce_condition_static_message(cce_condition(L)));
-    cce_condition_free(cce_condition(L));
+    cce_condition_delete(cce_condition(L));
   } else {
     cce_cleanup_handler_filedes_init(L, read_fd_H,  parent_read_child_write_fd);
     cce_cleanup_handler_filedes_init(L, write_fd_H, parent_write_child_read_fd);
@@ -410,7 +410,7 @@ parent_process (int parent_read_child_write_fd, int parent_write_child_read_fd)
     if (S.exceptional_condition) {
       fprintf(stderr, "%s: master task error: %s\n", progname,
 	      cce_condition_static_message(S.exceptional_condition));
-      cce_condition_free(S.exceptional_condition);
+      cce_condition_delete(S.exceptional_condition);
     }
 
     cce_run_cleanup_handlers(L);
@@ -661,7 +661,7 @@ void
 cleanup_handler_slave_state_init (cce_location_t * there, slave_state_H_t * S_handler, slave_state_t * S)
 {
   S_handler->state		= S;
-  S_handler->handler_function	= cleanup_handler_slave_state;
+  S_handler->function	= cleanup_handler_slave_state;
   cce_register_cleanup_handler(there, S_handler);
 }
 
@@ -669,7 +669,7 @@ void
 error_handler_slave_state_init (cce_location_t * there, slave_state_H_t * S_handler, slave_state_t * S)
 {
   S_handler->state		= S;
-  S_handler->handler_function	= cleanup_handler_slave_state;
+  S_handler->function	= cleanup_handler_slave_state;
   cce_register_error_handler(there, S_handler);
 }
 
@@ -681,8 +681,8 @@ child_process (int child_read_parent_write_fd, int child_write_parent_read_fd)
    structures; finally return. */
 {
   cce_location_t	L[1];
-  cce_handler_filedes_t	handler_write_fd[1];
-  cce_handler_filedes_t	handler_read_fd[1];
+  cce_handler_t		handler_write_fd[1];
+  cce_handler_t		handler_read_fd[1];
   slave_state_t		S;
   slave_state_H_t	S_handler[1];
 
@@ -691,7 +691,7 @@ child_process (int child_read_parent_write_fd, int child_write_parent_read_fd)
   if (cce_location(L)) {
     cce_run_error_handlers(L);
     fprintf(stderr, "%s error: %s\n", __func__, cce_condition_static_message(cce_condition(L)));
-    cce_condition_free(cce_condition(L));
+    cce_condition_delete(cce_condition(L));
     exit(EXIT_FAILURE);
   } else {
     cce_cleanup_handler_filedes_init(L, handler_read_fd,  child_read_parent_write_fd);
@@ -704,7 +704,7 @@ child_process (int child_read_parent_write_fd, int child_write_parent_read_fd)
     /* Are we out of the loop because of an exceptional condition? */
     if (S.exceptional_condition) {
       fprintf(stderr, "slave task error: %s\n", cce_condition_static_message(S.exceptional_condition));
-      cce_condition_free(S.exceptional_condition);
+      cce_condition_delete(S.exceptional_condition);
     }
 
     cce_run_cleanup_handlers(L);

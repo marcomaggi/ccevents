@@ -65,8 +65,7 @@ test_standalone_readability (void)
   pipe(X);
 
   if (cce_location(L)) {
-    cce_run_error_handlers(L);
-    cce_condition_free(cce_condition(L));
+    cce_run_error_handlers_final(L);
     error_flag = true;
   } else {
     ccevents_group_t		grp[1];
@@ -133,8 +132,7 @@ test_standalone_writability (void)
   pipe(X);
 
   if (cce_location(L)) {
-    cce_run_error_handlers(L);
-    cce_condition_free(cce_condition(L));
+    cce_run_error_handlers_final(L);
     error_flag = true;
   } else {
     ccevents_group_t		grp[1];
@@ -199,8 +197,7 @@ test_standalone_exception (void)
   volatile bool		error_flag = false;
 
   if (cce_location(L)) {
-    cce_run_error_handlers(L);
-    cce_condition_free(cce_condition(L));
+    cce_run_error_handlers_final(L);
     error_flag = true;
   } else {
     master_sock = socket(PF_INET, SOCK_STREAM, 0);
@@ -356,8 +353,8 @@ test_talking_processes_with_groups (void)
     {
       close(write_fd);
     }
-    cce_handler_t	H1 = { .handler_function = close_read_fd_handler  };
-    cce_handler_t	H2 = { .handler_function = close_write_fd_handler };
+    cce_handler_t	H1 = { .function = close_read_fd_handler  };
+    cce_handler_t	H2 = { .function = close_write_fd_handler };
     cce_register_cleanup_handler(L, &H1);
     cce_register_cleanup_handler(L, &H2);
 
@@ -373,7 +370,7 @@ test_talking_processes_with_groups (void)
 	  fprintf(stderr, "master: send 'hello'\n");
 	  errno = 0;
 	  if (strlen("hello\n") != write(fdsrc->fd, "hello\n", strlen("hello\n"))) {
-	    cce_raise(there, cce_errno_C(errno));
+	    cce_raise(there, cce_condition_new_errno_clear());
 	  }
 	  state = 1;
 	  ccevents_source_enable_servicing(read_source);
@@ -384,7 +381,7 @@ test_talking_processes_with_groups (void)
 	  fprintf(stderr, "master: send 'quit'\n");
 	  errno = 0;
 	  if (strlen("quit\n") != write(write_fd, "quit\n", strlen("quit\n"))) {
-	    cce_raise(there, cce_errno_C(errno));
+	    cce_raise(there, cce_condition_new_errno_clear());
 	  }
 	  state = 3;
 	  ccevents_source_enable_servicing(read_source);
@@ -412,7 +409,7 @@ test_talking_processes_with_groups (void)
 	  errno = 0;
 	  count = read(fdsrc->fd, buf, 10);
 	  if (-1 == count) {
-	    cce_raise(there, cce_errno_C(errno));
+	    cce_raise(there, cce_condition_new_errno_clear());
 	  }
 	  buf[count] = '\0';
 	  assert(0 == strncmp("hello\n", buf, strlen("hello\n")));
@@ -429,7 +426,7 @@ test_talking_processes_with_groups (void)
 	  errno = 0;
 	  count = read(fdsrc->fd, buf, 10);
 	  if (-1 == count) {
-	    cce_raise(there, cce_errno_C(errno));
+	    cce_raise(there, cce_condition_new_errno_clear());
 	  }
 	  buf[count] = '\0';
 	  assert(0 == strncmp("quit\n", buf, strlen("quit\n")));
@@ -448,8 +445,7 @@ test_talking_processes_with_groups (void)
 
     /* Do the talking. */
     if (cce_location(L)) {
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       ccevents_fd_source_init(read_source, read_fd);
       ccevents_fd_source_init(write_source, write_fd);
@@ -489,8 +485,8 @@ test_talking_processes_with_groups (void)
     {
       close(write_fd);
     }
-    cce_handler_t	H1 = { .handler_function = close_read_fd_handler  };
-    cce_handler_t	H2 = { .handler_function = close_write_fd_handler };
+    cce_handler_t	H1 = { .function = close_read_fd_handler  };
+    cce_handler_t	H2 = { .function = close_write_fd_handler };
     cce_register_cleanup_handler(L, &H1);
     cce_register_cleanup_handler(L, &H2);
 
@@ -508,7 +504,7 @@ test_talking_processes_with_groups (void)
 	  errno = 0;
 	  count = read(fdsrc->fd, buf, 10);
 	  if (-1 == count) {
-	    cce_raise(there, cce_errno_C(errno));
+	    cce_raise(there, cce_condition_new_errno_clear());
 	  }
 	  buf[count] = '\0';
 	  assert(0 == strncmp("hello\n", buf, strlen("hello\n")));
@@ -525,7 +521,7 @@ test_talking_processes_with_groups (void)
 	  errno = 0;
 	  count = read(fdsrc->fd, buf, 10);
 	  if (-1 == count) {
-	    cce_raise(there, cce_errno_C(errno));
+	    cce_raise(there, cce_condition_new_errno_clear());
 	  }
 	  buf[count] = '\0';
 	  assert(0 == strncmp("quit\n", buf, strlen("quit\n")));
@@ -550,7 +546,7 @@ test_talking_processes_with_groups (void)
 	  fprintf(stderr, "slave: send 'hello'\n");
 	  errno = 0;
 	  if (strlen("hello\n") != write(fdsrc->fd, "hello\n", strlen("hello\n"))) {
-	    cce_raise(there, cce_errno_C(errno));
+	    cce_raise(there, cce_condition_new_errno_clear());
 	  }
 	  fprintf(stderr, "slave: sent 'hello'\n");
 	  state = 2;
@@ -563,7 +559,7 @@ test_talking_processes_with_groups (void)
 	  fprintf(stderr, "slave: send 'quit'\n");
 	  errno = 0;
 	  if (strlen("quit\n") != write(fdsrc->fd, "quit\n", strlen("quit\n"))) {
-	    cce_raise(there, cce_errno_C(errno));
+	    cce_raise(there, cce_condition_new_errno_clear());
 	  }
 	  state = 0;
 	  ccevents_source_dequeue_itself(read_source);
@@ -576,8 +572,7 @@ test_talking_processes_with_groups (void)
 
     /* Do the talking. */
     if (cce_location(L)) {
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
       error_flag = true;
     } else {
       ccevents_fd_source_init(read_source, read_fd);
@@ -607,13 +602,12 @@ test_talking_processes_with_groups (void)
     pid_t		pid;
 
     if (cce_location(L)) {
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       errno = 0;
       pid   = fork();
       if (-1 == pid) {
-	cce_raise(L, cce_errno_C(errno));
+	cce_raise(L, cce_condition_new_errno_clear());
       } else if (0 == pid) {
 	/* This is the child process. */
 	slave_process();
@@ -629,7 +623,7 @@ test_talking_processes_with_groups (void)
 	errno = 0;
 	rv    = waitpid(pid, &wstatus, 0);
 	if (-1 == rv) {
-	  cce_raise(L, cce_errno_C(errno));
+	  cce_raise(L, cce_condition_new_errno_clear());
 	}
 	assert(WIFEXITED(wstatus));
 	assert(0 == WEXITSTATUS(wstatus));

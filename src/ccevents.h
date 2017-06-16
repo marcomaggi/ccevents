@@ -19,8 +19,9 @@
   MERCHANTABILITY  or FITNESS  FOR A  PARTICULAR PURPOSE.   See  the GNU
   General Public License for more details.
 
-  You  should have received  a copy  of the  GNU General  Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  You  should have  received a  copy of  the GNU  Lesser General  Public
+  License     along    with     this    program.      If    not,     see
+  <http://www.gnu.org/licenses/>.
 */
 
 #ifndef CCEVENTS_H
@@ -64,22 +65,22 @@ extern "C" {
 #if defined _WIN32 || defined __CYGWIN__
 #  ifdef BUILDING_DLL
 #    ifdef __GNUC__
-#      define ccevents_decl		__attribute__((dllexport))
+#      define ccevents_decl		__attribute__((dllexport)) extern
 #    else
-#      define ccevents_decl		__declspec(dllexport)
+#      define ccevents_decl		__declspec(dllexport) extern
 #    endif
 #  else
 #    ifdef __GNUC__
-#      define ccevents_decl		__attribute__((dllimport))
+#      define ccevents_decl		__attribute__((dllimport)) extern
 #    else
-#      define ccevents_decl		__declspec(dllimport)
+#      define ccevents_decl		__declspec(dllimport) extern
 #    endif
 #  endif
 #  define ccevents_private_decl	extern
 #else
 #  if __GNUC__ >= 4
-#    define ccevents_decl		__attribute__((visibility ("default")))
-#    define ccevents_private_decl	__attribute__((visibility ("hidden")))
+#    define ccevents_decl		__attribute__((visibility ("default"))) extern
+#    define ccevents_private_decl	__attribute__((visibility ("hidden"))) extern
 #  else
 #    define ccevents_decl		extern
 #    define ccevents_private_decl	extern
@@ -112,6 +113,28 @@ typedef struct ccevents_timer_source_t		ccevents_timer_source_t;
 
 typedef struct ccevents_queue_node_t		ccevents_queue_node_t;
 typedef struct ccevents_queue_t			ccevents_queue_t;
+
+/* ------------------------------------------------------------------ */
+
+typedef struct ccevents_descriptor_base_t		ccevents_descriptor_base_t;
+
+typedef struct ccevents_descriptor_timeval_t		ccevents_descriptor_timeval_t;
+typedef struct ccevents_descriptor_timeval_invalid_t	ccevents_descriptor_timeval_invalid_t;
+typedef struct ccevents_descriptor_timeval_overflow_t	ccevents_descriptor_timeval_overflow_t;
+
+typedef struct ccevents_descriptor_timeout_t		ccevents_descriptor_timeout_t;
+typedef struct ccevents_descriptor_timeout_invalid_t	ccevents_descriptor_timeout_invalid_t;
+typedef struct ccevents_descriptor_timeout_overflow_t	ccevents_descriptor_timeout_overflow_t;
+
+typedef struct ccevents_condition_base_t		ccevents_condition_base_t;
+
+typedef struct ccevents_condition_timeval_t		ccevents_condition_timeval_t;
+typedef struct ccevents_condition_timeval_invalid_t	ccevents_condition_timeval_invalid_t;
+typedef struct ccevents_condition_timeval_overflow_t	ccevents_condition_timeval_overflow_t;
+
+typedef struct ccevents_condition_timeout_t		ccevents_condition_timeout_t;
+typedef struct ccevents_condition_timeout_invalid_t	ccevents_condition_timeout_invalid_t;
+typedef struct ccevents_condition_timeout_overflow_t	ccevents_condition_timeout_overflow_t;
 
 
 /** --------------------------------------------------------------------
@@ -222,122 +245,153 @@ ccevents_queue_node_is_enqueued (const ccevents_queue_node_t * N)
  ** Exceptional conditions.
  ** ----------------------------------------------------------------- */
 
-typedef struct ccevents_base_D_t {
-  cce_condition_descriptor_t;
-} ccevents_base_D_t;
+struct ccevents_descriptor_base_t {
+  cce_descriptor_t	descriptor;
+};
 
-ccevents_decl const ccevents_base_D_t * ccevents_base_D;
+struct ccevents_condition_base_t {
+  cce_condition_t	condition;
+};
+
+ccevents_decl const ccevents_descriptor_base_t * const ccevents_descriptor_base;
 
 __attribute__((pure,nonnull(1),always_inline))
 static inline bool
-ccevents_is_a_base_C (const cce_condition_t * C)
+ccevents_condition_is_base (cce_condition_t const * C)
 {
-  return cce_is_a_condition(C, ccevents_base_D);
+  return cce_is_condition(C, &(ccevents_descriptor_base->descriptor));
 }
 
 /* ------------------------------------------------------------------ */
 
-typedef struct ccevents_timeval_D_t {
-  cce_condition_descriptor_t;
-} ccevents_timeval_D_t;
+struct ccevents_descriptor_timeval_t {
+  cce_descriptor_t	descriptor;
+};
 
-typedef struct ccevents_timeval_C_t {
-  cce_condition_t;
-} ccevents_timeval_C_t;
+struct ccevents_condition_timeval_t {
+  ccevents_condition_base_t	base;
+};
 
-ccevents_decl const ccevents_timeval_C_t * ccevents_timeval_C (void)
+ccevents_decl const ccevents_descriptor_timeval_t * const ccevents_descriptor_timeval;
+
+ccevents_decl cce_condition_t const * ccevents_condition_new_timeval (void)
   __attribute__((leaf,pure));
-ccevents_decl const ccevents_timeval_D_t * ccevents_timeval_D;
 
 __attribute__((pure,nonnull(1),always_inline))
 static inline bool
-ccevents_is_a_timeval_C (const cce_condition_t * C)
+ccevents_condition_is_timeval (cce_condition_t const * C)
 {
-  return cce_is_a_condition(C, ccevents_timeval_D);
+  return cce_is_condition(C, &(ccevents_descriptor_timeval->descriptor));
 }
 
 /* ------------------------------------------------------------------ */
 
-typedef struct ccevents_timeval_invalid_D_t {
-  cce_condition_descriptor_t;
-} ccevents_timeval_invalid_D_t;
+struct ccevents_descriptor_timeval_invalid_t {
+  cce_descriptor_t	descriptor;
+};
 
-typedef struct ccevents_timeval_invalid_C_t {
-  cce_condition_t;
-} ccevents_timeval_invalid_C_t;
+struct ccevents_condition_timeval_invalid_t {
+  ccevents_condition_timeval_t	timeval;
+};
 
-ccevents_decl const ccevents_timeval_invalid_C_t * ccevents_timeval_invalid_C (void)
+ccevents_decl const ccevents_descriptor_timeval_invalid_t * const ccevents_descriptor_timeval_invalid;
+
+ccevents_decl cce_condition_t const * ccevents_condition_new_timeval_invalid (void)
   __attribute__((leaf,pure));
-ccevents_decl const ccevents_timeval_invalid_D_t * ccevents_timeval_invalid_D;
 
 __attribute__((pure,nonnull(1),always_inline))
 static inline bool
-ccevents_is_a_timeval_invalid_C (const cce_condition_t * C)
+ccevents_condition_is_timeval_invalid (cce_condition_t const * C)
 {
-  return cce_is_a_condition(C, ccevents_timeval_invalid_D);
+  return cce_is_condition(C, &(ccevents_descriptor_timeval_invalid->descriptor));
 }
 
 /* ------------------------------------------------------------------ */
 
-typedef struct ccevents_timeval_overflow_D_t {
-  cce_condition_descriptor_t;
-} ccevents_timeval_overflow_D_t;
+struct ccevents_descriptor_timeval_overflow_t {
+  cce_descriptor_t	descriptor;
+};
 
-typedef struct ccevents_timeval_overflow_C_t {
-  cce_condition_t;
-} ccevents_timeval_overflow_C_t;
+struct ccevents_condition_timeval_overflow_t {
+  ccevents_condition_timeval_t	timeval;
+};
 
-ccevents_decl const ccevents_timeval_overflow_C_t * ccevents_timeval_overflow_C (void)
+ccevents_decl const ccevents_descriptor_timeval_overflow_t * const ccevents_descriptor_timeval_overflow;
+
+ccevents_decl cce_condition_t const * ccevents_condition_new_timeval_overflow (void)
   __attribute__((leaf,pure));
-ccevents_decl const ccevents_timeval_overflow_D_t * ccevents_timeval_overflow_D;
 
 __attribute__((pure,nonnull(1),always_inline))
 static inline bool
-ccevents_is_a_timeval_overflow_C (const cce_condition_t * C)
+ccevents_condition_is_timeval_overflow (cce_condition_t const * C)
 {
-  return cce_is_a_condition(C, ccevents_timeval_overflow_D);
+  return cce_is_condition(C, &(ccevents_descriptor_timeval_overflow->descriptor));
 }
 
 /* ------------------------------------------------------------------ */
 
-typedef struct ccevents_timeout_invalid_D_t {
-  cce_condition_descriptor_t;
-} ccevents_timeout_invalid_D_t;
+struct ccevents_descriptor_timeout_t {
+  cce_descriptor_t	descriptor;
+};
 
-typedef struct ccevents_timeout_invalid_C_t {
-  cce_condition_t;
-} ccevents_timeout_invalid_C_t;
+struct ccevents_condition_timeout_t {
+  ccevents_condition_base_t	base;
+};
 
-ccevents_decl const ccevents_timeout_invalid_C_t * ccevents_timeout_invalid_C (void)
+ccevents_decl const ccevents_descriptor_timeout_t * const ccevents_descriptor_timeout;
+
+ccevents_decl cce_condition_t const * ccevents_condition_new_timeout (void)
   __attribute__((leaf,pure));
-ccevents_decl const ccevents_timeout_invalid_D_t * ccevents_timeout_invalid_D;
 
 __attribute__((pure,nonnull(1),always_inline))
 static inline bool
-ccevents_is_a_timeout_invalid_C (const cce_condition_t * C)
+ccevents_condition_is_timeout (cce_condition_t const * C)
 {
-  return cce_is_a_condition(C, ccevents_timeout_invalid_D);
+  return cce_is_condition(C, &(ccevents_descriptor_timeout->descriptor));
 }
 
 /* ------------------------------------------------------------------ */
 
-typedef struct ccevents_timeout_overflow_D_t {
-  cce_condition_descriptor_t;
-} ccevents_timeout_overflow_D_t;
+struct ccevents_descriptor_timeout_invalid_t {
+  cce_descriptor_t	descriptor;
+};
 
-typedef struct ccevents_timeout_overflow_C_t {
-  cce_condition_t;
-} ccevents_timeout_overflow_C_t;
+struct ccevents_condition_timeout_invalid_t {
+  ccevents_condition_timeout_t	timeout;
+};
 
-ccevents_decl const ccevents_timeout_overflow_C_t * ccevents_timeout_overflow_C (void)
+ccevents_decl const ccevents_descriptor_timeout_invalid_t * const ccevents_descriptor_timeout_invalid;
+
+ccevents_decl cce_condition_t const * ccevents_condition_new_timeout_invalid (void)
   __attribute__((leaf,pure));
-ccevents_decl const ccevents_timeout_overflow_D_t * ccevents_timeout_overflow_D;
 
 __attribute__((pure,nonnull(1),always_inline))
 static inline bool
-ccevents_is_a_timeout_overflow_C (const cce_condition_t * C)
+ccevents_condition_is_timeout_invalid (cce_condition_t const * C)
 {
-  return cce_is_a_condition(C, ccevents_timeout_overflow_D);
+  return cce_is_condition(C, &(ccevents_descriptor_timeout_invalid->descriptor));
+}
+
+/* ------------------------------------------------------------------ */
+
+struct ccevents_descriptor_timeout_overflow_t {
+  cce_descriptor_t	descriptor;
+};
+
+struct ccevents_condition_timeout_overflow_t {
+  ccevents_condition_timeout_t	timeout;
+};
+
+ccevents_decl const ccevents_descriptor_timeout_overflow_t * const ccevents_descriptor_timeout_overflow;
+
+ccevents_decl cce_condition_t const * ccevents_condition_new_timeout_overflow (void)
+  __attribute__((leaf,pure));
+
+__attribute__((pure,nonnull(1),always_inline))
+static inline bool
+ccevents_condition_is_timeout_overflow (cce_condition_t const * C)
+{
+  return cce_is_condition(C, &(ccevents_descriptor_timeout_overflow->descriptor));
 }
 
 
@@ -503,7 +557,7 @@ struct ccevents_source_t {
   /* Nested  anonymous struct  defined as  a bitfield.   Everybody hates
      bitfields, but I do not care.  I'm bad. */
   struct {
-    int		enabled: 1;
+    unsigned int	enabled: 1;
   };
 };
 

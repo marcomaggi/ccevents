@@ -43,7 +43,7 @@ static void
 method_event_handler (cce_location_t * there, ccevents_source_t * src)
 {
   CCEVENTS_PC(ccevents_task_source_t, tksrc, src);
-  return tksrc->event_handler(there, tksrc);
+  tksrc->event_handler(there, tksrc);
 }
 static const ccevents_source_vtable_t methods_table = {
   .event_inquirer	= method_event_inquirer,

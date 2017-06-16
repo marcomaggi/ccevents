@@ -81,8 +81,7 @@ test_single_task (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       ccevents_task_source_init(tksrc);
       ccevents_source_set_timeout(tksrc, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
@@ -176,8 +175,7 @@ test_multi_tasks (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       task_init(tsk1, "multi task 1");
       task_init(tsk2, "multi task 2");

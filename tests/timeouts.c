@@ -51,8 +51,7 @@ test_timeout_initialisation (void)
 
   if (cce_location(L)) {
     error_flag = true;
-    cce_run_error_handlers(L);
-    cce_condition_free(cce_condition(L));
+    cce_run_error_handlers_final(L);
   } else {
     to = ccevents_timeout_init(L, 1, 2, 3);
     cce_run_cleanup_handlers(L);
@@ -73,8 +72,7 @@ test_timeout_initialisation_correct_milliseconds_overflow (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       to = ccevents_timeout_init(L, 0, 1001, 0);
       cce_run_cleanup_handlers(L);
@@ -92,8 +90,7 @@ test_timeout_initialisation_correct_milliseconds_overflow (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       to = ccevents_timeout_init(L, 0, LONG_MAX, 0);
       cce_run_cleanup_handlers(L);
@@ -111,8 +108,7 @@ test_timeout_initialisation_correct_milliseconds_overflow (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       to = ccevents_timeout_init(L, 1, -100, 0);
       cce_run_cleanup_handlers(L);
@@ -130,8 +126,7 @@ test_timeout_initialisation_correct_milliseconds_overflow (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       to = ccevents_timeout_init(L, LONG_MAX-1000, LONG_MIN, 0);
       cce_run_cleanup_handlers(L);
@@ -155,8 +150,7 @@ test_timeout_initialisation_correct_microseconds_overflow (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       to = ccevents_timeout_init(L, 0, 0, 1001);
       cce_run_cleanup_handlers(L);
@@ -175,8 +169,7 @@ test_timeout_initialisation_correct_microseconds_overflow (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       to = ccevents_timeout_init(L, 0, 1, -100);
       cce_run_cleanup_handlers(L);
@@ -195,8 +188,7 @@ test_timeout_initialisation_correct_microseconds_overflow (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       to = ccevents_timeout_init(L, 0, 1, -100);
       cce_run_cleanup_handlers(L);
@@ -215,8 +207,7 @@ test_timeout_initialisation_correct_microseconds_overflow (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       to = ccevents_timeout_init(L, 0, LONG_MAX, LONG_MIN);
       cce_run_cleanup_handlers(L);
@@ -240,8 +231,7 @@ test_timeout_initialisation_double_microseconds_overflow (void)
 
   if (cce_location(L)) {
     error_flag = true;
-    cce_run_error_handlers(L);
-    cce_condition_free(cce_condition(L));
+    cce_run_error_handlers_final(L);
   } else {
     to = ccevents_timeout_init(L, 0, 0, 1001001);
     cce_run_cleanup_handlers(L);
@@ -261,9 +251,8 @@ test_condition_invalid_milliseconds_overflow (void)
 
   if (cce_location(L)) {
     error_flag = true;
-    assert(true == ccevents_is_a_timeout_overflow_C(cce_condition(L)));
-    cce_run_error_handlers(L);
-    cce_condition_free(cce_condition(L));
+    assert(true == ccevents_condition_is_timeout_overflow(cce_condition(L)));
+    cce_run_error_handlers_final(L);
   } else {
     to = ccevents_timeout_init(L, LONG_MAX - (LONG_MAX / 1000) + 1, LONG_MAX, 0);
     PRINTO(to);
@@ -281,9 +270,8 @@ test_condition_invalid_microseconds_overflow (void)
 
   if (cce_location(L)) {
     error_flag = true;
-    assert(true == ccevents_is_a_timeout_overflow_C(cce_condition(L)));
-    cce_run_error_handlers(L);
-    cce_condition_free(cce_condition(L));
+    assert(true == ccevents_condition_is_timeout_overflow(cce_condition(L)));
+    cce_run_error_handlers_final(L);
   } else {
     to = ccevents_timeout_init(L, LONG_MAX-1, 1000, 1000000);
     PRINTO(to);
@@ -302,9 +290,8 @@ test_condition_invalid_seconds (void)
 
   if (cce_location(L)) {
     error_flag = true;
-    assert(true == ccevents_is_a_timeout_invalid_C(cce_condition(L)));
-    cce_run_error_handlers(L);
-    cce_condition_free(cce_condition(L));
+    assert(true == ccevents_condition_is_timeout_invalid(cce_condition(L)));
+    cce_run_error_handlers_final(L);
   } else {
     to = ccevents_timeout_init(L, -10, 0, 0);
     PRINTO(to);
@@ -322,8 +309,7 @@ test_timeout_getters (void)
 
   if (cce_location(L)) {
     error_flag = true;
-    cce_run_error_handlers(L);
-    cce_condition_free(cce_condition(L));
+    cce_run_error_handlers_final(L);
   } else {
     to = ccevents_timeout_init(L, 1, 2, 3);
   }
@@ -344,8 +330,7 @@ test_timeout_predicates (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       to = ccevents_timeout_init(L, LONG_MAX, 0, 0);
     }
@@ -360,8 +345,7 @@ test_timeout_predicates (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       to = ccevents_timeout_init(L, 123, 0, 0);
     }
@@ -382,8 +366,7 @@ test_timeout_span_comparisons (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       A = ccevents_timeout_init(L, 1, 0, 0);
       B = ccevents_timeout_init(L, 1, 0, 0);
@@ -400,8 +383,7 @@ test_timeout_span_comparisons (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       A = ccevents_timeout_init(L, 1, 0, 0);
       B = ccevents_timeout_init(L, 2, 0, 0);
@@ -418,8 +400,7 @@ test_timeout_span_comparisons (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       A = ccevents_timeout_init(L, 0, 1, 0);
       B = ccevents_timeout_init(L, 0, 2, 0);
@@ -436,8 +417,7 @@ test_timeout_span_comparisons (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       A = ccevents_timeout_init(L, 0, 0, 1);
       B = ccevents_timeout_init(L, 0, 0, 2);
@@ -454,8 +434,7 @@ test_timeout_span_comparisons (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       A = ccevents_timeout_init(L, 2, 0, 0);
       B = ccevents_timeout_init(L, 1, 0, 0);
@@ -472,8 +451,7 @@ test_timeout_span_comparisons (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       A = ccevents_timeout_init(L, 0, 2, 0);
       B = ccevents_timeout_init(L, 0, 1, 0);
@@ -490,8 +468,7 @@ test_timeout_span_comparisons (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       A = ccevents_timeout_init(L, 0, 0, 2);
       B = ccevents_timeout_init(L, 0, 0, 1);
@@ -513,8 +490,7 @@ test_timeout_expiration_time_comparisons (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       A = ccevents_timeout_init(L, 1, 0, 0);
       B = ccevents_timeout_init(L, 1, 0, 1);
@@ -535,8 +511,7 @@ test_timeout_expiration_time_comparisons (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       A = ccevents_timeout_init(L, 10, 0, 0);
       B = ccevents_timeout_init(L, 1, 0, 0);
@@ -564,8 +539,7 @@ test_timeout_operations (void)
 
     if (cce_location(L)) {
       error_flag = true;
-      cce_run_error_handlers(L);
-      cce_condition_free(cce_condition(L));
+      cce_run_error_handlers_final(L);
     } else {
       to = ccevents_timeout_init(L, 1, 0, 0);
       tv = ccevents_timeout_start(L, to);

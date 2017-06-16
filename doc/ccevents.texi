@@ -266,8 +266,8 @@ Return an integer representing the library interface current age.
 @chapter Exceptional condition objects
 
 
-@value{PACKAGE} makes use of the external library CCExceptions to signal exceptional conditions and
-errors through non--local exits; @xref{Top, CCExceptions, CCExceptions, ccexceptions, CCExceptions}.
+@value{PACKAGE} uses the external library CCExceptions to signal exceptional conditions and errors
+through non--local exits; @xref{Top, CCExceptions, CCExceptions, ccexceptions, CCExceptions}.
 
 The functions will raise exceptional conditions with @cfunc{cce_raise} and expect the caller to
 intercept them using the @code{cce_location_t} mechanics.  The basic code template is:
@@ -287,11 +287,6 @@ if (cce_location(L)) @{
 @}
 @end example
 
-@value{PACKAGE} makes use of a naming convention for condition descriptors and condition objects:
-names ending with @samp{_D_t} are condition descriptor types; names ending with @samp{_C_t} are
-condition object types; names ending with @samp{_D} are instances of condition descriptors; names
-ending with @samp{_C} are instances of condition objects.
-
 @menu
 * conditions base::             Base exceptional conditions.
 * conditions timevals::         Timeval exceptional conditions.
@@ -307,27 +302,28 @@ ending with @samp{_C} are instances of condition objects.
 @cindex Exceptional conditions, base
 
 
-@deftp {Struct Typedef} ccevents_base_D_t
-Type of data structure representing the base exceptional condition descriptor for all the conditions
-defined by this library.  It has the following public fields:
+@deftp {Struct Typedef} ccevents_descriptor_base_t
+Type of data structure representing the base exceptional--condition descriptor for all the
+conditions defined by @value{PACKAGE}.  It has the following public fields:
 
 @table @code
-@item cce_condition_descriptor_t
-Anonymous field representing the condition descriptor's base values.
+@item cce_descriptor_t descriptor
+The condition descriptor's base values.
 @end table
 
-The parent of this type descriptor is @code{cce_root_D} as defined by the CCExceptions library.
+The parent of this type descriptor is the root type descriptor defined by the CCExceptions library;
 @xref{conditions root, CCExceptions, CCExceptions, ccexceptions, CCExceptions}.
 @end deftp
 
 
-@deftypevr {Dynamic Constant} {const ccevents_base_D_t *} ccevents_base_D
+@deftypevr {Dynamic Constant} {const ccevents_descriptor_base_t * const} ccevents_descriptor_base
 Pointer to a statically allocated exceptional condition descriptor.
 @end deftypevr
 
 
-@deftypefun bool ccevents_is_a_base_C (const cce_condition_t * @var{C})
-Return @true{} if @var{C} is of type @code{ccevents_base_D}; otherwise return @false{}.
+@deftypefun bool ccevents_condition_is_base (cce_condition_t const * @var{C})
+Return @true{} if @var{C} is of type @objtype{ccevents_descriptor_base_t}; otherwise return
+@false{}.
 @end deftypefun
 
 @c page
@@ -350,43 +346,43 @@ Return @true{} if @var{C} is of type @code{ccevents_base_D}; otherwise return @f
 @cindex Exceptional conditions, timeval
 
 
-@deftp {Struct Typedef} ccevents_timeval_D_t
+@deftp {Struct Typedef} ccevents_descriptor_timeval_t
 Type of data structure representing a generic exceptional condition descriptor for all the
 timeval--related errors; it is the base for all the timeval--related condition object types.  It has
 the following public fields:
 
 @table @code
-@item cce_condition_descriptor_t
-Anonymous field representing the condition descriptor's base values.
+@item cce_descriptor_t descriptor
+The condition descriptor's base values.
 @end table
 
-The parent of this type descriptor is the descriptor referenced by @code{ccevents_base_D}.
+The parent of this type descriptor is the one referenced by @code{ccevents_descriptor_base}.
 @end deftp
 
 
-@deftp {Struct Typedef} ccevents_timeval_C_t
+@deftp {Struct Typedef} ccevents_condition_timeval_t
 Type of data structure representing an exceptional condition object for a generic timeval--related
 error.  It has the following public fields:
 
 @table @code
-@item cce_condition_t
-Anonymous field representing the condition object's base values.
+@item cce_condition_t base
+The condition object's base values.
 @end table
 @end deftp
 
 
-@deftypevr {Dynamic Constant} {const ccevents_timeval_D_t *} ccevents_timeval_D
+@deftypevr {Dynamic Constant} {const ccevents_descriptor_timeval_t * const} ccevents_descriptor_timeval
 Pointer to a statically allocated exceptional condition descriptor.
 @end deftypevr
 
 
-@deftypefun {const ccevents_timeval_C_t *} ccevents_timeval_C (void)
+@deftypefun {cce_condition_t const *} ccevents_condition_new_timeval (void)
 Return a pointer to exceptional condition object.
 @end deftypefun
 
 
-@deftypefun bool ccevents_is_a_timeval_C (const cce_condition_t * @var{C})
-Return @true{} if @var{C} if of type @code{ccevents_timeval_D}; otherwise return @false{}.
+@deftypefun bool ccevents_condition_is_timeval (cce_condition_t const * @var{C})
+Return @true{} if @var{C} if of type @code{ccevents_descriptor_timeval}; otherwise return @false{}.
 @end deftypefun
 
 
@@ -396,12 +392,11 @@ To catch this exceptional condition we can do:
 cce_location_t        L[1];
 
 if (cce_location(L)) @{
-  if (ccevents_is_a_timeval_C(cce_condition(L))) @{
-    CCEVENTS_PC(ccevents_timeval_C_t, C, cce_condition(L));
+  if (ccevents_condition_is_timeval(cce_condition(L))) @{
+    CCEVENTS_PC(ccevents_condition_timeval_t, C, cce_condition(L));
     do_something_with(C);
   @}
-  cce_run_error_handlers(L);
-  cce_condition_free(cce_condition(L));
+  cce_run_error_handlers_final(L);
 @} else @{
   do_something(L);
   cce_run_cleanup_handlers(L);
@@ -418,44 +413,43 @@ if (cce_location(L)) @{
 @cindex Exceptional conditions, invalid timeval
 
 
-@deftp {Struct Typedef} ccevents_timeval_invalid_D_t
+@deftp {Struct Typedef} ccevents_descriptor_timeval_invalid_t
 Type of data structure representing the exceptional condition descriptor for ``invalid timeval
 initialisation'' errors.  It has the following public fields:
 
 @table @code
-@item cce_condition_descriptor_t
-Anonymous field representing the condition descriptor's base values.
+@item cce_descriptor_t descriptor
+The condition descriptor's base values.
 @end table
 
-The parent of this type descriptor is the descriptor referenced by
-@code{ccevents_timeval_D}.
+The parent of this type descriptor is the one referenced by @code{ccevents_descriptor_timeval}.
 @end deftp
 
 
-@deftp {Struct Typedef} ccevents_timeval_invalid_C_t
+@deftp {Struct Typedef} ccevents_condition_timeval_invalid_t
 Type of data structure representing exceptional condition objects for ``invalid timeval
 initialisation'' errors.  It has the following public fields:
 
 @table @code
-@item cce_condition_t
-Anonymous field representing the condition object's base values.
+@item cce_condition_t timeval
+The condition object's base values.
 @end table
 @end deftp
 
 
-@deftypevr {Dynamic Constant} {const ccevents_timeval_invalid_D_t *} ccevents_timeval_invalid_D
+@deftypevr {Dynamic Constant} {const ccevents_descriptor_timeval_invalid_t * const} ccevents_descriptor_timeval_invalid
 Pointer to a statically allocated exceptional condition descriptor.
 @end deftypevr
 
 
-@deftypefun {const ccevents_timeval_invalid_C_t *} ccevents_timeval_invalid_C (void)
+@deftypefun {cce_condition_t const *} ccevents_condition_new_timeval_invalid (void)
 Return a pointer to exceptional condition object.
 @end deftypefun
 
 
-@deftypefun bool ccevents_is_a_timeval_invalid_C (const cce_condition_t * @var{C})
+@deftypefun bool ccevents_condition_is_timeval_invalid (cce_condition_t const * @var{C})
 Return @true{} if @var{C} is an exceptional condition object with type descriptor
-@code{ccevents_timeval_invalid_D}; otherwise return @false{}.
+@code{ccevents_descriptor_timeval_invalid}; otherwise return @false{}.
 @end deftypefun
 
 
@@ -465,12 +459,11 @@ To catch this exceptional condition we can do:
 cce_location_t        L[1];
 
 if (cce_location(L)) @{
-  if (ccevents_is_a_timeval_invalid_C(cce_condition(L))) @{
-    CCEVENTS_PC(ccevents_timeval_invalid_C_t, C, cce_condition(L));
+  if (ccevents_condition_is_timeval_invalid(cce_condition(L))) @{
+    CCEVENTS_PC(ccevents_condition_timeval_invalid_t, C, cce_condition(L));
     do_something_with(C);
   @}
-  cce_run_error_handlers(L);
-  cce_condition_free(cce_condition(L));
+  cce_run_error_handlers_final(L);
 @} else @{
   do_something(L);
   cce_run_cleanup_handlers(L);
@@ -487,43 +480,43 @@ if (cce_location(L)) @{
 @cindex Exceptional conditions, overflow in timeval
 
 
-@deftp {Struct Typedef} ccevents_timeval_overflow_D_t
+@deftp {Struct Typedef} ccevents_descriptor_timeval_overflow_t
 Type of data structure representing the exceptional condition descriptor for ``timeval
 initialisation overflow'' errors.  It has the following public fields:
 
 @table @code
-@item cce_condition_descriptor_t
-Anonymous field representing the condition descriptor's base values.
+@item cce_descriptor_t descriptor
+The condition descriptor's base values.
 @end table
 
-The parent of this type descriptor is the descriptor referenced by @code{ccevents_timeval_D}.
+The parent of this type descriptor is the one referenced by @code{ccevents_descriptor_timeval}.
 @end deftp
 
 
-@deftp {Struct Typedef} ccevents_timeval_overflow_C_t
+@deftp {Struct Typedef} ccevents_condition_timeval_overflow_t
 Type of data structure representing exceptional condition objects for ``timeval initialisation
 overflow'' errors.  It has the following public fields:
 
 @table @code
-@item cce_condition_t
-Anonymous field representing the condition object's base values.
+@item cce_condition_t timeval
+The condition object's base values.
 @end table
 @end deftp
 
 
-@deftypevr {Dynamic Constant} {const ccevents_timeval_overflow_D_t *} ccevents_timeval_overflow_D
+@deftypevr {Dynamic Constant} {const ccevents_descriptor_timeval_overflow_t * const} ccevents_descriptor_timeval_overflow
 Pointer to a statically allocated exceptional condition descriptor.
 @end deftypevr
 
 
-@deftypefun {const ccevents_timeval_overflow_C_t *} ccevents_timeval_overflow_C (void)
+@deftypefun {cce_condition_t const *} ccevents_condition_new_timeval_overflow (void)
 Return a pointer to exceptional condition object.
 @end deftypefun
 
 
-@deftypefun bool ccevents_is_a_timeval_overflow_C (const cce_condition_t * @var{C})
+@deftypefun bool ccevents_condition_is_timeval_overflow (cce_condition_t const * @var{C})
 Return @true{} if @var{C} is an exceptional condition object with type descriptor
-@code{ccevents_timeval_overflow_D}; otherwise return @false{}.
+@code{ccevents_descriptor_timeval_overflow}; otherwise return @false{}.
 @end deftypefun
 
 
@@ -533,12 +526,11 @@ To catch this exceptional condition we can do:
 cce_location_t        L[1];
 
 if (cce_location(L)) @{
-  if (ccevents_is_a_timeval_overflow_C(cce_condition(L))) @{
-    CCEVENTS_PC(ccevents_timeval_overflow_C_t, C, cce_condition(L));
+  if (ccevents_condition_is_timeval_overflow(cce_condition(L))) @{
+    CCEVENTS_PC(ccevents_condition_timeval_overflow_t, C, cce_condition(L));
     do_something_with(C);
   @}
-  cce_run_error_handlers(L);
-  cce_condition_free(cce_condition(L));
+  cce_run_error_handlers_final(L);
 @} else @{
   do_something(L);
   cce_run_cleanup_handlers(L);
@@ -551,52 +543,57 @@ if (cce_location(L)) @{
 
 
 @menu
+* conditions timeouts timeout::         Timeout exceptional conditions.
 * conditions timeouts invalid::         Invalid timeout values.
 * conditions timeouts overflow::        Overflow in timeout representation.
 @end menu
 
 @c page
-@node conditions timeouts invalid
-@subsection Invalid timeout values
+@node conditions timeouts timeout
+@subsection Timeout exceptional conditions
 
 
-@deftp {Struct Typedef} ccevents_timeout_invalid_D_t
-Type of data structure representing the exceptional condition descriptor for ``invalid timeout
-initialisation'' errors.  It has the following public fields:
+@cindex Timeout, exceptional condition
+@cindex Exceptional conditions, timeout
+
+
+@deftp {Struct Typedef} ccevents_descriptor_timeout_t
+Type of data structure representing a generic exceptional condition descriptor for all the
+timeout--related errors; it is the base for all the timeout--related condition object types.  It has
+the following public fields:
 
 @table @code
-@item cce_condition_descriptor_t
-Anonymous field representing the condition descriptor's base values.
+@item cce_descriptor_t descriptor
+The condition descriptor's base values.
 @end table
 
-The parent of this type descriptor is the descriptor referenced by @code{ccevents_base_condition_descriptor}.
+The parent of this type descriptor is the one referenced by @code{ccevents_descriptor_base}.
 @end deftp
 
 
-@deftp {Struct Typedef} ccevents_timeout_invalid_C_t
-Type of data structure representing exceptional condition objects for ``invalid timeout
-initialisation'' errors.  It has the following public fields:
+@deftp {Struct Typedef} ccevents_condition_timeout_t
+Type of data structure representing an exceptional condition object for a generic timeout--related
+error.  It has the following public fields:
 
 @table @code
-@item cce_condition_t
-Anonymous field representing the condition object's base values.
+@item cce_condition_t base
+The condition object's base values.
 @end table
 @end deftp
 
 
-@deftypevr {Dynamic Constant} {const ccevents_timeout_invalid_D_t *} ccevents_timeout_invalid_D
+@deftypevr {Dynamic Constant} {const ccevents_descriptor_timeout_t * const} ccevents_descriptor_timeout
 Pointer to a statically allocated exceptional condition descriptor.
 @end deftypevr
 
 
-@deftypefun {const ccevents_timeout_invalid_C_t *} ccevents_timeout_invalid_C (void)
+@deftypefun {cce_condition_t const *} ccevents_condition_new_timeout (void)
 Return a pointer to exceptional condition object.
 @end deftypefun
 
 
-@deftypefun bool ccevents_is_a_timeout_invalid_C (const cce_condition_t * @var{C})
-Return @true{} if @var{C} is an exceptional condition object with type descriptor
-@code{ccevents_timeout_invalid_D}; otherwise return @false{}.
+@deftypefun bool ccevents_condition_is_timeout (cce_condition_t const * @var{C})
+Return @true{} if @var{C} if of type @code{ccevents_descriptor_timeout}; otherwise return @false{}.
 @end deftypefun
 
 
@@ -606,8 +603,70 @@ To catch this exceptional condition we can do:
 cce_location_t        L[1];
 
 if (cce_location(L)) @{
-  if (ccevents_is_a_timeval_invalid_C(cce_condition(L))) @{
-    CCEVENTS_PC(ccevents_timeout_invalid_C_t, C, cce_condition(L));
+  if (ccevents_condition_is_timeout(cce_condition(L))) @{
+    CCEVENTS_PC(ccevents_condition_timeout_t, C, cce_condition(L));
+    do_something_with(C);
+  @}
+  cce_run_error_handlers_final(L);
+@} else @{
+  do_something(L);
+  cce_run_cleanup_handlers(L);
+@}
+@end smallexample
+
+@c page
+@node conditions timeouts invalid
+@subsection Invalid timeout values
+
+
+@deftp {Struct Typedef} ccevents_descriptor_timeout_invalid_t
+Type of data structure representing the exceptional condition descriptor for ``invalid timeout
+initialisation'' errors.  It has the following public fields:
+
+@table @code
+@item cce_descriptor_t descriptor
+The condition descriptor's base values.
+@end table
+
+The parent of this type descriptor is the one referenced by @code{ccevents_descriptor_timeout}.
+@end deftp
+
+
+@deftp {Struct Typedef} ccevents_condition_timeout_invalid_t
+Type of data structure representing exceptional condition objects for ``invalid timeout
+initialisation'' errors.  It has the following public fields:
+
+@table @code
+@item ccevents_condition_timeout_t timeout
+The condition object's base values.
+@end table
+@end deftp
+
+
+@deftypevr {Dynamic Constant} {const ccevents_descriptor_timeout_invalid_t * const} ccevents_descriptor_timeout_invalid
+Pointer to a statically allocated exceptional condition descriptor.
+@end deftypevr
+
+
+@deftypefun {cce_condition_t const *} ccevents_condition_new_timeout_invalid (void)
+Return a pointer to exceptional condition object.
+@end deftypefun
+
+
+@deftypefun bool ccevents_condition_is_timeout_invalid (cce_condition_t const * @var{C})
+Return @true{} if @var{C} is an exceptional condition object with type descriptor
+@code{ccevents_descriptor_timeout_invalid}; otherwise return @false{}.
+@end deftypefun
+
+
+To catch this exceptional condition we can do:
+
+@smallexample
+cce_location_t        L[1];
+
+if (cce_location(L)) @{
+  if (ccevents_conition_is_timeval_invalid(cce_condition(L))) @{
+    CCEVENTS_PC(ccevents_condition_timeout_invalid_t, C, cce_condition(L));
     do_something_with(C);
   @}
   cce_run_error_handlers(L);
@@ -623,44 +682,43 @@ if (cce_location(L)) @{
 @subsection Overflow in timeout representation
 
 
-@deftp {Struct Typedef} ccevents_timeout_overflow_D_t
+@deftp {Struct Typedef} ccevents_descriptor_timeout_overflow_t
 Type of data structure representing the exceptional condition descriptor for ``timeout
 initialisation overflow'' errors.  It has the following public fields:
 
 @table @code
-@item cce_condition_descriptor_t
-Anonymous field representing the condition descriptor's base values.
+@item cce_descriptor_t descriptor
+The condition descriptor's base values.
 @end table
 
-The parent of this type descriptor is the descriptor referenced by
-@code{ccevents_base_condition_descriptor}.
+The parent of this type descriptor is the one referenced by @code{ccevents_descriptor_timeout}.
 @end deftp
 
 
-@deftp {Struct Typedef} ccevents_timeout_overflow_C_t
+@deftp {Struct Typedef} ccevents_condition_timeout_overflow_t
 Type of data structure representing exceptional condition objects for ``timeout initialisation
 overflow'' errors.  It has the following public fields:
 
 @table @code
-@item cce_condition_t
-Anonymous field representing the condition object's base values.
+@item ccevents_condition_timeout_t timeout
+The condition object's base values.
 @end table
 @end deftp
 
 
-@deftypevr {Dynamic Constant} {const ccevents_timeout_overflow_D_t *} ccevents_timeout_overflow_D
+@deftypevr {Dynamic Constant} {const ccevents_descriptor_timeout_overflow_t * const} ccevents_descriptor_timeout_overflow
 Pointer to a statically allocated exceptional condition descriptor.
 @end deftypevr
 
 
-@deftypefun {const ccevents_timeout_overflow_C_t *} ccevents_timeout_overflow_C (void)
+@deftypefun {cce_condition_t const *} ccevents_condition_new_timeout_overflow (void)
 Return a pointer to exceptional condition object.
 @end deftypefun
 
 
-@deftypefun bool ccevents_is_a_timeout_overflow_C (const cce_condition_t * @var{C})
+@deftypefun bool ccevents_condition_is_timeout_overflow (cce_condition_t const * @var{C})
 Return @true{} if @var{C} is an exceptional condition object with type descriptor
-@code{ccevents_timeout_overflow_D}; otherwise return @false{}.
+@code{ccevents_descriptor_timeout_overflow}; otherwise return @false{}.
 @end deftypefun
 
 
@@ -670,8 +728,8 @@ To catch this exceptional condition we can do:
 cce_location_t        L[1];
 
 if (cce_location(L)) @{
-  if (ccevents_is_a_timeout_overflow_C(cce_condition(L))) @{
-    CCEVENTS_PC(ccevents_timeout_overflow_C_t, C, cce_condition(L));
+  if (ccevents_condition_is_timeout_overflow(cce_condition(L))) @{
+    CCEVENTS_PC(ccevents_condition_timeout_overflow_t, C, cce_condition(L));
     do_something_with(C);
   @}
   cce_run_error_handlers(L);
