@@ -279,8 +279,7 @@ cce_location_t  L[1];
 
 if (cce_location(L)) @{
   /* Handle errors here. */
-  cce_run_error_handlers(L);
-  cce_condition_free(cce_condition(L));
+  cce_run_error_handlers_final(L);
 @} else @{
   /* Do something useful here. */
   cce_run_cleanup_handlers(L);
