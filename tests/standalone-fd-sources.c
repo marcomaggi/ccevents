@@ -27,7 +27,8 @@
 */
 
 #include <ccevents.h>
-#include <ccexceptions.h>
+#include <ccexceptions-system.h>
+#include <ccexceptions-networking.h>
 #include <assert.h>
 #include <limits.h>
 #include <errno.h>
@@ -50,15 +51,28 @@ sleep_awhile (void)
 }
 
 
+static volatile bool test_1_0_event_flag   = false;
+static volatile bool test_1_0_timeout_flag = false;
+
 static void
-test_standalone_readability (void)
+test_1_0_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * fdsrc CCEVENTS_UNUSED)
+{
+  test_1_0_event_flag = true;
+}
+
+static void
+test_1_0_expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * fdsrc CCEVENTS_UNUSED)
+{
+  test_1_0_timeout_flag = true;
+}
+
+static void
+test_1_0_standalone_readability (void)
 /* Detecting readability in the first  file descriptor of a pipe created
    with "pipe(2)". */
 {
   int			X[2];
   volatile bool		error_flag   = false;
-  volatile bool		event_flag   = false;
-  volatile bool		timeout_flag = false;
   cce_location_t	L[1];
 
   /* X[0] is the readable end.  X[1] is the writable end. */
@@ -71,27 +85,18 @@ test_standalone_readability (void)
     ccevents_group_t		grp[1];
     ccevents_fd_source_t	fdsrc[1];
 
-    void event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * fdsrc CCEVENTS_UNUSED)
-    {
-      event_flag = true;
-    }
-    void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * fdsrc CCEVENTS_UNUSED)
-    {
-      timeout_flag = true;
-    }
-
     /* fprintf(stderr, "X[0] = %d, X[1] = %d\n", X[0], X[1]); */
     ccevents_fd_source_init(fdsrc, X[0]);
-    ccevents_fd_source_set(fdsrc, ccevents_query_fd_readability, event_handler);
-    ccevents_source_set_timeout(fdsrc, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
+    ccevents_fd_source_set(fdsrc, ccevents_query_fd_readability, test_1_0_event_handler);
+    ccevents_source_set_timeout(fdsrc, *CCEVENTS_TIMEVAL_NEVER, test_1_0_expiration_handler);
 
     ccevents_group_init(grp, INT_MAX);
 
     /* No event is pending: try to serve one. */
     {
       assert(false == ccevents_source_do_one_event(L, fdsrc));
-      assert(false == event_flag);
-      assert(false == timeout_flag);
+      assert(false == test_1_0_event_flag);
+      assert(false == test_1_0_timeout_flag);
     }
 
     /* Write to the pipe, serve the event. */
@@ -104,8 +109,8 @@ test_standalone_readability (void)
 	read(X[0], buf, 1);
 	assert('Z' == buf[0]);
       }
-      assert(true  == event_flag);
-      assert(false == timeout_flag);
+      assert(true  == test_1_0_event_flag);
+      assert(false == test_1_0_timeout_flag);
     }
 
     cce_run_cleanup_handlers(L);
@@ -117,15 +122,27 @@ test_standalone_readability (void)
 }
 
 
+static volatile bool test_2_0_event_flag   = false;
+static volatile bool test_2_0_timeout_flag = false;
+
 static void
-test_standalone_writability (void)
+test_2_0_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * fdsrc CCEVENTS_UNUSED)
+{
+  test_2_0_event_flag = true;
+}
+static void
+test_2_0_expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * fdsrc CCEVENTS_UNUSED)
+{
+  test_2_0_timeout_flag = true;
+}
+
+static void
+test_2_0_standalone_writability (void)
 /* Detecting writability in the second file descriptor of a pipe created
    with "pipe(2)".  The file descriptor is always writable. */
 {
   int			X[2];
   volatile bool		error_flag = false;
-  volatile bool		event_flag = false;
-  volatile bool		timeout_flag = false;
   cce_location_t	L[1];
 
   /* X[0] is the readable end.  X[1] is the writable end. */
@@ -138,19 +155,10 @@ test_standalone_writability (void)
     ccevents_group_t		grp[1];
     ccevents_fd_source_t	fdsrc[1];
 
-    void event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * fdsrc CCEVENTS_UNUSED)
-    {
-      event_flag = true;
-    }
-    void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * fdsrc CCEVENTS_UNUSED)
-    {
-      timeout_flag = true;
-    }
-
     /* fprintf(stderr, "X[0] = %d, X[1] = %d\n", X[0], X[1]); */
     ccevents_fd_source_init(fdsrc, X[1]);
-    ccevents_source_set_timeout(fdsrc, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
-    ccevents_fd_source_set(fdsrc, ccevents_query_fd_writability, event_handler);
+    ccevents_source_set_timeout(fdsrc, *CCEVENTS_TIMEVAL_NEVER, test_2_0_expiration_handler);
+    ccevents_fd_source_set(fdsrc, ccevents_query_fd_writability, test_2_0_event_handler);
 
     ccevents_group_init(grp, INT_MAX);
 
@@ -158,8 +166,8 @@ test_standalone_writability (void)
     {
       assert(true == ccevents_source_do_one_event(L, fdsrc));
       cce_run_cleanup_handlers(L);
-      assert(true  == event_flag);
-      assert(false == timeout_flag);
+      assert(true  == test_2_0_event_flag);
+      assert(false == test_2_0_timeout_flag);
     }
 
     cce_run_cleanup_handlers(L);
@@ -171,101 +179,142 @@ test_standalone_writability (void)
 }
 
 
+typedef struct test_3_0_readable_t {
+  ccevents_fd_source_t	src;
+  char			read_buf[11];
+  int			read_len;
+  volatile bool		readable_flag;
+} test_3_0_readable_t;
+
+typedef struct test_3_0_exception_t {
+  ccevents_fd_source_t	src;
+  char			except_buf[2];
+  int			except_len;
+  volatile bool		exception_flag;
+} test_3_0_exception_t;
+
 static void
-test_standalone_exception (void)
+test_3_0_readable_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * _src)
+{
+  cce_location_t	L[1];
+
+  if (cce_location(L)) {
+    fprintf(stderr, "%s: error, %s\n", __func__, cce_condition_static_message(cce_condition(L)));
+    cce_run_error_handlers_final(L);
+    exit(EXIT_FAILURE);
+  } else {
+    CCEVENTS_PC(test_3_0_readable_t, state, _src);
+    int	len;
+    len = cce_sys_recv(L, state->src.fd, state->read_buf + state->read_len, 10, 0);
+    if (0) { fprintf(stderr, "%s: read %d bytes\n", __func__, len); }
+    state->read_len      += len;
+    state->readable_flag  = true;
+    cce_run_cleanup_handlers(L);
+  }
+}
+
+static void
+test_3_0_exception_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * _src)
+{
+  cce_location_t	L[1];
+
+  if (cce_location(L)) {
+    fprintf(stderr, "%s: error, %s\n", __func__, cce_condition_static_message(cce_condition(L)));
+    cce_run_error_handlers_final(L);
+    exit(EXIT_FAILURE);
+  } else {
+    CCEVENTS_PC(test_3_0_exception_t, state, _src);
+    int	len;
+    len = cce_sys_recv(L, state->src.fd, state->except_buf + state->except_len, 1, MSG_OOB);
+    if (0) { fprintf(stderr, "%s: read %d bytes\n", __func__, len); }
+    state->except_len += len;
+    state->exception_flag = true;
+    cce_run_cleanup_handlers(L);
+  }
+}
+
+static void
+test_3_0_standalone_exception (void)
 /* Detecting exception in  the server socket of a INET  server.  To test
    sending  OOB  data  we  really  need  to  use  a  client/server  INET
    connection, a socketpair will not work. */
 {
-  volatile int		master_sock, server_sock, client_sock;
-  struct linger		optval = { .l_onoff  = 1, .l_linger = 1 };
-  socklen_t		optlen = sizeof(struct linger);
-  struct sockaddr_in	master_addr = {
-    .sin_family		= AF_INET,
-    /* This becomes the address "127.0.0.1" in host byte order. */
-    .sin_addr.s_addr	= htonl(INADDR_ANY),
-    .sin_port		= htons(8080)
-  };
-  struct sockaddr_in	server_addr;
-  socklen_t		server_addr_len;
-  struct sockaddr_in	client_addr = {
-    .sin_family	= AF_INET,
-    .sin_addr.s_addr	= htonl(INADDR_ANY),
-    .sin_port		= htons(8080)
-  };
   cce_location_t	L[1];
+  cce_handler_t		master_sock_H[1];
+  cce_handler_t		server_sock_H[1];
+  cce_handler_t		client_sock_H[1];
   volatile bool		error_flag = false;
 
   if (cce_location(L)) {
+    fprintf(stderr, "%s: error, %s\n", __func__, cce_condition_static_message(cce_condition(L)));
     cce_run_error_handlers_final(L);
     error_flag = true;
   } else {
-    master_sock = socket(PF_INET, SOCK_STREAM, 0);
-    /* We need this SO_REUSEADDR option: the system will let us run this
-       program multiple  times in a short  time span.  If we  do not set
-       it: the program  will fail if the address is  still registered as
-       bound by a previou program run. */
+    volatile int	master_sock, server_sock, client_sock;
+
+    /* Prepare the sockets pair. */
     {
-      int	reuse = 1;
-      setsockopt(master_sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
+      struct linger		optval = { .l_onoff  = 1, .l_linger = 1 };
+      socklen_t			optlen = sizeof(struct linger);
+      struct sockaddr_in	master_addr = {
+	.sin_family		= AF_INET,
+	/* This becomes the address "127.0.0.1" in host byte order. */
+	.sin_addr.s_addr	= htonl(INADDR_ANY),
+	.sin_port		= htons(8080)
+      };
+      struct sockaddr_in	server_addr;
+      socklen_t			server_addr_len;
+      struct sockaddr_in	client_addr = {
+	.sin_family		= AF_INET,
+	.sin_addr.s_addr	= htonl(INADDR_ANY),
+	.sin_port		= htons(8080)
+      };
+
+      master_sock = cce_sys_socket(L, PF_INET, SOCK_STREAM, 0);
+      assert(0 <= master_sock);
+      cce_cleanup_handler_filedes_init(L, master_sock_H, master_sock);
+      /* We need  this SO_REUSEADDR option:  the system will let  us run
+	 this program multiple times in a short time span.  If we do not
+	 set  it:  the  program  will  fail  if  the  address  is  still
+	 registered as bound by a previou program run. */
+      {
+	int	reuse = 1;
+	cce_sys_setsockopt(L, master_sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
+      }
+      cce_sys_bind(L, master_sock, (struct sockaddr *)&master_addr, sizeof(master_addr));
+      cce_sys_listen(L, master_sock, 2);
+
+      client_sock = cce_sys_socket(L, PF_INET, SOCK_STREAM, 0);
+      assert(0 <= client_sock);
+      cce_cleanup_handler_filedes_init(L, client_sock_H, client_sock);
+      setsockopt(client_sock, SOL_SOCKET, SO_LINGER, &optval, optlen);
+      cce_sys_connect(L, client_sock, (struct sockaddr *)&client_addr, sizeof(client_addr));
+
+      server_sock = cce_sys_accept(L, master_sock, (struct sockaddr *)&server_addr, &server_addr_len);
+      //assert(0 <= server_sock);
+      cce_cleanup_handler_filedes_init(L, server_sock_H, server_sock);
+      setsockopt(master_sock, SOL_SOCKET, SO_LINGER, &optval, optlen);
     }
-    assert(0 <= master_sock);
-    assert(0 == bind(master_sock, (struct sockaddr *)&master_addr, sizeof(master_addr)));
-    assert(0 == listen(master_sock, 2));
-
-    client_sock = socket(PF_INET, SOCK_STREAM, 0);
-    assert(0 <= client_sock);
-    setsockopt(client_sock, SOL_SOCKET, SO_LINGER, &optval, optlen);
-    assert(0 == connect(client_sock, (struct sockaddr *)&client_addr, sizeof(client_addr)));
-
-    server_sock = accept(master_sock, (struct sockaddr *)&server_addr, &server_addr_len);
-    setsockopt(master_sock, SOL_SOCKET, SO_LINGER, &optval, optlen);
 
     {
       ccevents_group_t		grp[1];
-      ccevents_fd_source_t	readable_fd_source;
-      ccevents_fd_source_t	exception_fd_source;
-      volatile bool		readable_flag = false;
-      volatile bool		exception_flag = false;
-      volatile bool		timeout_flag = false;
-      char			read_buf[11] = {
-	'\0', '\0', '\0',  '\0', '\0', '\0',  '\0', '\0', '\0',  '\0', '\0'
+      test_3_0_readable_t	readable_state = {
+	.read_len	= 0,
+	.readable_flag	= false
       };
-      int			read_len = 0;
-      char			except_buf[2] = { '\0', '\0' };
-      int			except_len = 0;
+      memset(readable_state.read_buf, '\0', sizeof(readable_state.read_buf[11]));
+      test_3_0_exception_t	exception_state = {
+	.except_len	= 0,
+	.exception_flag	= false
+      };
+      memset(exception_state.except_buf, '\0', sizeof(exception_state.except_buf[2]));
 
-      void readable_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
-      {
-	ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
-	int	len;
-	readable_flag = true;
-	len = recv(fdsrc->fd, read_buf + read_len, 10, 0);
-	//fprintf(stderr, "%s: read %d bytes\n", __func__, len);
-	read_len += len;
-      }
-      void exception_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src)
-      {
-	ccevents_fd_source_t * fdsrc = ccevents_cast_to_fd_source(src);
-	int	len;
-	exception_flag = true;
-	len = recv(fdsrc->fd, except_buf + except_len, 1, MSG_OOB);
-	//fprintf(stderr, "%s: read %d bytes\n", __func__, len);
-	except_len += len;
-      }
-      void expiration_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * src CCEVENTS_UNUSED)
-      {
-	timeout_flag = true;
-      }
+      if (0) { fprintf(stderr, "socketpair: server_sock = %d, client_sock = %d\n", server_sock, client_sock); }
+      ccevents_fd_source_init(&readable_state.src, server_sock);
+      ccevents_fd_source_set(&readable_state.src, ccevents_query_fd_readability, test_3_0_readable_event_handler);
 
-      //fprintf(stderr, "socketpair: server_sock = %d, client_sock = %d\n", server_sock, client_sock);
-      ccevents_fd_source_init(&readable_fd_source, server_sock);
-      ccevents_source_set_timeout(&readable_fd_source, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
-      ccevents_fd_source_set(&readable_fd_source, ccevents_query_fd_readability, readable_event_handler);
-
-      ccevents_fd_source_init(&exception_fd_source, server_sock);
-      ccevents_source_set_timeout(&exception_fd_source, *CCEVENTS_TIMEVAL_NEVER, expiration_handler);
-      ccevents_fd_source_set(&exception_fd_source, ccevents_query_fd_exception, exception_event_handler);
+      ccevents_fd_source_init(&exception_state.src, server_sock);
+      ccevents_fd_source_set(&exception_state.src, ccevents_query_fd_exception, test_3_0_exception_event_handler);
 
       ccevents_group_init(grp, INT_MAX);
 
@@ -274,52 +323,48 @@ test_standalone_exception (void)
 	uint8_t		buf1[3] = { '1', '2', '3' };
 	uint8_t		buf2[3] = { '4', '5', '6' };
 	uint8_t		buf3[3] = { '7', '8', '9' };
-	assert(3 == send(client_sock, buf1, 3, 0));
-	assert(3 == send(client_sock, buf2, 3, 0));
+	assert(3 == cce_sys_send(L, client_sock, buf1, 3, 0));
+	assert(3 == cce_sys_send(L, client_sock, buf2, 3, 0));
 	/* The byte "X" is the OOB data. */
-	assert(1 == send(client_sock, "X", 1, MSG_OOB));
-	assert(3 == send(client_sock, buf3, 3, 0));
+	assert(1 == cce_sys_send(L, client_sock, "X", 1, MSG_OOB));
+	assert(3 == cce_sys_send(L, client_sock, buf3, 3, 0));
       }
 
       /* Serve the readable event. */
       {
-	assert(true == ccevents_source_do_one_event(L, &readable_fd_source));
-	assert(true == readable_flag);
-	assert(false == exception_flag);
-	assert(false == timeout_flag);
-	//fprintf(stderr, "read_len = %d, read_buf = %s\n", (int)read_len, read_buf);
-	assert(0 == strncmp(read_buf, "123456", 6));
+	assert(true  == ccevents_source_do_one_event(L, &readable_state.src));
+	assert(true  == readable_state.readable_flag);
+	assert(false == exception_state.exception_flag);
+	if (0) { fprintf(stderr, "read_len = %d, read_buf = %s\n", (int)(readable_state.read_len), readable_state.read_buf); }
+	assert(0 == strncmp(readable_state.read_buf, "123456", 6));
       }
 
       /* Serve the readable event. */
       {
-	assert(true == ccevents_source_do_one_event(L, &exception_fd_source));
-	assert(true == readable_flag);
-	assert(true == exception_flag);
-	assert(false == timeout_flag);
-	//fprintf(stderr, "except_len = %d, except_buf = %s\n", (int)except_len, except_buf);
-	assert(0 == strncmp(except_buf, "X", 1));
+	assert(true == ccevents_source_do_one_event(L, &exception_state.src));
+	assert(true == readable_state.readable_flag);
+	assert(true == exception_state.exception_flag);
+	if (1) { fprintf(stderr, "except_len = %d, except_buf = %s\n", (int)(exception_state.except_len), exception_state.except_buf); }
+	assert(0 == strncmp(exception_state.except_buf, "X", 1));
       }
 
       /* Serve the readable event. */
       {
-	assert(true == ccevents_source_do_one_event(L, &readable_fd_source));
-	assert(true == readable_flag);
-	//fprintf(stderr, "read_len = %d, read_buf = %s\n", (int)read_len, read_buf);
-	assert(0 == strncmp(read_buf, "123456789", 9));
+	assert(true == ccevents_source_do_one_event(L, &readable_state.src));
+	assert(true == readable_state.readable_flag);
+	if (1) { fprintf(stderr, "read_len = %d, read_buf = %s\n", (int)(readable_state.read_len), readable_state.read_buf); }
+	assert(0 == strncmp(readable_state.read_buf, "123456789", 9));
       }
     }
+    fprintf(stderr, "%s: done, no error\n", __func__);
     cce_run_cleanup_handlers(L);
   }
-  close(server_sock);
-  close(client_sock);
-  close(master_sock);
   assert(false == error_flag);
 }
 
 
 static void
-test_talking_processes_with_groups (void)
+test_4_0_talking_processes_with_groups (void)
 /* Two processes  talk to each  others through  pipes.  This is  just an
    example,  so we  use an  event source  to wait  for writability  even
    though a pipe writable end is always writable. */
@@ -640,11 +685,11 @@ main (int argc CCEVENTS_UNUSED, const char *const argv[] CCEVENTS_UNUSED)
 {
   ccevents_init();
   //
-  if (1) test_standalone_readability();
-  if (1) test_standalone_writability();
-  if (1) test_standalone_exception();
+  if (1) test_1_0_standalone_readability();
+  if (1) test_2_0_standalone_writability();
+  if (1) test_3_0_standalone_exception();
   //
-  if (1) test_talking_processes_with_groups();
+  if (1) test_4_0_talking_processes_with_groups();
   //
   exit(EXIT_SUCCESS);
 }
