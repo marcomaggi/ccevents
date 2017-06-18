@@ -360,10 +360,6 @@ struct test_4_0_slave_state_t {
   volatile int		state;
 };
 
-#define CCEVENTS_SF(STRUCT_TYPE_NAME, STRUCT_POINTER_VAR_NAME, STRUCT_FIELD_NAME, FIELD_POINTER_NAME) \
-  STRUCT_TYPE_NAME * STRUCT_POINTER_VAR_NAME = \
-    ((STRUCT_TYPE_NAME *)((uint8_t *)(FIELD_POINTER_NAME) - (ptrdiff_t)offsetof(struct STRUCT_TYPE_NAME, STRUCT_FIELD_NAME)))
-
 static void test_4_0_master_process (cce_location_t * there, int forwards_pipe[2], int backwards_pipe[2]);
 static void test_4_0_slave_process  (int forwards_pipe[2], int backwards_pipe[2]);
 

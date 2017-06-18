@@ -90,6 +90,31 @@ extern "C" {
 /* Pointer cast macro helper. */
 #define CCEVENTS_PC(TYPE,X,Y)		TYPE * X = (TYPE *) (Y)
 
+/* Expand  into a  pointer variable  definition.  Given  a pointer  to a
+ * struct's field: cast it to a pointer to the whole struct.  Example:
+ *
+ *    typedef struct spiffy_t	spiffy_t;
+ *
+ *    struct spiffy_t {
+ *      int alpha;
+ *      int beta;
+ *    };
+ *
+ *    void
+ *    fun (int * arg)
+ *    {
+ *      CCEVENTS_SF(spiffy_t, S, beta, arg);
+ *      printf("alpha=%d, beta=%d\n", S->alpha, S->beta);
+ *    }
+ *
+ *    spiffy_t	S = { .alpha = 1, .beta = 2 };
+ *    fun(&S.beta);
+ *
+ */
+#define CCEVENTS_SF(STRUCT_TYPE_NAME, STRUCT_POINTER_VAR_NAME, STRUCT_FIELD_NAME, FIELD_POINTER_NAME) \
+  STRUCT_TYPE_NAME * STRUCT_POINTER_VAR_NAME = \
+    ((STRUCT_TYPE_NAME *)((uint8_t *)(FIELD_POINTER_NAME) - (ptrdiff_t)offsetof(struct STRUCT_TYPE_NAME, STRUCT_FIELD_NAME)))
+
 
 /** --------------------------------------------------------------------
  ** Initialisation.

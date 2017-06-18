@@ -2313,6 +2313,34 @@ CCEVENTS_PC(ccevents_timeval_invalid_t, K, C);
 @end example
 @end deffn
 
+
+@deffn {Preprocessor Macro} CCEVENTS_SF (@var{STRUCT_TYPE_NAME}, @var{STRUCT_POINTER_VAR_NAME}, @var{STRUCT_FIELD_NAME}, @var{FIELD_POINTER_NAME})
+Expand into a pointer variable definition.  Given a pointer to a struct's field: cast it to a
+pointer to the whole struct.  Example:
+
+@example
+typedef struct spiffy_t    spiffy_t;
+
+struct spiffy_t @{
+  int alpha;
+  int beta;
+@};
+
+void fun (int * arg)
+@{
+  CCEVENTS_SF(spiffy_t, S, beta, arg);
+  printf("alpha=%d, beta=%d\n", S->alpha, S->beta);
+@}
+
+int main (void)
+@{
+  spiffy_t      S = @{ .alpha = 1, .beta = 2 @};
+  fun(&S.beta);
+  return 0;
+@}
+@end example
+@end deffn
+
 @c page
 @c ------------------------------------------------------------
 @c Appendices.
