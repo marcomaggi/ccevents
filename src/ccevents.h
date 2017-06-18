@@ -43,6 +43,10 @@ extern "C" {
 #include <time.h>
 #include <sys/time.h>
 
+#ifndef __GNUC__
+#  define __attribute__(...)		/* empty */
+#endif
+
 /* The  macro  CCEVENTS_UNUSED  indicates  that a  function,  function
    argument or variable may potentially be unused. Usage examples:
 
@@ -56,12 +60,6 @@ extern "C" {
 #  define CCEVENTS_UNUSED		/* empty */
 #endif
 
-#ifndef __GNUC__
-#  define __attribute__(...)		/* empty */
-#endif
-
-/* I found  the following chunk on  the Net.  (Marco Maggi;  Sun Feb 26,
-   2012) */
 #if defined _WIN32 || defined __CYGWIN__
 #  ifdef BUILDING_DLL
 #    ifdef __GNUC__
