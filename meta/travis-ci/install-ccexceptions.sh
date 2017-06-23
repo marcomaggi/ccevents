@@ -10,7 +10,7 @@ PROGNAME=install-ccexceptions.sh
 VERSION=0.5.0-devel.1
 STEM="ccexceptions-${VERSION}"
 ARCHIVE="${STEM}.tar.gz"
-SOURCE_URI="https://github.com/marcomaggi/ccexceptions/archive/v${VERSION}.tar.gz"
+SOURCE_URI="https://github.com/marcomaggi/ccexceptions/archive/${VERSION}.tar.gz"
 LOCAL_ARCHIVE="/tmp/${ARCHIVE}"
 TOP_SRCDIR="/tmp/${STEM}"
 
