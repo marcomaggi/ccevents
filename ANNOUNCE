@@ -5,14 +5,12 @@ Subject: [announce] CCEvents revision 0.1.0-devel.0
 			       ==========
 
 
-This package  installs a C  language library implementing an  event loop
-for the GNU+Linux platform.  It is  written in standard C11 language; it
-targets POSIX systems.
+This package  installs a standard  C11 language library  implementing an
+event loop for the POSIX systems.
 
-  The package  makes use  of the  GNU Autotools  and it  is tested  on a
-GNU+Linux system.  It is distributed under the GNU Lesser General Public
-License version 3.0.  This package  depends on the package CCExceptions,
-at least version 0.5.
+  The package uses  the GNU Autotools.  It is distributed  under the GNU
+Lesser General Public License version  3.0.  This package depends on the
+package CCExceptions, at least version 0.5.
 
   The latest release of this package can be downloaded from:
 

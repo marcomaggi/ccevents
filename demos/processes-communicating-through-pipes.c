@@ -85,7 +85,7 @@ static void slave_write_event_handler (cce_location_t * there, ccevents_source_t
 typedef struct all_filedes_H_t	all_filedes_H_t;
 
 struct all_filedes_H_t {
-  cce_handler_t;
+  cce_handler_t		handler;
   all_filedes_t *	fds;
 };
 
@@ -123,16 +123,16 @@ cce_handler_all_filedes_close (const cce_condition_t * C CCE_UNUSED, cce_handler
 void
 cce_cleanup_handler_all_filedes_init (cce_location_t * there, all_filedes_H_t * H, all_filedes_t * fds)
 {
-  H->function	= cce_handler_all_filedes_close;
+  H->handler.function	= cce_handler_all_filedes_close;
   H->fds		= fds;
-  cce_register_cleanup_handler(there, H);
+  cce_register_cleanup_handler(there, &(H->handler));
 }
 void
 cce_error_handler_all_filedes_init (cce_location_t * there, all_filedes_H_t * H, all_filedes_t * fds)
 {
-  H->function	= cce_handler_all_filedes_close;
+  H->handler.function	= cce_handler_all_filedes_close;
   H->fds		= fds;
-  cce_register_error_handler(there, H);
+  cce_register_error_handler(there, &(H->handler));
 }
 
 
@@ -296,16 +296,16 @@ master_state_init (master_state_t * S, int parent_read_fd, int parent_write_fd)
   ccevents_fd_source_init(S->write_source, parent_write_fd);
   ccevents_fd_source_set(S->read_source,  ccevents_query_fd_readability, master_read_event_handler);
   ccevents_fd_source_set(S->write_source, ccevents_query_fd_writability, master_write_event_handler);
-  ccevents_source_set_timeout(S->read_source,  *CCEVENTS_TIMEVAL_NEVER, ccevents_dummy_timeout_handler);
-  ccevents_source_set_timeout(S->write_source, *CCEVENTS_TIMEVAL_NEVER, ccevents_dummy_timeout_handler);
+  ccevents_source_set_timeout(ccevents_source(S->read_source),  *CCEVENTS_TIMEVAL_NEVER, ccevents_dummy_timeout_handler);
+  ccevents_source_set_timeout(ccevents_source(S->write_source), *CCEVENTS_TIMEVAL_NEVER, ccevents_dummy_timeout_handler);
   ccevents_group_init(S->grp, 2);
   ccevents_loop_init(S->loop);
-  ccevents_group_enqueue_source(S->grp, S->read_source);
-  ccevents_group_enqueue_source(S->grp, S->write_source);
+  ccevents_group_enqueue_source(S->grp, ccevents_source(S->read_source));
+  ccevents_group_enqueue_source(S->grp, ccevents_source(S->write_source));
   ccevents_loop_enqueue_group(S->loop, S->grp);
   /* The parent  process is  the master  and it  starts the  dialogue by
      writing. */
-  ccevents_source_disable_servicing(S->read_source);
+  ccevents_source_disable_servicing(ccevents_source(S->read_source));
   S->state			= MASTER_SEND_GREETINGS;
   S->exceptional_condition	= NULL;
 }
@@ -317,8 +317,8 @@ master_state_final (master_state_t * S)
    errors, if any. */
 {
   ccevents_loop_final(S->loop);
-  close(S->read_source[0].fd);
-  close(S->write_source[0].fd);
+  close(ccevents_fd(S->read_source));
+  close(ccevents_fd(S->write_source));
   if (0) { fprintf(stderr, "%s: done\n", __func__); }
 }
 
@@ -335,8 +335,8 @@ master_task_final (master_state_t * S)
    operations. */
 {
   S->state = MASTER_DONE;
-  ccevents_source_dequeue_itself(S->read_source);
-  ccevents_source_dequeue_itself(S->write_source);
+  ccevents_source_dequeue_itself(ccevents_source(S->read_source));
+  ccevents_source_dequeue_itself(ccevents_source(S->write_source));
   ccevents_loop_post_request_to_leave(S->loop);
 }
 
@@ -348,7 +348,7 @@ master_task_final (master_state_t * S)
 typedef struct master_state_H_t	master_state_H_t;
 
 struct master_state_H_t {
-  cce_handler_t;
+  cce_handler_t		handler;
   master_state_t *	state;
 };
 
@@ -367,16 +367,16 @@ void
 cleanup_handler_master_state_init (cce_location_t * there, master_state_H_t * S_handler, master_state_t * S)
 {
   S_handler->state		= S;
-  S_handler->function	= cleanup_handler_master_state;
-  cce_register_cleanup_handler(there, S_handler);
+  S_handler->handler.function	= cleanup_handler_master_state;
+  cce_register_cleanup_handler(there, &(S_handler->handler));
 }
 
 void
 error_handler_master_state_init (cce_location_t * there, master_state_H_t * S_handler, master_state_t * S)
 {
   S_handler->state		= S;
-  S_handler->function	= cleanup_handler_master_state;
-  cce_register_error_handler(there, S_handler);
+  S_handler->handler.function	= cleanup_handler_master_state;
+  cce_register_error_handler(there, &(S_handler->handler));
 }
 
 
@@ -448,8 +448,8 @@ master_read_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_sour
       {
 	assert(0 == strncmp(expected_greetings, buf, strlen(expected_greetings)));
 	S->state = MASTER_SEND_FAREWELL;
-	ccevents_source_disable_servicing(S->read_source);
-	ccevents_source_enable_servicing(S->write_source);
+	ccevents_source_disable_servicing(ccevents_source(S->read_source));
+	ccevents_source_enable_servicing(ccevents_source(S->write_source));
       }
       break;
 
@@ -492,7 +492,7 @@ master_write_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_sou
   } else {
     const char *	message;
 
-    ccevents_source_disable_servicing(S->write_source);
+    ccevents_source_disable_servicing(ccevents_source(S->write_source));
     switch (S->state) {
     case MASTER_SEND_GREETINGS:
       message = greetings;
@@ -515,11 +515,11 @@ master_write_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_sou
     switch (S->state) {
     case MASTER_SEND_GREETINGS:
       S->state = MASTER_READ_GREETINGS;
-      ccevents_source_enable_servicing(S->read_source);
+      ccevents_source_enable_servicing(ccevents_source(S->read_source));
       break;
     case MASTER_SEND_FAREWELL:
       S->state = MASTER_READ_FAREWELL;
-      ccevents_source_enable_servicing(S->read_source);
+      ccevents_source_enable_servicing(ccevents_source(S->read_source));
       break;
     default:
       assert(0);
@@ -587,19 +587,19 @@ slave_state_init (slave_state_t * S, int child_read_fd, int child_write_fd)
   ccevents_fd_source_init(S->write_source, child_write_fd);
   ccevents_fd_source_set(S->read_source,  ccevents_query_fd_readability, slave_read_event_handler);
   ccevents_fd_source_set(S->write_source, ccevents_query_fd_writability, slave_write_event_handler);
-  ccevents_source_set_timeout(S->read_source,  *CCEVENTS_TIMEVAL_NEVER, ccevents_dummy_timeout_handler);
-  ccevents_source_set_timeout(S->write_source, *CCEVENTS_TIMEVAL_NEVER, ccevents_dummy_timeout_handler);
+  ccevents_source_set_timeout(ccevents_source(S->read_source),  *CCEVENTS_TIMEVAL_NEVER, ccevents_dummy_timeout_handler);
+  ccevents_source_set_timeout(ccevents_source(S->write_source), *CCEVENTS_TIMEVAL_NEVER, ccevents_dummy_timeout_handler);
   ccevents_group_init(S->grp, 2);
   ccevents_loop_init(S->loop);
   S->state			= SLAVE_READ_GREETINGS;
   S->exceptional_condition	= NULL;
 
-  ccevents_group_enqueue_source(S->grp, S->read_source);
-  ccevents_group_enqueue_source(S->grp, S->write_source);
+  ccevents_group_enqueue_source(S->grp, ccevents_source(S->read_source));
+  ccevents_group_enqueue_source(S->grp, ccevents_source(S->write_source));
   ccevents_loop_enqueue_group(S->loop, S->grp);
   /* The  child process  is  the slave  and it  starts  the dialogue  by
      reading. */
-  ccevents_source_disable_servicing(S->write_source);
+  ccevents_source_disable_servicing(ccevents_source(S->write_source));
 }
 
 void
@@ -608,11 +608,11 @@ slave_state_final (slave_state_t * S)
    used  to  communicate with  the  child  process; ignore  the  closing
    errors, if any. */
 {
-  ccevents_source_dequeue_itself(S->read_source);
-  ccevents_source_dequeue_itself(S->write_source);
+  ccevents_source_dequeue_itself(ccevents_source(S->read_source));
+  ccevents_source_dequeue_itself(ccevents_source(S->write_source));
   ccevents_loop_final(S->loop);
-  close(S->read_source[0].fd);
-  close(S->write_source[0].fd);
+  close(ccevents_fd(S->read_source));
+  close(ccevents_fd(S->write_source));
   if (0) { fprintf(stderr, "%s: done\n", __func__); }
 }
 
@@ -628,8 +628,8 @@ slave_task_final (slave_state_t * S)
    if  an  unrecoverable  error   occurs  while  performing  the  task's
    operations. */
 {
-  ccevents_source_dequeue_itself(S->read_source);
-  ccevents_source_dequeue_itself(S->write_source);
+  ccevents_source_dequeue_itself(ccevents_source(S->read_source));
+  ccevents_source_dequeue_itself(ccevents_source(S->write_source));
   ccevents_loop_post_request_to_leave(S->loop);
   S->state = SLAVE_DONE;
 }
@@ -642,7 +642,7 @@ slave_task_final (slave_state_t * S)
 typedef struct slave_state_H_t	slave_state_H_t;
 
 struct slave_state_H_t {
-  cce_handler_t;
+  cce_handler_t		handler;
   slave_state_t *	state;
 };
 
@@ -661,16 +661,16 @@ void
 cleanup_handler_slave_state_init (cce_location_t * there, slave_state_H_t * S_handler, slave_state_t * S)
 {
   S_handler->state		= S;
-  S_handler->function	= cleanup_handler_slave_state;
-  cce_register_cleanup_handler(there, S_handler);
+  S_handler->handler.function	= cleanup_handler_slave_state;
+  cce_register_cleanup_handler(there, &(S_handler->handler));
 }
 
 void
 error_handler_slave_state_init (cce_location_t * there, slave_state_H_t * S_handler, slave_state_t * S)
 {
   S_handler->state		= S;
-  S_handler->function	= cleanup_handler_slave_state;
-  cce_register_error_handler(there, S_handler);
+  S_handler->handler.function	= cleanup_handler_slave_state;
+  cce_register_error_handler(there, &(S_handler->handler));
 }
 
 
@@ -736,7 +736,7 @@ slave_read_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_sourc
     char	buf[10];
     size_t	count;
 
-    ccevents_source_disable_servicing(S->read_source);
+    ccevents_source_disable_servicing(ccevents_source(S->read_source));
     count = cce_sys_read(L, S->read_source->fd, buf, 10);
     buf[count] = '\0';
 
@@ -746,7 +746,7 @@ slave_read_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_sourc
 	fprintf(stderr, "slave: recv '%s'\n", buf);
 	assert(0 == strncmp(expected_greetings, buf, strlen(expected_greetings)));
 	S->state = SLAVE_SEND_GREETINGS;
-	ccevents_source_enable_servicing(S->write_source);
+	ccevents_source_enable_servicing(ccevents_source(S->write_source));
       }
       break;
 
@@ -755,7 +755,7 @@ slave_read_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_sourc
 	fprintf(stderr, "slave: recv '%s'\n", buf);
 	assert(0 == strncmp(expected_farewell, buf, strlen(expected_farewell)));
 	S->state = SLAVE_SEND_FAREWELL;
-	ccevents_source_enable_servicing(S->write_source);
+	ccevents_source_enable_servicing(ccevents_source(S->write_source));
       }
       break;
 
@@ -789,7 +789,7 @@ slave_write_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_sour
   } else {
     const char *	message;
 
-    ccevents_source_disable_servicing(S->write_source);
+    ccevents_source_disable_servicing(ccevents_source(S->write_source));
 
     switch (S->state) {
     case SLAVE_SEND_GREETINGS:
@@ -812,12 +812,12 @@ slave_write_event_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_sour
     switch (S->state) {
     case SLAVE_SEND_GREETINGS:
       S->state = SLAVE_READ_FAREWELL;
-      ccevents_source_enable_servicing(S->read_source);
+      ccevents_source_enable_servicing(ccevents_source(S->read_source));
       break;
     case SLAVE_SEND_FAREWELL:
       S->state = SLAVE_DONE;
-      ccevents_source_dequeue_itself(S->read_source);
-      ccevents_source_dequeue_itself(S->write_source);
+      ccevents_source_dequeue_itself(ccevents_source(S->read_source));
+      ccevents_source_dequeue_itself(ccevents_source(S->write_source));
       ccevents_loop_post_request_to_leave(S->loop);
       break;
     default:

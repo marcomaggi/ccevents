@@ -82,9 +82,9 @@ ccevents_group_servicing_attempts_watermark_not_reached (ccevents_group_t * grp,
 void
 ccevents_group_init (ccevents_group_t * grp, size_t servicing_attempts_watermark)
 {
-  ccevents_queue_node_init(grp);
+  ccevents_queue_node_init(ccevents_node(grp));
   ccevents_queue_init(grp->sources);
-  grp->request_to_leave		= false;
+  grp->request_to_leave			= false;
   grp->servicing_attempts_watermark	= servicing_attempts_watermark;
 }
 

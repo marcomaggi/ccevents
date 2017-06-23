@@ -27,6 +27,7 @@
 */
 
 #include "ccevents-internals.h"
+#include <ccexceptions-system.h>
 #include <errno.h>
 #include <sys/select.h>
 
@@ -56,16 +57,16 @@ default_event_handler (cce_location_t    * L     CCEVENTS_UNUSED,
 static bool
 method_event_inquirer (cce_location_t * L, ccevents_source_t * src)
 {
-  CCEVENTS_PC(ccevents_fd_source_t, fdsrc, src);
-  return fdsrc->event_inquirer(L, fdsrc);
+  CCEVENTS_SF(ccevents_fd_source_t, fdsrc, source, src);
+  return fdsrc->event_inquirer(L, ccevents_source(fdsrc));
 }
 static void
 method_event_handler (cce_location_t * L, ccevents_source_t * src)
 {
-  CCEVENTS_PC(ccevents_fd_source_t, fdsrc, src);
-  fdsrc->event_handler(L, fdsrc);
+  CCEVENTS_SF(ccevents_fd_source_t, fdsrc, source, src);
+  fdsrc->event_handler(L, ccevents_source(fdsrc));
 }
-static const ccevents_source_vtable_t methods_table = {
+static const ccevents_source_etable_t methods_table = {
   .event_inquirer	= method_event_inquirer,
   .event_handler	= method_event_handler,
 };
@@ -81,7 +82,7 @@ ccevents_fd_source_init (ccevents_fd_source_t * fdsrc, int fd)
    already  allocated  fd   events  source  struct.   FD   is  the  file
    descriptor. */
 {
-  ccevents_source_init(fdsrc, &methods_table);
+  ccevents_source_init(ccevents_source(fdsrc), &methods_table);
   fdsrc->fd			= fd;
   fdsrc->event_inquirer		= default_event_query;
   fdsrc->event_handler		= default_event_handler;
@@ -118,23 +119,16 @@ ccevents_query_fd_readability (cce_location_t * there, ccevents_source_t * src)
 {
   /* Remember that "select()" might mutate this struct. */
   struct timeval	timeout = { 0, 0 };
-  CCEVENTS_PC(ccevents_fd_source_t, fdsrc, src);
+  CCEVENTS_SF(ccevents_fd_source_t, fdsrc, source, src);
   fd_set		set;
   int			rv;
   FD_ZERO(&set);
-  FD_SET(fdsrc->fd, &set);
-  errno = 0;
-  rv = select(1+(fdsrc->fd), &set, NULL, NULL, &timeout);
-  if (0) { fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fdsrc->fd, rv); }
-  if (-1 == rv) {
-    /* An error occurred. */
-    cce_raise(there, cce_condition_new_errno_clear());
-  } else {
-    /* Success.  RV  contains the number  of file descriptors  ready for
-       reading; in this case it can be only 1 or 0. */
-    //fprintf(stderr, "%s: rv=%d\n", __func__, rv);
-    return (1 == rv)? true : false;
-  }
+  FD_SET(ccevents_fd(fdsrc), &set);
+  rv = cce_sys_select(there, 1+(ccevents_fd(fdsrc)), &set, NULL, NULL, &timeout);
+  if (0) { fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, ccevents_fd(fdsrc), rv); }
+  /* Success.   RV contains  the number  of file  descriptors ready  for
+     reading; in this case it can be only 1 or 0. */
+  return (1 == rv)? true : false;
 }
 
 bool
@@ -143,23 +137,16 @@ ccevents_query_fd_writability (cce_location_t * there, ccevents_source_t * src)
 {
   /* Remember that "select()" might mutate this struct. */
   struct timeval	timeout = { 0, 0 };
-  CCEVENTS_PC(ccevents_fd_source_t, fdsrc, src);
+  CCEVENTS_SF(ccevents_fd_source_t, fdsrc, source, src);
   fd_set	set;
   int		rv;
   FD_ZERO(&set);
-  FD_SET(fdsrc->fd, &set);
-  errno = 0;
-  rv = select(1+(fdsrc->fd), NULL, &set, NULL, &timeout);
-  if (0) { fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fdsrc->fd, rv); }
-  if (-1 == rv) {
-    /* An error occurred. */
-    cce_raise(there, cce_condition_new_errno_clear());
-  } else {
-    /* Success.  RV  contains the number  of file descriptors  ready for
-       writing; in this case it can be only 1 or 0. */
-    //fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, fdsrc->fd, rv);
-    return (1 == rv)? true : false;
-  }
+  FD_SET(ccevents_fd(fdsrc), &set);
+  rv = cce_sys_select(there, 1+(ccevents_fd(fdsrc)), NULL, &set, NULL, &timeout);
+  if (0) { fprintf(stderr, "%s: fd=%d, rv=%d\n", __func__, ccevents_fd(fdsrc), rv); }
+  /* Success.   RV contains  the number  of file  descriptors ready  for
+     writing; in this case it can be only 1 or 0. */
+  return (1 == rv)? true : false;
 }
 
 bool
@@ -168,21 +155,15 @@ ccevents_query_fd_exception (cce_location_t * there, ccevents_source_t * src)
 {
   /* Remember that "select()" might mutate this struct. */
   struct timeval	timeout = { 0, 0 };
-  CCEVENTS_PC(ccevents_fd_source_t, fdsrc, src);
+  CCEVENTS_SF(ccevents_fd_source_t, fdsrc, source, src);
   fd_set		set;
   int			rv;
   FD_ZERO(&set);
-  FD_SET(fdsrc->fd, &set);
-  errno = 0;
-  rv = select(1+(fdsrc->fd), NULL, NULL, &set, &timeout);
-  if (-1 == rv) {
-    /* An error occurred. */
-    cce_raise(there, cce_condition_new_errno_clear());
-  } else {
-    /* Success.   RV  contains  the  number of  file  descriptors  which
-       received an exception; in this case it can be only 1 or 0. */
-    return (1 == rv)? true : false;
-  }
+  FD_SET(ccevents_fd(fdsrc), &set);
+  rv = cce_sys_select(there, 1+(ccevents_fd(fdsrc)), NULL, NULL, &set, &timeout);
+  /* Success.  RV contains the number of file descriptors which received
+     an exception; in this case it can be only 1 or 0. */
+  return (1 == rv)? true : false;
 }
 
 /* end of file */

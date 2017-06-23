@@ -30,10 +30,10 @@
 
 #define ASSERT_NORMALISED_TIMEVAL(TV)		\
   do {						\
-    assert(0        <= (TV).tv_sec);		\
-    assert(LONG_MAX >= (TV).tv_sec);		\
-    assert(0        <= (TV).tv_usec);		\
-    assert(999999   >= (TV).tv_usec);		\
+    assert(0        <= (TV).tv.tv_sec);		\
+    assert(LONG_MAX >= (TV).tv.tv_sec);		\
+    assert(0        <= (TV).tv.tv_usec);	\
+    assert(999999   >= (TV).tv.tv_usec);	\
   } while (0);
 
 /** ------------------------------------------------------------
@@ -43,8 +43,8 @@
 /* A  constant, statically  allocated  instance of  "ccevents_timeval_t"
    representing a conventionally infinite time span. */
 static const ccevents_timeval_t TIMEVAL_NEVER	= {
-  .tv_sec	= LONG_MAX,
-  .tv_usec	= LONG_MAX
+  .tv.tv_sec	= LONG_MAX,
+  .tv.tv_usec	= LONG_MAX
 };
 const ccevents_timeval_t * CCEVENTS_TIMEVAL_NEVER = &TIMEVAL_NEVER;
 
@@ -57,8 +57,8 @@ ccevents_timeval_normalise (cce_location_t * there, struct timeval T)
 /* Normalise  the structure  "T" and  return the  result.  The  returned
  * structure is guaranteed to have:
  *
- *    0 <= R.tv_sec  <= LONG_MAX
- *    0 <= R.tv_usec <= 999999
+ *    0 <= R.tv.tv_sec  <= LONG_MAX
+ *    0 <= R.tv.tv_usec <= 999999
  *
  * The field "tv_sec" of "T" is meant  to be in the range [0, LONG_MAX].
  * The field  "tv_usec" of "T"  is meant to  be in the  range [LONG_MIN,
@@ -102,7 +102,7 @@ ccevents_timeval_normalise (cce_location_t * there, struct timeval T)
     T.tv_usec = mod;
   }
   {
-    ccevents_timeval_t	R = { .tv_sec = T.tv_sec, .tv_usec = T.tv_usec };
+    ccevents_timeval_t	R = { .tv.tv_sec = T.tv_sec, .tv.tv_usec = T.tv_usec };
     return R;
   }
 }
@@ -129,21 +129,21 @@ ccevents_timeval_add (cce_location_t * there, const ccevents_timeval_t A, const 
   ASSERT_NORMALISED_TIMEVAL(A);
   ASSERT_NORMALISED_TIMEVAL(B);
 
-  if ((LONG_MAX - A.tv_sec) > B.tv_sec) {
-    R.tv_sec = A.tv_sec + B.tv_sec;
+  if ((LONG_MAX - A.tv.tv_sec) > B.tv.tv_sec) {
+    R.tv.tv_sec = A.tv.tv_sec + B.tv.tv_sec;
   } else {
     cce_raise(there, ccevents_condition_new_timeval_overflow());
   }
 
   /* The sum between  two normalised "usec" fields is  guaranteed to fit
      into a "usec" field. */
-  R.tv_usec = A.tv_usec + B.tv_usec;
+  R.tv.tv_usec = A.tv.tv_usec + B.tv.tv_usec;
   /* Redistribute the excess "usec" into the "sec" field. */
   {
-    long	secs = R.tv_usec / 1000000L;
-    R.tv_usec %= 1000000L;
-    if ((LONG_MAX - R.tv_sec) > secs) {
-      R.tv_sec += secs;
+    long	secs = R.tv.tv_usec / 1000000L;
+    R.tv.tv_usec %= 1000000L;
+    if ((LONG_MAX - R.tv.tv_sec) > secs) {
+      R.tv.tv_sec += secs;
     } else {
       cce_raise(there, ccevents_condition_new_timeval_overflow());
     }
@@ -156,36 +156,36 @@ ccevents_timeval_sub (cce_location_t * there, const ccevents_timeval_t A, const 
 /* Subtract B from A  and return the result: R = A -  B.  Assume A and B
  * are normalised, that is:
  *
- *    0 <= A.tv_sec  <= LONG_MAX
- *    0 <= A.tv_usec <= 999999
+ *    0 <= A.tv.tv_sec  <= LONG_MAX
+ *    0 <= A.tv.tv_usec <= 999999
  *
- *    0 <= B.tv_sec  <= LONG_MAX
- *    0 <= B.tv_usec <= 999999
+ *    0 <= B.tv.tv_sec  <= LONG_MAX
+ *    0 <= B.tv.tv_usec <= 999999
  *
  * Return a structure for which:
  *
- *    0 <= R.tv_sec  <= LONG_MAX
- *    0 <= R.tv_usec <= 999999
+ *    0 <= R.tv.tv_sec  <= LONG_MAX
+ *    0 <= R.tv.tv_usec <= 999999
  *
  */
 {
   ASSERT_NORMALISED_TIMEVAL(A);
   ASSERT_NORMALISED_TIMEVAL(B);
-  return ccevents_timeval_init(there, (A.tv_sec - B.tv_sec), (A.tv_usec - B.tv_usec));
+  return ccevents_timeval_init(there, (A.tv.tv_sec - B.tv.tv_sec), (A.tv.tv_usec - B.tv.tv_usec));
 }
 
 int
 ccevents_timeval_compare (const ccevents_timeval_t A, const ccevents_timeval_t B)
 {
-  if (A.tv_sec < B.tv_sec) {
+  if (A.tv.tv_sec < B.tv.tv_sec) {
     return -1;
-  } else if (A.tv_sec > B.tv_sec) {
+  } else if (A.tv.tv_sec > B.tv.tv_sec) {
     return +1;
   } else {
-    /* (A.tv_sec == B.tv_sec) */
-    if (A.tv_usec < B.tv_usec) {
+    /* (A.tv.tv_sec == B.tv.tv_sec) */
+    if (A.tv.tv_usec < B.tv.tv_usec) {
       return -1;
-    } else if (A.tv_usec > B.tv_usec) {
+    } else if (A.tv.tv_usec > B.tv.tv_usec) {
       return +1;
     } else {
       return 0;
@@ -201,10 +201,10 @@ ccevents_timeval_is_expired_timeout (const ccevents_timeval_t expiration_time)
     return false;
   } else {
     ccevents_timeval_t	now;
-    gettimeofday(&now, NULL);
-    if (now.tv_sec < expiration_time.tv_sec) {
+    gettimeofday(&now.tv, NULL);
+    if (now.tv.tv_sec < expiration_time.tv.tv_sec) {
       return false;
-    } else if ((now.tv_sec == expiration_time.tv_sec) && (now.tv_usec <= expiration_time.tv_usec)) {
+    } else if ((now.tv.tv_sec == expiration_time.tv.tv_sec) && (now.tv.tv_usec <= expiration_time.tv.tv_usec)) {
       return false;
     } else {
       return true;
@@ -215,7 +215,7 @@ ccevents_timeval_is_expired_timeout (const ccevents_timeval_t expiration_time)
 bool
 ccevents_timeval_is_infinite_timeout (const ccevents_timeval_t T)
 {
-  return (LONG_MAX == T.tv_sec);
+  return (LONG_MAX == T.tv.tv_sec);
 }
 
 /* end of file */

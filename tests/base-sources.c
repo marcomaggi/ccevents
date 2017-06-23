@@ -51,7 +51,7 @@ test_1_0_enabling_and_disabling_servicing (void)
   ccevents_source_t	src[1];
   volatile bool		error_flag = false;
 
-  ccevents_source_vtable_t vtable = {
+  ccevents_source_etable_t etable = {
     .event_inquirer = test_1_0_event_inquirer,
     .event_handler  = test_1_0_event_handler
   };
@@ -63,7 +63,7 @@ test_1_0_enabling_and_disabling_servicing (void)
       error_flag = true;
       cce_run_error_handlers_final(L);
     } else {
-      ccevents_source_init(src, &vtable);
+      ccevents_source_init(src, &etable);
       ccevents_source_disable_servicing(src);
       ccevents_source_do_one_event(L, src);
       assert(false == test_1_0_event_flag);

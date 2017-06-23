@@ -68,7 +68,7 @@ test_1_0_loop_single_group_single_source__dequeued_both (void)
     ccevents_group_init(grp, 10);
     ccevents_task_source_init(src);
     ccevents_task_source_set(src, test_1_0_event_inquirer, test_1_0_event_handler);
-    ccevents_group_enqueue_source(grp, src);
+    ccevents_group_enqueue_source(grp, ccevents_source(src));
     ccevents_loop_enqueue_group(loop, grp);
     ccevents_loop_enter(loop);
     cce_run_cleanup_handlers(L);
@@ -122,7 +122,7 @@ test_1_1_loop_single_group_single_source__dequeued_group (void)
     ccevents_group_init(grp, 10);
     ccevents_task_source_init(src);
     ccevents_task_source_set(src, test_1_1_event_inquirer, test_1_1_event_handler);
-    ccevents_group_enqueue_source(grp, src);
+    ccevents_group_enqueue_source(grp, ccevents_source(src));
     ccevents_loop_enqueue_group(loop, grp);
     ccevents_loop_enter(loop);
     cce_run_cleanup_handlers(L);
@@ -176,7 +176,7 @@ test_2_0_loop_post_exit_in_loop (void)
     ccevents_group_init(grp, 10);
     ccevents_task_source_init(src);
     ccevents_task_source_set(src, test_2_0_event_inquirer, test_2_0_event_handler);
-    ccevents_group_enqueue_source(grp, src);
+    ccevents_group_enqueue_source(grp, ccevents_source(src));
     ccevents_loop_enqueue_group(test_2_0_loop, grp);
     ccevents_loop_enter(test_2_0_loop);
     cce_run_cleanup_handlers(L);
@@ -251,9 +251,9 @@ test_3_0_loop_multi_groups (void)
     ccevents_task_source_set(srcB, test_3_0_event_inquirer, test_3_0_event_handler_B);
     ccevents_task_source_set(srcC, test_3_0_event_inquirer, test_3_0_event_handler_C);
 
-    ccevents_group_enqueue_source(grpA, srcA);
-    ccevents_group_enqueue_source(grpB, srcB);
-    ccevents_group_enqueue_source(grpC, srcC);
+    ccevents_group_enqueue_source(grpA, ccevents_source(srcA));
+    ccevents_group_enqueue_source(grpB, ccevents_source(srcB));
+    ccevents_group_enqueue_source(grpC, ccevents_source(srcC));
 
     ccevents_loop_enqueue_group(test_3_0_loop, grpC);
     ccevents_loop_enqueue_group(test_3_0_loop, grpB);
@@ -318,18 +318,18 @@ test_4_0_loop_finalisation (void)
   ccevents_task_source_init(C);
   ccevents_task_source_init(D);
 
-  ccevents_source_set_otable(A, &otableA);
-  ccevents_source_set_otable(B, &otableB);
-  ccevents_source_set_otable(C, &otableC);
-  ccevents_source_set_otable(D, &otableD);
+  ccevents_source_set_otable(ccevents_source(A), &otableA);
+  ccevents_source_set_otable(ccevents_source(B), &otableB);
+  ccevents_source_set_otable(ccevents_source(C), &otableC);
+  ccevents_source_set_otable(ccevents_source(D), &otableD);
 
   ccevents_loop_init(L);
   ccevents_group_init(G, 10);
 
-  ccevents_group_enqueue_source(G, A);
-  ccevents_group_enqueue_source(G, B);
-  ccevents_group_enqueue_source(G, C);
-  ccevents_group_enqueue_source(G, D);
+  ccevents_group_enqueue_source(G, ccevents_source(A));
+  ccevents_group_enqueue_source(G, ccevents_source(B));
+  ccevents_group_enqueue_source(G, ccevents_source(C));
+  ccevents_group_enqueue_source(G, ccevents_source(D));
 
   ccevents_loop_enqueue_group(L, G);
 

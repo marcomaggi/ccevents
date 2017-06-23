@@ -36,16 +36,16 @@
 static bool
 method_event_inquirer (cce_location_t * there, ccevents_source_t * src)
 {
-  CCEVENTS_PC(ccevents_task_source_t, tksrc, src);
-  return tksrc->event_inquirer(there, tksrc);
+  CCEVENTS_SF(ccevents_task_source_t, tksrc, source, src);
+  return tksrc->event_inquirer(there, ccevents_source(tksrc));
 }
 static void
 method_event_handler (cce_location_t * there, ccevents_source_t * src)
 {
-  CCEVENTS_PC(ccevents_task_source_t, tksrc, src);
-  tksrc->event_handler(there, tksrc);
+  CCEVENTS_SF(ccevents_task_source_t, tksrc, source, src);
+  tksrc->event_handler(there, ccevents_source(tksrc));
 }
-static const ccevents_source_vtable_t methods_table = {
+static const ccevents_source_etable_t methods_table = {
   .event_inquirer	= method_event_inquirer,
   .event_handler	= method_event_handler,
 };
@@ -60,7 +60,7 @@ ccevents_task_source_init (ccevents_task_source_t * tksrc)
 /* Initialise an already  allocated source structure.  Do  not start the
    event waiting: this is done by "ccevents_task_source_set()". */
 {
-  ccevents_source_init(tksrc, &methods_table);
+  ccevents_source_init(ccevents_source(tksrc), &methods_table);
 }
 
 void

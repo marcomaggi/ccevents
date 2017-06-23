@@ -88,13 +88,13 @@ test_1_0_standalone_readability (void)
     /* fprintf(stderr, "X[0] = %d, X[1] = %d\n", X[0], X[1]); */
     ccevents_fd_source_init(fdsrc, X[0]);
     ccevents_fd_source_set(fdsrc, ccevents_query_fd_readability, test_1_0_event_handler);
-    ccevents_source_set_timeout(fdsrc, *CCEVENTS_TIMEVAL_NEVER, test_1_0_expiration_handler);
+    ccevents_source_set_timeout(ccevents_source(fdsrc), *CCEVENTS_TIMEVAL_NEVER, test_1_0_expiration_handler);
 
     ccevents_group_init(grp, INT_MAX);
 
     /* No event is pending: try to serve one. */
     {
-      assert(false == ccevents_source_do_one_event(L, fdsrc));
+      assert(false == ccevents_source_do_one_event(L, ccevents_source(fdsrc)));
       assert(false == test_1_0_event_flag);
       assert(false == test_1_0_timeout_flag);
     }
@@ -102,7 +102,7 @@ test_1_0_standalone_readability (void)
     /* Write to the pipe, serve the event. */
     {
       assert(1 == write(X[1], "Z", 1));
-      assert(true == ccevents_source_do_one_event(L, fdsrc));
+      assert(true == ccevents_source_do_one_event(L, ccevents_source(fdsrc)));
       cce_run_cleanup_handlers(L);
       {
 	char	buf[1] = { '0' };
@@ -157,14 +157,14 @@ test_2_0_standalone_writability (void)
 
     /* fprintf(stderr, "X[0] = %d, X[1] = %d\n", X[0], X[1]); */
     ccevents_fd_source_init(fdsrc, X[1]);
-    ccevents_source_set_timeout(fdsrc, *CCEVENTS_TIMEVAL_NEVER, test_2_0_expiration_handler);
     ccevents_fd_source_set(fdsrc, ccevents_query_fd_writability, test_2_0_event_handler);
+    ccevents_source_set_timeout(ccevents_source(fdsrc), *CCEVENTS_TIMEVAL_NEVER, test_2_0_expiration_handler);
 
     ccevents_group_init(grp, INT_MAX);
 
     /* The pipe is always writable. */
     {
-      assert(true == ccevents_source_do_one_event(L, fdsrc));
+      assert(true == ccevents_source_do_one_event(L, ccevents_source(fdsrc)));
       cce_run_cleanup_handlers(L);
       assert(true  == test_2_0_event_flag);
       assert(false == test_2_0_timeout_flag);
@@ -238,19 +238,17 @@ test_3_0_standalone_exception (void)
     {
       struct linger		optval = { .l_onoff  = 1, .l_linger = 1 };
       socklen_t			optlen = sizeof(struct linger);
-      struct sockaddr_in	master_addr = {
-	.sin_family		= AF_INET,
-	/* This becomes the address "127.0.0.1" in host byte order. */
-	.sin_addr.s_addr	= htonl(INADDR_ANY),
-	.sin_port		= htons(8080)
-      };
+      struct sockaddr_in	master_addr;
+      master_addr.sin_family		= AF_INET;
+      /* This becomes the address "127.0.0.1" in host byte order. */
+      master_addr.sin_addr.s_addr	= htonl(INADDR_ANY);
+      master_addr.sin_port		= htons(8080);
       struct sockaddr_in	server_addr;
       socklen_t			server_addr_len;
-      struct sockaddr_in	client_addr = {
-	.sin_family		= AF_INET,
-	.sin_addr.s_addr	= htonl(INADDR_ANY),
-	.sin_port		= htons(8080)
-      };
+      struct sockaddr_in	client_addr;
+      client_addr.sin_family		= AF_INET;
+      client_addr.sin_addr.s_addr	= htonl(INADDR_ANY);
+      client_addr.sin_port		= htons(8080);
 
       master_sock = cce_sys_socket(L, PF_INET, SOCK_STREAM, 0);
       assert(0 <= master_sock);
@@ -314,7 +312,7 @@ test_3_0_standalone_exception (void)
 
       /* Serve the readable event. */
       {
-	assert(true  == ccevents_source_do_one_event(L, &readable_state.src));
+	assert(true  == ccevents_source_do_one_event(L, ccevents_source(&readable_state.src)));
 	assert(true  == readable_state.readable_flag);
 	assert(false == exception_state.exception_flag);
 	if (0) { fprintf(stderr, "read_len = %d, read_buf = %s\n", (int)(readable_state.read_len), readable_state.read_buf); }
@@ -323,7 +321,7 @@ test_3_0_standalone_exception (void)
 
       /* Serve the readable event. */
       {
-	assert(true == ccevents_source_do_one_event(L, &exception_state.src));
+	assert(true == ccevents_source_do_one_event(L, ccevents_source(&exception_state.src)));
 	assert(true == readable_state.readable_flag);
 	assert(true == exception_state.exception_flag);
 	if (1) { fprintf(stderr, "except_len = %d, except_buf = %s\n", (int)(exception_state.except_len), exception_state.except_buf); }
@@ -332,7 +330,7 @@ test_3_0_standalone_exception (void)
 
       /* Serve the readable event. */
       {
-	assert(true == ccevents_source_do_one_event(L, &readable_state.src));
+	assert(true == ccevents_source_do_one_event(L, ccevents_source(&readable_state.src)));
 	assert(true == readable_state.readable_flag);
 	if (1) { fprintf(stderr, "read_len = %d, read_buf = %s\n", (int)(readable_state.read_len), readable_state.read_buf); }
 	assert(0 == strncmp(readable_state.read_buf, "123456789", 9));
@@ -441,9 +439,9 @@ test_4_0_master_process (cce_location_t * there, int forwards_pipe[2], int backw
     ccevents_fd_source_set(&state.write_source, ccevents_query_fd_writability, test_4_0_master_write_event_handler);
     ccevents_group_init(grp, INT_MAX);
     {
-      ccevents_group_enqueue_source(grp, &state.read_source);
-      ccevents_group_enqueue_source(grp, &state.write_source);
-      ccevents_source_disable_servicing(&state.read_source);
+      ccevents_group_enqueue_source(grp, ccevents_source(&state.read_source));
+      ccevents_group_enqueue_source(grp, ccevents_source(&state.write_source));
+      ccevents_source_disable_servicing(ccevents_source(&state.read_source));
     }
     ccevents_group_enter(grp);
     cce_run_cleanup_handlers(L);
@@ -456,7 +454,7 @@ test_4_0_master_write_event_handler (cce_location_t * there, ccevents_source_t *
 {
   CCEVENTS_SF(test_4_0_master_state_t, master, write_source, src);
   fprintf(stderr, "%s: enter, master state %d\n", __func__, master->state);
-  ccevents_source_disable_servicing(&(master->write_source));
+  ccevents_source_disable_servicing(ccevents_source(&(master->write_source)));
   {
     char const *	buf;
     switch (master->state) {
@@ -477,7 +475,7 @@ test_4_0_master_write_event_handler (cce_location_t * there, ccevents_source_t *
       cce_raise(there, cce_condition_new_errno_clear());
     }
   }
-  ccevents_source_enable_servicing(&(master->read_source));
+  ccevents_source_enable_servicing(ccevents_source(&(master->read_source)));
   fprintf(stderr, "%s: leave, master state %d\n", __func__, master->state);
   sleep_awhile();
 }
@@ -491,7 +489,7 @@ test_4_0_master_read_event_handler (cce_location_t * there, ccevents_source_t * 
   int	count;
 
   fprintf(stderr, "%s: master state %d\n", __func__, master->state);
-  ccevents_source_disable_servicing(&(master->read_source));
+  ccevents_source_disable_servicing(ccevents_source(&(master->read_source)));
   count = cce_sys_read(there, master->read_source.fd, buf, 10);
   buf[count] = '\0';
   switch (master->state) {
@@ -500,7 +498,7 @@ test_4_0_master_read_event_handler (cce_location_t * there, ccevents_source_t * 
       assert(0 == strncmp("hello\n", buf, strlen("hello\n")));
       fprintf(stderr, "master: recv '%s'\n", buf);
       master->state = 2;
-      ccevents_source_enable_servicing(&(master->write_source));
+      ccevents_source_enable_servicing(ccevents_source(&(master->write_source)));
       sleep_awhile();
     }
     break;
@@ -509,8 +507,8 @@ test_4_0_master_read_event_handler (cce_location_t * there, ccevents_source_t * 
       assert(0 == strncmp("quit\n", buf, strlen("quit\n")));
       fprintf(stderr, "master: recv '%s'\n", buf);
       master->state = 0;
-      ccevents_source_dequeue_itself(&(master->read_source));
-      ccevents_source_dequeue_itself(&(master->write_source));
+      ccevents_source_dequeue_itself(ccevents_source(&(master->read_source)));
+      ccevents_source_dequeue_itself(ccevents_source(&(master->write_source)));
       /* end */
     }
     break;
@@ -544,9 +542,9 @@ test_4_0_slave_process (int forwards_pipe[2], int backwards_pipe[2])
 
     ccevents_group_init(grp, INT_MAX);
     {
-      ccevents_group_enqueue_source(grp, &state.read_source);
-      ccevents_group_enqueue_source(grp, &state.write_source);
-      ccevents_source_disable_servicing(&state.write_source);
+      ccevents_group_enqueue_source(grp, ccevents_source(&state.read_source));
+      ccevents_group_enqueue_source(grp, ccevents_source(&state.write_source));
+      ccevents_source_disable_servicing(ccevents_source(&state.write_source));
     }
     fprintf(stderr, "%s: enter group\n", __func__);
     ccevents_group_enter(grp);
@@ -565,7 +563,7 @@ test_4_0_slave_read_event_handler (cce_location_t * there, ccevents_source_t * s
   int	count;
 
   fprintf(stderr, "%s: slave state %d\n", __func__, slave->state);
-  ccevents_source_disable_servicing(&(slave->read_source));
+  ccevents_source_disable_servicing(ccevents_source(&(slave->read_source)));
   count = cce_sys_read(there, slave->read_source.fd, buf, 10);
   buf[count] = '\0';
 
@@ -583,7 +581,7 @@ test_4_0_slave_read_event_handler (cce_location_t * there, ccevents_source_t * s
     break;
   }
   fprintf(stderr, "slave: recv '%s'\n", buf);
-  ccevents_source_enable_servicing(&(slave->write_source));
+  ccevents_source_enable_servicing(ccevents_source(&(slave->write_source)));
   sleep_awhile();
 }
 
@@ -593,7 +591,7 @@ test_4_0_slave_write_event_handler (cce_location_t * there, ccevents_source_t * 
 {
   CCEVENTS_SF(test_4_0_slave_state_t, slave, write_source, src);
   char const *	buf;
-  ccevents_source_disable_servicing(&(slave->write_source));
+  ccevents_source_disable_servicing(ccevents_source(&(slave->write_source)));
   fprintf(stderr, "%s: slave state %d\n", __func__, slave->state);
 
   switch (slave->state) {
@@ -617,13 +615,13 @@ test_4_0_slave_write_event_handler (cce_location_t * there, ccevents_source_t * 
   switch (slave->state) {
   case 1: /* Done greetings. */
     slave->state = 2;
-    ccevents_source_enable_servicing(&(slave->read_source));
+    ccevents_source_enable_servicing(ccevents_source(&(slave->read_source)));
     sleep_awhile();
     break;
   case 3: /* Done quitting.  End. */
     slave->state = 0;
-    ccevents_source_dequeue_itself(&(slave->read_source));
-    ccevents_source_dequeue_itself(&(slave->write_source));
+    ccevents_source_dequeue_itself(ccevents_source(&(slave->read_source)));
+    ccevents_source_dequeue_itself(ccevents_source(&(slave->write_source)));
     break;
   }
 }

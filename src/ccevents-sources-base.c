@@ -86,11 +86,11 @@ const ccevents_source_otable_t * const ccevents_source_otable_default = &ccevent
  ** ----------------------------------------------------------------- */
 
 void
-ccevents_source_init (ccevents_source_t * src, const ccevents_source_vtable_t * vtable)
+ccevents_source_init (ccevents_source_t * src, const ccevents_source_etable_t * etable)
 {
-  ccevents_queue_node_init(src);
+  ccevents_queue_node_init(ccevents_node(src));
   src->otable			= &ccevents_source_otable_default_stru;
-  src->vtable			= vtable;
+  src->etable			= etable;
   src->expiration_time		= *CCEVENTS_TIMEVAL_NEVER;
   src->expiration_handler	= ccevents_dummy_timeout_handler;
   src->enabled			= 1;
@@ -127,7 +127,7 @@ ccevents_source_query (cce_location_t * there, ccevents_source_t * src)
    exit is performed to THERE.
 */
 {
-  return src->vtable->event_inquirer(there, src);
+  return src->etable->event_inquirer(there, src);
 }
 
 void
@@ -138,7 +138,7 @@ ccevents_source_handle_event (cce_location_t * there, ccevents_source_t * src)
    condition: a non-local exit is performed to THERE.
 */
 {
-  src->vtable->event_handler(there, src);
+  src->etable->event_handler(there, src);
 }
 
 void

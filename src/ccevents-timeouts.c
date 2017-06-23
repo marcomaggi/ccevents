@@ -199,14 +199,14 @@ ccevents_timeval_t
 ccevents_timeout_start (cce_location_t * there, const ccevents_timeout_t to)
 {
   if (ccevents_timeout_is_infinite(to)) {
-    ccevents_timeval_t	R = { .tv_sec = LONG_MAX, .tv_usec = 0 };
+    ccevents_timeval_t	R = { .tv.tv_sec = LONG_MAX, .tv.tv_usec = 0 };
     return R;
   } else {
     ccevents_timeval_t	now, span = {
-      .tv_sec	= to.seconds,
-      .tv_usec	= 1000L * to.milliseconds + to.microseconds
+      .tv.tv_sec	= to.seconds,
+      .tv.tv_usec	= 1000L * to.milliseconds + to.microseconds
     };
-    gettimeofday(&now, NULL);
+    gettimeofday(&now.tv, NULL);
     return ccevents_timeval_add(there, now, span);
   }
 }

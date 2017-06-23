@@ -431,7 +431,7 @@ typedef struct ccevents_timeval_t	ccevents_timeval_t;
  *    0 <= tv_usec <= 999999
  */
 struct ccevents_timeval_t {
-  struct timeval;
+  struct timeval	tv;
 };
 
 /* Pointer   to   a   constant,   statically   allocated   instance   of
@@ -554,9 +554,9 @@ typedef void ccevents_event_handler_t	(cce_location_t * L, ccevents_source_t * s
 typedef void ccevents_timeout_handler_t	(cce_location_t * L, ccevents_source_t * src)
   __attribute__((nonnull(1,2)));
 
-typedef struct ccevents_source_vtable_t		 ccevents_source_vtable_t;
+typedef struct ccevents_source_etable_t		 ccevents_source_etable_t;
 
-struct ccevents_source_vtable_t {
+struct ccevents_source_etable_t {
   ccevents_event_inquirer_t *	event_inquirer;
   ccevents_event_handler_t *	event_handler;
 };
@@ -566,10 +566,10 @@ struct ccevents_source_vtable_t {
 struct ccevents_source_t {
   /* This struct is a node in the  list of event sources registered in a
      group. */
-  ccevents_queue_node_t;
+  ccevents_queue_node_t			node;
 
   const ccevents_source_otable_t *	otable;
-  const ccevents_source_vtable_t *	vtable;
+  const ccevents_source_etable_t *	etable;
 
   /* The expiration time for the next event in this event source. */
   ccevents_timeval_t			expiration_time;
@@ -588,7 +588,7 @@ ccevents_decl ccevents_event_inquirer_t		ccevents_source_query;
 ccevents_decl ccevents_event_handler_t		ccevents_source_handle_event;
 ccevents_decl ccevents_timeout_handler_t	ccevents_source_handle_expiration;
 
-ccevents_decl void ccevents_source_init (ccevents_source_t * src, const ccevents_source_vtable_t * vtable)
+ccevents_decl void ccevents_source_init (ccevents_source_t * src, const ccevents_source_etable_t * etable)
   __attribute__((nonnull(1)));
 
 ccevents_decl void ccevents_source_final (ccevents_source_t * src);
@@ -610,7 +610,7 @@ __attribute__((nonnull(1),always_inline))
 static inline void
 ccevents_source_dequeue_itself (ccevents_source_t * src)
 {
-  ccevents_queue_node_dequeue_itself(src);
+  ccevents_queue_node_dequeue_itself(&(src->node));
 }
 
 /* ------------------------------------------------------------------ */
@@ -619,7 +619,7 @@ __attribute__((pure,nonnull(1),always_inline))
 static inline bool
 ccevents_source_is_enqueued (const ccevents_source_t * src)
 {
-  return ccevents_queue_node_is_enqueued(src);
+  return ccevents_queue_node_is_enqueued(&(src->node));
 }
 
 /* ------------------------------------------------------------------ */
@@ -658,7 +658,7 @@ ccevents_decl ccevents_timeout_handler_t	ccevents_dummy_timeout_handler;
  ** ----------------------------------------------------------------- */
 
 struct ccevents_fd_source_t {
-  ccevents_source_t;
+  ccevents_source_t		source;
 
   /* The file descriptor. */
   int				fd;
@@ -701,9 +701,9 @@ ccevents_cast_to_fd_source_from_source (ccevents_source_t * src)
  ** ----------------------------------------------------------------- */
 
 struct ccevents_task_source_t {
-  ccevents_source_t;
+  ccevents_source_t		source;
   ccevents_event_inquirer_t *	event_inquirer;
-  ccevents_event_handler_t *		event_handler;
+  ccevents_event_handler_t *	event_handler;
 };
 
 ccevents_decl void ccevents_task_source_init (ccevents_task_source_t * tksrc)
@@ -719,7 +719,8 @@ __attribute__((const,always_inline))
 static inline ccevents_task_source_t *
 ccevents_cast_to_task_source_from_source (ccevents_source_t * src)
 {
-  return (ccevents_task_source_t *)src;
+  CCEVENTS_SF(ccevents_task_source_t, tksrc, source, src);
+  return tksrc;
 }
 #define ccevents_cast_to_task_source(SRC)		\
   _Generic((SRC), ccevents_source_t *: ccevents_cast_to_task_source_from_source)(SRC)
@@ -731,14 +732,14 @@ ccevents_cast_to_task_source_from_source (ccevents_source_t * src)
  ** ----------------------------------------------------------------- */
 
 struct ccevents_signal_bub_source_t {
-  ccevents_source_t;
+  ccevents_source_t		source;
 
   /* The signal number to which this event source must react. */
-  int	signum;
+  int				signum;
 
   /* Pointer  to  function to  be  called  whenever the  expected  event
      happens. */
-  ccevents_event_handler_t *		event_handler;
+  ccevents_event_handler_t *	event_handler;
 };
 
 ccevents_decl void ccevents_signal_bub_init (void)
@@ -776,7 +777,7 @@ ccevents_cast_to_signal_bub_source_from_source (ccevents_source_t * src)
  ** ----------------------------------------------------------------- */
 
 struct ccevents_timer_source_t {
-  ccevents_source_t;
+  ccevents_source_t	source;
 };
 
 ccevents_decl void ccevents_timer_source_init (ccevents_timer_source_t * timsrc)
@@ -802,7 +803,7 @@ ccevents_cast_to_timer_source_from_source (ccevents_source_t * src)
    pending events with the same priority.
 */
 struct ccevents_group_t {
-  ccevents_queue_node_t;
+  ccevents_queue_node_t	node;
 
   /* Queue of event sources. */
   ccevents_queue_t	sources[1];
@@ -853,7 +854,7 @@ __attribute__((nonnull(1),always_inline))
 static inline bool
 ccevents_group_contains_source (const ccevents_group_t * grp, const ccevents_source_t * src)
 {
-  return ccevents_queue_contains_item (grp->sources, src);
+  return ccevents_queue_contains_item (grp->sources, &(src->node));
 }
 
 /* ------------------------------------------------------------------ */
@@ -862,14 +863,14 @@ __attribute__((nonnull(1),always_inline))
 static inline void
 ccevents_group_dequeue_itself (ccevents_group_t * grp)
 {
-  ccevents_queue_node_dequeue_itself(grp);
+  ccevents_queue_node_dequeue_itself(&(grp->node));
 }
 
 __attribute__((nonnull(1),always_inline))
 static inline void
 ccevents_group_enqueue_source (ccevents_group_t * grp, ccevents_source_t * new_source)
 {
-  ccevents_queue_enqueue(grp->sources, new_source);
+  ccevents_queue_enqueue(grp->sources, &(new_source->node));
 }
 
 __attribute__((nonnull(1),always_inline))
@@ -918,7 +919,7 @@ __attribute__((nonnull(1,2),always_inline))
 static inline void
 ccevents_loop_enqueue_group (ccevents_loop_t * loop, ccevents_group_t * grp)
 {
-  ccevents_queue_enqueue(loop->groups, grp);
+  ccevents_queue_enqueue(loop->groups, &(grp->node));
 }
 
 __attribute__((nonnull(1),always_inline))
@@ -948,7 +949,7 @@ __attribute__((pure,nonnull(1,2),always_inline))
 static inline bool
 ccevents_loop_contains_group (const ccevents_loop_t * loop, const ccevents_group_t * grp)
 {
-  return ccevents_queue_contains_item(loop->groups, grp);
+  return ccevents_queue_contains_item(loop->groups, &(grp->node));
 }
 
 
@@ -964,8 +965,8 @@ ccevents_source_get_group (const ccevents_source_t * src)
    function is defined here because it  needs the full definition of the
    structure "ccevents_group_t". */
 {
-  return (src->base)? \
-    (ccevents_group_t *)((uint8_t*)(src->base) - (ptrdiff_t)offsetof(struct ccevents_group_t, sources)) :
+  return (src->node.base)? \
+    (ccevents_group_t *)((uint8_t*)(src->node.base) - (ptrdiff_t)offsetof(struct ccevents_group_t, sources)) :
     NULL;
 }
 
@@ -977,10 +978,39 @@ ccevents_group_get_loop (const ccevents_group_t * grp)
    defined here  because it needs  the full definition of  the structure
    "ccevents_loop_t". */
 {
-  return (grp->base)?
-    (ccevents_loop_t *)((uint8_t*)(grp->base) - (ptrdiff_t)offsetof(struct ccevents_loop_t, groups)) :
+  return (grp->node.base)?
+    (ccevents_loop_t *)((uint8_t*)(grp->node.base) - (ptrdiff_t)offsetof(struct ccevents_loop_t, groups)) :
     NULL;
 }
+
+
+/** --------------------------------------------------------------------
+ ** Generic macros.
+ ** ----------------------------------------------------------------- */
+
+#define CCEVENTS_C001(S)	((ccevents_source_t *)(S))
+#define CCEVENTS_C002(S)	((ccevents_queue_node_t *)(S))
+
+#define ccevents_source(S)					\
+  _Generic((S),							\
+	   ccevents_source_t		*: (S),			\
+	   ccevents_task_source_t	*: CCEVENTS_C001(S),	\
+	   ccevents_timer_source_t	*: CCEVENTS_C001(S),	\
+	   ccevents_fd_source_t		*: CCEVENTS_C001(S),	\
+	   ccevents_signal_bub_source_t	*: CCEVENTS_C001(S))
+
+#define ccevents_fd(S)					\
+  _Generic((S),						\
+	   ccevents_fd_source_t		*: (S)->fd)	\
+
+#define ccevents_node(S)					\
+  _Generic((S),							\
+	   ccevents_source_t		*: CCEVENTS_C002(S),	\
+	   ccevents_group_t		*: CCEVENTS_C002(S),	\
+	   ccevents_task_source_t	*: CCEVENTS_C002(S),	\
+	   ccevents_timer_source_t	*: CCEVENTS_C002(S),	\
+	   ccevents_fd_source_t		*: CCEVENTS_C002(S),	\
+	   ccevents_signal_bub_source_t	*: CCEVENTS_C002(S))
 
 
 /** --------------------------------------------------------------------

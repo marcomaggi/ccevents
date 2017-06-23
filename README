@@ -12,7 +12,7 @@ Topics
   3. Install
   4. Usage
   A. Credits
-  B. Bugs
+  B. Bugs, vulnerabilities and contributions
   C. Resources
   D. Badges and static analysis
 
@@ -20,8 +20,8 @@ Topics
 1. Introduction
 ---------------
 
-This package installs  a C language library implementing  an event loop;
-it is written in standard C11 language; it targets POSIX systems.
+This package  installs a standard  C11 language library  implementing an
+event loop for POSIX systems.
 
   This package  depends on  the package  CCExceptions, at  least version
 0.5.
@@ -46,8 +46,8 @@ WITHOUT   ANY   WARRANTY;  without   even   the   implied  warranty   of
 MERCHANTABILITY  or  FITNESS FOR  A  PARTICULAR  PURPOSE.  See  the  GNU
 General Public License for more details.
 
-You should have received a copy  of the GNU General Public License along
-with this program.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 3. Install
@@ -133,8 +133,8 @@ The  stuff was  written by  Marco Maggi.   If this  package exists  it's
 because of the great GNU software tools that he uses all the time.
 
 
-B. Bugs
--------
+B. Bugs, vulnerabilities and contributions
+------------------------------------------
 
 Bug  and vulnerability  reports are  appreciated, all  the vulnerability
 reports  are  public; register  them  using  the  Issue Tracker  at  the

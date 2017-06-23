@@ -23,10 +23,7 @@
   License along  with this library; if  not, write to  the Free Software
   Foundation, Inc.,  59 Temple Place,  Suite 330, Boston,  MA 02111-1307
   USA.
-
 */
-
-
 
 #include <ccevents.h>
 #include <ccexceptions.h>
@@ -41,7 +38,7 @@ test_timeval_initialisation_from_values (void)
   /* Small positive values. */
   if (1) {
     cce_location_t	L[1];
-    bool			flag = false;
+    bool		flag = false;
     ccevents_timeval_t	T;
 
     if (cce_location(L)) {
@@ -54,13 +51,13 @@ test_timeval_initialisation_from_values (void)
       flag = true;
     }
     assert(true == flag);
-    assert(1 == T.tv_sec);
-    assert(2 == T.tv_usec);
+    assert(1 == T.tv.tv_sec);
+    assert(2 == T.tv.tv_usec);
   }
   /* Negative microseconds: small value. */
   if (1) {
     cce_location_t	L[1];
-    bool			flag = false;
+    bool		flag = false;
     ccevents_timeval_t	T;
 
     if (cce_location(L)) {
@@ -72,16 +69,16 @@ test_timeval_initialisation_from_values (void)
       cce_run_cleanup_handlers(L);
       flag = true;
     }
-    if (0) fprintf(stderr, "tv_sec = %ld, tv_usec = %ld\n", T.tv_sec, T.tv_usec);
+    if (0) { fprintf(stderr, "tv_sec = %ld, tv_usec = %ld\n", T.tv.tv_sec, T.tv.tv_usec); }
     assert(true == flag);
-    assert(0 == T.tv_sec);
-    assert(999998 == T.tv_usec);
+    assert(0 == T.tv.tv_sec);
+    assert(999998 == T.tv.tv_usec);
   }
   /* Negative microseconds: big value,  correct overflow of microseconds
      into seconds. */
   if (1) {
     cce_location_t	L[1];
-    bool			flag = false;
+    bool		flag = false;
     ccevents_timeval_t	T;
 
     if (cce_location(L)) {
@@ -93,16 +90,16 @@ test_timeval_initialisation_from_values (void)
       cce_run_cleanup_handlers(L);
       flag = true;
     }
-    if (0) fprintf(stderr, "tv_sec = %ld, tv_usec = %ld\n", T.tv_sec, T.tv_usec);
+    if (0) fprintf(stderr, "tv_sec = %ld, tv_usec = %ld\n", T.tv.tv_sec, T.tv.tv_usec);
     assert(true == flag);
-    assert(1 == T.tv_sec);
-    assert(0 == T.tv_usec);
+    assert(1 == T.tv.tv_sec);
+    assert(0 == T.tv.tv_usec);
   }
   /* Negative microseconds: big value,  correct overflow of microseconds
      into seconds. */
   if (1) {
     cce_location_t	L[1];
-    bool			flag = false;
+    bool		flag = false;
     ccevents_timeval_t	T;
 
     if (cce_location(L)) {
@@ -114,10 +111,10 @@ test_timeval_initialisation_from_values (void)
       cce_run_cleanup_handlers(L);
       flag = true;
     }
-    if (0) fprintf(stderr, "tv_sec = %ld, tv_usec = %ld\n", T.tv_sec, T.tv_usec);
+    if (0) fprintf(stderr, "tv_sec = %ld, tv_usec = %ld\n", T.tv.tv_sec, T.tv.tv_usec);
     assert(true == flag);
-    assert(0 == T.tv_sec);
-    assert(999999 == T.tv_usec);
+    assert(0 == T.tv.tv_sec);
+    assert(999999 == T.tv.tv_usec);
   }
   /* Negative microseconds: LONG_MIN,  erroneous overflow.  Distributing
      the  microseconds on  the seconds  fields causes  the latter  to be
@@ -156,8 +153,8 @@ test_timeval_initialisation_from_timeval (void)
     flag = true;
   }
   assert(true == flag);
-  assert(1 == T.tv_sec);
-  assert(2 == T.tv_usec);
+  assert(1 == T.tv.tv_sec);
+  assert(2 == T.tv.tv_usec);
 }
 
 
@@ -217,7 +214,7 @@ test_timeval_initialisation_invalid_from_timeval (void)
     ccevents_timeval_t	tv;
     tv = ccevents_timeval_normalise(L, T);
     /* Let's print to make "tv" used: GCC will not remove it. */
-    fprintf(stderr, "%ld\n", tv.tv_sec);
+    fprintf(stderr, "%ld\n", tv.tv.tv_sec);
     cce_run_cleanup_handlers(L);
   }
   assert(true == error_flag);
@@ -238,7 +235,7 @@ test_timeval_initialisation_overflow_from_timeval (void)
     ccevents_timeval_t	R;
     R = ccevents_timeval_normalise(L, T);
     /* Let's print to make R used: GCC will not remove it. */
-    fprintf(stderr, "%ld\n", R.tv_sec);
+    fprintf(stderr, "%ld\n", R.tv.tv_sec);
     cce_run_cleanup_handlers(L);
   }
   assert(true == flag);
@@ -259,16 +256,16 @@ test_timeval_addition (void)
     } else {
       A = ccevents_timeval_init(L, 10, 300);
       B = ccevents_timeval_init(L, 2, 44);
-      if (0) fprintf(stderr, "A.tv_sec = %ld, A.tv_usec = %ld\n", A.tv_sec, A.tv_usec);
-      if (0) fprintf(stderr, "B.tv_sec = %ld, B.tv_usec = %ld\n", B.tv_sec, B.tv_usec);
+      if (0) fprintf(stderr, "A.tv.tv_sec = %ld, A.tv.tv_usec = %ld\n", A.tv.tv_sec, A.tv.tv_usec);
+      if (0) fprintf(stderr, "B.tv.tv_sec = %ld, B.tv.tv_usec = %ld\n", B.tv.tv_sec, B.tv.tv_usec);
       C = ccevents_timeval_add(L, A, B);
-      if (0) fprintf(stderr, "C.tv_sec = %ld, C.tv_usec = %ld\n", C.tv_sec, C.tv_usec);
+      if (0) fprintf(stderr, "C.tv.tv_sec = %ld, C.tv.tv_usec = %ld\n", C.tv.tv_sec, C.tv.tv_usec);
       cce_run_cleanup_handlers(L);
       flag = true;
     }
     assert(true == flag);
-    assert((10+2) == C.tv_sec);
-    assert((44+300) == C.tv_usec);
+    assert((10+2) == C.tv.tv_sec);
+    assert((44+300) == C.tv.tv_usec);
   }
 
   /* Overflow adding seconds. */
@@ -288,7 +285,7 @@ test_timeval_addition (void)
       B = ccevents_timeval_init(L, 100, 44);
       C = ccevents_timeval_add(L, A, B);
       /* Let's print to make C used: GCC will not remove it. */
-      fprintf(stderr, "%ld\n", C.tv_sec);
+      fprintf(stderr, "%ld\n", C.tv.tv_sec);
       cce_run_cleanup_handlers(L);
     }
     assert(true == flag);
@@ -311,7 +308,7 @@ test_timeval_addition (void)
       B = ccevents_timeval_init(L, 0, 2000000);
       R = ccevents_timeval_add(L, A, B);
       /* Let's print to make R used: GCC will not remove it. */
-      fprintf(stderr, "%ld\n", R.tv_sec);
+      fprintf(stderr, "%ld\n", R.tv.tv_sec);
       cce_run_cleanup_handlers(L);
     }
     assert(true == flag);
@@ -333,16 +330,16 @@ test_timeval_subtraction (void)
     } else {
       A = ccevents_timeval_init(L, 10, 300);
       B = ccevents_timeval_init(L, 2, 44);
-      if (0) fprintf(stderr, "A.tv_sec = %ld, A.tv_usec = %ld\n", A.tv_sec, A.tv_usec);
-      if (0) fprintf(stderr, "B.tv_sec = %ld, B.tv_usec = %ld\n", B.tv_sec, B.tv_usec);
+      if (0) fprintf(stderr, "A.tv.tv_sec = %ld, A.tv.tv_usec = %ld\n", A.tv.tv_sec, A.tv.tv_usec);
+      if (0) fprintf(stderr, "B.tv.tv_sec = %ld, B.tv.tv_usec = %ld\n", B.tv.tv_sec, B.tv.tv_usec);
       C = ccevents_timeval_sub(L, A, B);
-      if (0) fprintf(stderr, "C.tv_sec = %ld, C.tv_usec = %ld\n", C.tv_sec, C.tv_usec);
+      if (0) fprintf(stderr, "C.tv.tv_sec = %ld, C.tv.tv_usec = %ld\n", C.tv.tv_sec, C.tv.tv_usec);
       cce_run_cleanup_handlers(L);
       flag = true;
     }
     assert(true == flag);
-    assert((10-2) == C.tv_sec);
-    assert((300-44) == C.tv_usec);
+    assert((10-2) == C.tv.tv_sec);
+    assert((300-44) == C.tv.tv_usec);
   }
 
   /* Invalid value subtracting seconds. */
@@ -362,7 +359,7 @@ test_timeval_subtraction (void)
       B = ccevents_timeval_init(L, 99, 44);
       R = ccevents_timeval_sub(L, A, B);
       /* Let's print to make R used: GCC will not remove it. */
-      fprintf(stderr, "%ld\n", R.tv_sec);
+      fprintf(stderr, "%ld\n", R.tv.tv_sec);
       cce_run_cleanup_handlers(L);
     }
     assert(true == flag);
@@ -385,7 +382,7 @@ test_timeval_subtraction (void)
       B = ccevents_timeval_init(L, 0, -100);
       R = ccevents_timeval_add(L, A, B);
       /* Let's print to make R used: GCC will not remove it. */
-      fprintf(stderr, "%ld\n", R.tv_sec);
+      fprintf(stderr, "%ld\n", R.tv.tv_sec);
       cce_run_cleanup_handlers(L);
     }
     assert(true == flag);

@@ -56,34 +56,15 @@ AC_DEFINE([_GNU_SOURCE],[1],[enable everything GNU and other extensions])
 AC_PROG_CC_C99
 AX_CHECK_COMPILE_FLAG([-std=c11],[],[AC_MSG_ERROR([*** Compiler does not support -std=c11])],[-pedantic])
 AX_CFLAGS="-std=c11"
-AX_CHECK_COMPILE_FLAG([-fplan9-extensions],[],[AC_MSG_ERROR([*** Compiler does not support -fplan9-extensions])],[$AX_CFLAGS])
-AX_CFLAGS="$AX_CFLAGS -fplan9-extensions"
 AC_SUBST(AX_CFLAGS)
 
 AM_PROG_AS
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_HEADER_STDC
-dnl AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([assert.h stdint.h strings.h errno.h stddef.h])
-AC_CHECK_HEADER([stdbool.h],,[AC_MSG_ERROR([unable to fine stdbool.h])])
-AC_CHECK_HEADER([sys/select.h],,[AC_MSG_ERROR([unable to fine sys/select.h])])
-dnl AC_CHECK_SIZEOF(void *)
-dnl AC_C_CONST
-dnl AC_C_INLINE
-dnl AC_C_RESTRICT
-dnl AC_TYPE_LONG_LONG_INT
-dnl AC_TYPE_UNSIGNED_LONG_LONG_INT
-dnl AC_TYPE_SIZE_T
-dnl AC_TYPE_SSIZE_T
-dnl AC_TYPE_INT8_T
-dnl AC_TYPE_INT16_T
-dnl AC_TYPE_INT32_T
-dnl AC_TYPE_INT64_T
-dnl AC_TYPE_UINT8_T
-dnl AC_TYPE_UINT16_T
-dnl AC_TYPE_UINT32_T
-dnl AC_TYPE_UINT64_T
+AC_CHECK_HEADER([stdbool.h],,[AC_MSG_ERROR([unable to find stdbool.h])])
+AC_CHECK_HEADER([sys/select.h],,[AC_MSG_ERROR([unable to find sys/select.h])])
 
 AC_CACHE_SAVE
 
@@ -91,10 +72,6 @@ dnl page
 #### checks for library functions
 
 AC_FUNC_MALLOC
-dnl AC_FUNC_MEMCMP
-dnl AC_CHECK_FUNCS([memmove memset strerror])
-dnl AC_CHECK_FUNCS([mmap munmap msync mremap madvise mlock munlock mlockall munlockall mprotect])
-dnl AC_CHECK_FUNCS([getenv])
 
 AC_CACHE_SAVE
 

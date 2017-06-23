@@ -106,7 +106,7 @@ test_2_0_signals_raiser_inquirer (cce_location_t * there CCEVENTS_UNUSED, cceven
 static void
 test_2_0_sigusr1_handler_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * _src)
 {
-  test_2_0_sigusr1_handler_t *	sigusr1_handler = (test_2_0_sigusr1_handler_t *) _src;
+  CCEVENTS_PC(test_2_0_sigusr1_handler_t, sigusr1_handler, _src);
   sigusr1_handler->signal_flag = true;
 }
 
@@ -142,9 +142,9 @@ test_2_0 (void)
       ccevents_task_source_set(signals_acquirer_src, test_2_0_signals_acquirer_inquirer, ccevents_dummy_event_handler);
       ccevents_task_source_set(signals_raiser_src,   test_2_0_signals_raiser_inquirer,   ccevents_dummy_event_handler);
       ccevents_signal_bub_source_set(&sigusr1_handler.src, test_2_0_sigusr1_handler_handler);
-      ccevents_group_enqueue_source(grp, &sigusr1_handler.src);
-      ccevents_group_enqueue_source(grp, signals_acquirer_src);
-      ccevents_group_enqueue_source(grp, signals_raiser_src);
+      ccevents_group_enqueue_source(grp, ccevents_source(&sigusr1_handler.src));
+      ccevents_group_enqueue_source(grp, ccevents_source(signals_acquirer_src));
+      ccevents_group_enqueue_source(grp, ccevents_source(signals_raiser_src));
       ccevents_group_enter(grp);
       cce_run_cleanup_handlers(L);
     }
@@ -175,7 +175,7 @@ test_3_0_signals_acquirer_inquirer (cce_location_t * there CCEVENTS_UNUSED, ccev
 static void
 test_3_0_signal_handler (cce_location_t * there CCEVENTS_UNUSED, ccevents_source_t * _src)
 {
-  test_3_0_sigusr1_handler_t *	sigusr1_handler = (test_3_0_sigusr1_handler_t *) _src;
+  CCEVENTS_PC(test_3_0_sigusr1_handler_t, sigusr1_handler, _src);
   sigusr1_handler->signal_flag = 1;
 }
 
@@ -205,8 +205,8 @@ test_3_0 (void)
     } else {
       ccevents_task_source_set(signals_acquirer_src, test_3_0_signals_acquirer_inquirer, ccevents_dummy_event_handler);
       ccevents_signal_bub_source_set(&sigusr1_handler.src, test_3_0_signal_handler);
-      ccevents_group_enqueue_source(grp, &sigusr1_handler.src);
-      ccevents_group_enqueue_source(grp, signals_acquirer_src);
+      ccevents_group_enqueue_source(grp, ccevents_source(&sigusr1_handler.src));
+      ccevents_group_enqueue_source(grp, ccevents_source(signals_acquirer_src));
       ccevents_group_enter(grp);
       cce_run_cleanup_handlers(L);
     }

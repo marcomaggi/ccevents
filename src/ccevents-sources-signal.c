@@ -126,9 +126,9 @@ static void
 method_event_handler (cce_location_t * there, ccevents_source_t * src)
 {
   CCEVENTS_PC(ccevents_signal_bub_source_t, sigsrc, src);
-  sigsrc->event_handler(there, sigsrc);
+  sigsrc->event_handler(there, ccevents_source(sigsrc));
 }
-static const ccevents_source_vtable_t methods_table = {
+static const ccevents_source_etable_t methods_table = {
   .event_inquirer	= method_event_inquirer,
   .event_handler	= method_event_handler,
 };
@@ -143,7 +143,7 @@ ccevents_signal_bub_source_init (ccevents_signal_bub_source_t * sigsrc, int sign
 /* Initialise an already  allocated source structure.  Do  not start the
    event waiting: this is done by "ccevents_signal_bub_source_set()". */
 {
-  ccevents_source_init(sigsrc, &methods_table);
+  ccevents_source_init(ccevents_source(sigsrc), &methods_table);
   sigsrc->signum = signum;
   arrived_signals[signum] = 0;
 }

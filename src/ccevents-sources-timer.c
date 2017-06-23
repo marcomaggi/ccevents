@@ -45,7 +45,7 @@ method_event_handler (cce_location_t    * there CCEVENTS_UNUSED,
 {
   return;
 }
-static const ccevents_source_vtable_t methods_table = {
+static const ccevents_source_etable_t methods_table = {
   .event_inquirer	= method_event_inquirer,
   .event_handler	= method_event_handler,
 };
@@ -58,7 +58,7 @@ static const ccevents_source_vtable_t methods_table = {
 void
 ccevents_timer_source_init (ccevents_timer_source_t * timsrc)
 {
-  ccevents_source_init(timsrc, &methods_table);
+  ccevents_source_init(ccevents_source(timsrc), &methods_table);
 }
 
 /* end of file */

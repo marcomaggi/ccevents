@@ -8,13 +8,13 @@
 
 ## Introduction
 
-This package installs  a C language library implementing  an event loop;
-it is written in standard C11 language; it targets POSIX systems.
+This package  installs a standard  C11 language library  implementing an
+event loop for POSIX systems.
 
 This package depends on the package CCExceptions, at least version 0.5.
 
-The  package makes  use of  the  GNU Autotools  and  it is  tested on  a
-GNU+Linux system.
+The  package uses  the GNU  Autotools and  it is  tested on  a GNU+Linux
+system.
 
 
 ## License
@@ -37,7 +37,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ## Install
 
-To install from a proper release tarball, do this:
+First  we must  make  sure  that the  package  CCExceptions is  properly
+installed.  To install from a proper release tarball, do this:
 
 ```
 $ cd ccevents-0.1.0
@@ -118,6 +119,14 @@ $ make install
 
 Read the documentation.
 
+*IMPORTANT* To  use the library we  must enable the POSIX  features when
+including the standard  header files; so either  we include `ccevents.h`
+as  first  header,  or  we  include  the  following  definitions  before
+including *all* the header files:
+
+```C
+#define _POSIX_C_SOURCE 200809L
+```
 
 ## Credits
 
@@ -125,7 +134,7 @@ The  stuff was  written by  Marco Maggi.   If this  package exists  it's
 because of the great GNU software tools that he uses all the time.
 
 
-## Bugs
+## Bugs, vulnerabilities and contributions
 
 Bug  and vulnerability  reports are  appreciated, all  the vulnerability
 reports  are  public; register  them  using  the  Issue Tracker  at  the
