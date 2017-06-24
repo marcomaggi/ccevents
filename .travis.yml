@@ -67,7 +67,7 @@ matrix:
         export LD_LIBRARY_PATH=/tmp/mine/lib:$LD_LIBRARY_PATH;
         export PKG_CONFIG_PATH=/tmp/mine/lib/pkgconfig:$PKG_CONFIG_PATH;
         sh ./autogen.sh;
-        ./configure --enable-maintainer-mode;
+        ./configure --enable-maintainer-mode CPPFLAGS="-I/tmp/mine/include";
         make all;
         make check;
 
@@ -90,7 +90,7 @@ matrix:
         export LD_LIBRARY_PATH=/tmp/mine/lib:$LD_LIBRARY_PATH;
         export PKG_CONFIG_PATH=/tmp/mine/lib/pkgconfig:$PKG_CONFIG_PATH;
         sh ./autogen.sh;
-        ./configure --enable-maintainer-mode;
+        ./configure --enable-maintainer-mode CPPFLAGS="-I/tmp/mine/include";
         make all;
         make check;
 
@@ -113,7 +113,7 @@ matrix:
         export LD_LIBRARY_PATH=/tmp/mine/lib:$LD_LIBRARY_PATH;
         export PKG_CONFIG_PATH=/tmp/mine/lib/pkgconfig:$PKG_CONFIG_PATH;
         sh ./autogen.sh;
-        ./configure --enable-maintainer-mode;
+        ./configure --enable-maintainer-mode CPPFLAGS="-I/tmp/mine/include";
         make all;
         make check;
 
@@ -136,7 +136,7 @@ matrix:
         export LD_LIBRARY_PATH=/tmp/mine/lib:$LD_LIBRARY_PATH;
         export PKG_CONFIG_PATH=/tmp/mine/lib/pkgconfig:$PKG_CONFIG_PATH;
         sh ./autogen.sh;
-        ./configure --enable-maintainer-mode CFLAGS='-Wno-unknown-attributes';
+        ./configure --enable-maintainer-mode CFLAGS='-Wno-unknown-attributes' CPPFLAGS="-I/tmp/mine/include";
         make all;
         make check;
 
@@ -153,7 +153,7 @@ matrix:
         export LD_LIBRARY_PATH=/tmp/mine/lib:$LD_LIBRARY_PATH;
         export PKG_CONFIG_PATH=/tmp/mine/lib/pkgconfig:$PKG_CONFIG_PATH;
         LIBTOOLIZE=glibtoolize sh ./autogen.sh;
-        ./configure --enable-maintainer-mode CFLAGS='-Wno-unknown-attributes';
+        ./configure --enable-maintainer-mode CFLAGS='-Wno-unknown-attributes' CPPFLAGS="-I/tmp/mine/include";
         make all;
         make check;
 
@@ -170,7 +170,7 @@ matrix:
         export LD_LIBRARY_PATH=/tmp/mine/lib:$LD_LIBRARY_PATH;
         export PKG_CONFIG_PATH=/tmp/mine/lib/pkgconfig:$PKG_CONFIG_PATH;
         LIBTOOLIZE=glibtoolize sh ./autogen.sh;
-        ./configure --enable-maintainer-mode CFLAGS='-Wno-unknown-attributes';
+        ./configure --enable-maintainer-mode CFLAGS='-Wno-unknown-attributes' CPPFLAGS="-I/tmp/mine/include";
         make all;
         make check;
 
@@ -193,7 +193,7 @@ matrix:
         # export LD_LIBRARY_PATH=/tmp/mine/lib:$LD_LIBRARY_PATH;
         # export PKG_CONFIG_PATH=/tmp/mine/lib/pkgconfig:$PKG_CONFIG_PATH;
     #     sh ./autogen.sh;
-    #     ./configure --enable-maintainer-mode CFLAGS='-O0 --coverage';
+    #     ./configure --enable-maintainer-mode CFLAGS='-O0 --coverage' CPPFLAGS="-I/tmp/mine/include";
     #     make all;
     #     make check;
     #   after_success:
