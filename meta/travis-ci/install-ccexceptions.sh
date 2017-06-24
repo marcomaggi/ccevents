@@ -60,8 +60,8 @@ else
     fi
 fi
 
-echo "./configure --prefix=/tmp/mine" >&2
-if ! ./configure --prefix=/tmp/mine
+echo "./configure --prefix=/tmp/mine --enable-maintainer-mode" >&2
+if ! ./configure --prefix=/tmp/mine --enable-maintainer-mode
 then
     printf '%s: error configuring %s\n' "$PROGNAME" "${STEM}" >&2
     exit 1
